@@ -9,16 +9,16 @@
 // | Author:   huzhichao@laoyuegou.com
 // | Created:  2017-xx-xx
 // +----------------------------------------------------------------------
-use Robots;
+use Robots as robotModel;
 class TestService extends BaseService
 {
 	private $msg = 'success';
 
 	public function test()
 	{
-        $oRobot = new Robots();
+        $oRobot = new robotModel();
 	    //$oRobot->test();
-        $robot = $oRobot->findAll(777)->toArray();
+        $robot = $oRobot->findByData(777)->toArray();
 
         print_R($robot);
         die();
