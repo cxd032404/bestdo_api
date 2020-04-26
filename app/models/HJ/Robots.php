@@ -1,5 +1,5 @@
 <?php
-
+namespace HJ;
 use Phalcon\Mvc\Model;
 use Phalcon\Mvc\Model\Query;
 

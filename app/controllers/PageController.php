@@ -15,14 +15,13 @@ use Monolog\Logger;
 use Monolog\Handler\ElasticsearchHandler;
 use Monolog\Formatter\ElasticsearchFormatter;
 
-class ApiController extends BaseController 
+class PageController extends BaseController
 {
 
-	public function testAction( $id = 0 ) 
+	public function getPageAction( $sign="" )
 	{
-	    echo "here";die($id);
-	    $return  = (new TestService)->test();
-        //$return = $oService->test();
+	    $sign = $this->request->get("sign");
+	    $return  = (new PageService())->getPageBySign($sign);
         $this->logger->info(json_encode($return));
 
         return $this->success($return);
