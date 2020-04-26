@@ -28,12 +28,12 @@ class LoginService extends BaseService
         }else if(!isset($data['password'])){
             $return["msg"]="密码无效，请填写密码！";
         }else{
-            $userinfo = UserInfo::findFirst(["username = '".$data['mobile']."'"]);
-            if(!$userinfo || !$userinfo->userId){
+            $userinfo = UserInfo::findFirst(["username = '".$data['mobile']."'"])->toArray();
+            if(!isset($userinfo['userId'])){
                 $return["msg"]="当前手机号尚未注册，请填写正确的手机号码！";
-            }else if($userinfo->is_del==0){
+            }else if($userinfo['is_del']==0){
                 $return["msg"]="当前手机号已被禁用，禁止登录！";
-            }else if($userinfo->password!=$data['password']){
+            }else if($userinfo['password']!=$data['password']){
                 $return["msg"]="密码错误，请填写正确的密码！";
             }else{
                 $return["result"]=1;

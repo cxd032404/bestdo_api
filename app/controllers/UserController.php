@@ -30,6 +30,7 @@ class UserController extends BaseController
 	{
 		$data = $this->request->getQuery();
 		$return  = (new LoginService)->mobile_login($data);
+		$this->logger->info(json_encode($return));
 		if($return['result']==1){
 			return $this->success($return);
 		}else{
@@ -47,11 +48,11 @@ class UserController extends BaseController
 	{
 		$data = $this->request->getQuery();
 		$return  = (new LoginService)->mobile_code_login($data);
-		if($return['result']==1){
-			return $this->success($return);
-		}else{
+		$this->logger->info(json_encode($return));
+		if($return['result']!=1){
 			return $this->failure("",$return['msg']);
 		}
+		return $this->success($return);
 	}
 
 	/*
