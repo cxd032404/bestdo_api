@@ -28,6 +28,10 @@ $router -> add('api/test/', [
     'controller' => 'api',
     'action' => 'test'
 ]);
+$router -> add('page/getPage/{company}/{page_sign}', [
+    'controller' => 'page',
+    'action' => 'getPage'
+]);
 
 
 return $router;
