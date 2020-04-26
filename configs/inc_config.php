@@ -26,14 +26,21 @@ $config = [
         'suffix'            => '队列消耗',
         'description'       => '',
     ],
-    'database' => [ // cmf 主库
+    'hj_config' => [ // 配置库
+        'adapter'  => 'Mysql',
+        'host'     => '192.168.31.155',
+        'username' => 'mbtest',
+        'password' => 'Bestdo123',
+        'dbname'   => 'hj_config'
+    ],
+    'database' => [ // 测试库1
         'adapter'  => 'Mysql',
         'host'     => '127.0.0.1',
         'username' => 'root',
         'password' => '',
         'dbname'   => 'swoole_test'
     ],
-    'database_1' => [ // 文章发布库
+    'database_1' => [ // 测试库2
         'adapter'  => 'Mysql',
         'host'     => '127.0.0.1',
         'username' => 'root',
@@ -42,7 +49,7 @@ $config = [
     ],
     'redis' => [
         'adapter'       => 'Redis',
-        'host'          => '127.0.0.1:6379',
+        'host'          => '192.168.31.155:6379',
         //'port'   		=> 6379,
         'auth_password' => '123456',
         "persistent"    => false,

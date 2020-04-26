@@ -1,5 +1,5 @@
 <?php
-
+namespace HJ;
 use Phalcon\Mvc\Model;
 
 class Robots extends Model
@@ -8,8 +8,7 @@ class Robots extends Model
     public $name;
     public function initialize()
     {
-        echo "000";
-        $this->setSource("test_table");
+        $this->setSource("config_page");
         $this->setConnectionService("database_1");
         $this->setReadConnectionService("database_1");
         $this->setWriteConnectionService("database_1");

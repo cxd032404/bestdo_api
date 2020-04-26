@@ -9,14 +9,18 @@
 // | Author:   huzhichao@laoyuegou.com
 // | Created:  2017-xx-xx
 // +----------------------------------------------------------------------
-use Robots as robotModel;
+use HJ\Robots as robotModel;
+use HJ\Page;
 class TestService extends BaseService
 {
 	private $msg = 'success';
 
 	public function test()
 	{
-        $oRobot = new robotModel();
+        $pageList = (new Page())->findByPageId(1)->toArray();
+        print_R($pageList);
+        die();
+	    $oRobot = new robotModel();
 	    //$oRobot->test();
         $robot = $oRobot->findByData(777)->toArray();
 
