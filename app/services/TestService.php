@@ -22,7 +22,7 @@ class TestService extends BaseService
 
         print_R($robot);
         die();
-        	$return = $this->database->fetchAll("show tables;");
+        $return = $this->database->fetchAll("show tables;");
         $return1 = $this->database_1->fetchAll("select * from test_table;");
         //print_R($return);print_R($return1);//die();
         $redis = $this->redis->incr("redis-test");

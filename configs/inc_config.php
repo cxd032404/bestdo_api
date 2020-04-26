@@ -18,7 +18,7 @@ $config = [
     	'path_public'       => ROOT_PATH . '/public/',
         'path_cache'        => ROOT_PATH . '/runtime/cache/',
         'debug'             => '0',
-        'lifetime'          => 10,
+        'lifetime'          => 0,
         'cache_prefix'      => 'phalcon',
         'js_css_version'    => '',
         'keywords'          => '',
@@ -30,14 +30,14 @@ $config = [
         'adapter'  => 'Mysql',
         'host'     => '127.0.0.1',
         'username' => 'root',
-        'password' => '',
+        'password' => 'root',
         'dbname'   => 'swoole_test'
     ],
     'database_1' => [ // 文章发布库
         'adapter'  => 'Mysql',
         'host'     => '127.0.0.1',
         'username' => 'root',
-        'password' => '',
+        'password' => 'root',
         'dbname'   => 'swoole_test2'
     ],
     'redis' => [
@@ -73,6 +73,11 @@ $config = [
         'Server' 		=> 'Leopard Server 10',
         'Content_Type' 	=> 'application/json;charset=utf-8',
         'Status_Code' 	=> 'okey!'
+    ],
+    'aliyun_sms' => [
+        'accessKeyId' 	=> 'LTAIBfJoMGK90lWF',
+        'accessSecret' 	=> 'KF1XNkmImdTGwNRtccDbJ909wkLu5w',
+        'signName' 		=> 'willie',
     ]
 ];
 return $config;

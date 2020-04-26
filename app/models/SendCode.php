@@ -3,13 +3,13 @@
 use Phalcon\Mvc\Model;
 use Phalcon\Mvc\Model\Query;
 
-class Robots extends Model
+class SendCode extends Model
 {
     public $id;
     public $name;
     public function initialize()
     {
-        $this->setSource("test_table");
+        $this->setSource("send_code");
         $this->setConnectionService("database_1");
         $this->setReadConnectionService("database_1");
         $this->setWriteConnectionService("database_1");
@@ -19,9 +19,5 @@ class Robots extends Model
             'RobotsParts',
             'robots_id'
         );
-    }
-    public function test()
-    {
-        echo "999";
     }
 }

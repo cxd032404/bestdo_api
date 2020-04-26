@@ -132,4 +132,16 @@ class Common extends Component {
 	    return $cardnum;
 	}
 
+	/*正则验证手机号是否正确*/
+	static function check_mobile($mobile) {
+		if (!preg_match('/^1[0-9]{10}$/', $mobile)) {
+			return false;
+		}
+		return true;
+	}
+
+
+
+
+
 }
