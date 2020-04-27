@@ -22,8 +22,14 @@ class PageController extends BaseController
 	{
 	    $return  = (new PageService())->getPageInfo($page_sign);
         $this->logger->info(json_encode($return));
-
-        return $this->success($return);
+        if($return['result'])
+        {
+            return $this->success($return['data']);
+        }
+        else
+        {
+            return $this->failure([],$return['code']);
+        }
     }
 
 }
