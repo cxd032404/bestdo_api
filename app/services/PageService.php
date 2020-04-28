@@ -12,7 +12,7 @@ class PageService extends BaseService
 	    //没如果获取到
 	    if(!$pageInfo)
         {
-            $return  = ['result'=>0,'msg'=>"无此页面"];
+            $return  = ['result'=>0,'code'=>404,'msg'=>"无此页面"];
         }
 	    else
         {
@@ -25,8 +25,7 @@ class PageService extends BaseService
             {
                 $pageElementLlist[$key]['detail'] = json_decode($elementDetail['detail'],true);
             }
-	        $return['pageInfo'] = $pageInfo;
-	        $return['pageElementList'] = $pageElementLlist;
+	        $return = ['result'=>1,'code'=>200,'data'=>['pageInfo'=>$pageInfo,'pageElementList'=>$pageElementLlist]];
         }
         return $return;
 	}

@@ -4,6 +4,7 @@
         "elasticsearch/elasticsearch": "^7.6",
         "phalcon/ide-stubs": "^4.0",
         "monolog/monolog": "^2.0",
-        "alibabacloud/client": "^1.5"
+        "alibabacloud/client": "^1.5",
+        "lcobucci/jwt": "^3.3"
     }
 }

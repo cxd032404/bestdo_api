@@ -9,6 +9,8 @@
 | any other location as required by the application or its packages.
 |
 */
+
+
 define('APP_NAME', 'Phalcon');
 
 date_default_timezone_set('Asia/Shanghai');
