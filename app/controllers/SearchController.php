@@ -21,12 +21,10 @@ class SearchController extends BaseController
 
 	public function companyUserAction( $company ="",$query = "" )
 	{
-        //echo "company:".$company;
-        //echo "query:".$query;
         $client = ClientBuilder::create()->setHosts(["192.168.31.155:9200"])->build();
         $pa =
             [
-                'index'=>'company_user',
+                'index'=>'company_user_'.$company,
                 'type'=>'company_user',
                 'body'=>
                     ['query'=>
