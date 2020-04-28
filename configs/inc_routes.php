@@ -32,6 +32,10 @@ $router -> add('page/getPage/{company}/{page_sign}', [
     'controller' => 'page',
     'action' => 'getPage'
 ]);
+$router -> add('search/companyUser/{company}/{query}', [
+    'controller' => 'search',
+    'action' => 'companyUser'
+]);
 
 
 return $router;

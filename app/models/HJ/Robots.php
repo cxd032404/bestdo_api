@@ -8,7 +8,7 @@ class Robots extends Model
     public $name;
     public function initialize()
     {
-        $this->setSource("config_page");
+        $this->setSource("test_table");
         $this->setConnectionService("database_1");
         $this->setReadConnectionService("database_1");
         $this->setWriteConnectionService("database_1");
