@@ -17,13 +17,16 @@ class TestService extends BaseService
 
 	public function test()
 	{
-        $pageList = (new Page())->findByPageId(1)->toArray();
+        /*
+	    $pageList = (new Page())->findByPageId(1)->toArray();
         print_R($pageList);
         die();
+        */
 	    $oRobot = new robotModel();
 	    //$oRobot->test();
-        $robot = $oRobot->findByData(777)->toArray();
-
+        $robot = $oRobot->findByData(888);
+        //$robot->data = 888;
+        $robot->update(['test'=>999]);
         print_R($robot);
         die();
         $return = $this->database->fetchAll("show tables;");
