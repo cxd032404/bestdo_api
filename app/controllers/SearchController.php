@@ -23,7 +23,7 @@ class SearchController extends BaseController
 	{
         //echo "company:".$company;
         //echo "query:".$query;
-        $client = ClientBuilder::create()->setHosts(['127.0.0.1:9200'])->build();
+        $client = ClientBuilder::create()->setHosts(["192.168.31.155:9200"])->build();
         $pa =
             [
                 'index'=>'company_user',
