@@ -57,7 +57,9 @@ $config = [
     ],
     'elasticsearch' => [
         'adapter'       => 'Elasticsearch',
+        //'host'          => ['127.0.0.1:9200'],//['192.168.31.155:9200'],
         'host'          => ['192.168.31.155:9200'],
+
         "persistent"    => false,
         'lifttime'      => 86400
     ],
