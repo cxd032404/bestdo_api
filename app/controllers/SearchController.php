@@ -37,18 +37,43 @@ class SearchController extends BaseController
                 'body'=>
                     ['query'=>
                         ['bool'=>
-                            ['must'=>
-                                [
-                                    ['multi_match'=>
+                            [
+                                'must'=>
+                                    [
                                         [
-                                            'query'=>$query,
-                                            "type"=>"most_fields",
-                                            "analyzer"=>"ik_smart",
-                                            'fields'=>['name','mobile','worker_id']
-                                        ]],
-                                    ['term'
-                                     => ['company_id'=>$company_id]]
+                                            'term'=>
+                                                [
+                                                    'company_id'=>$company_id
+                                                ]
+                                        ]
+                                    ],
+                                'should'=>
+                                [
+
+                                    [
+                                        'multi_match'=>
+                                            [
+                                                'query'=>$query,
+                                                "type"=>"most_fields",
+                                                "analyzer"=>"ik_smart",
+                                                'fields'=>['name','mobile','worker_id']
+                                            ]
+                                    ],
+                                    [
+                                        'wildcard'=>
+                                            [
+                                                'name'=>'*'.$query."*",
+                                            ]
+                                    ],
+                                    [
+                                        'wildcard'=>
+                                            [
+                                                'mobile'=>'*'.$query."*",
+                                            ]
+                                    ],
                                 ],
+                                'minimum_should_match'=>1
+
                             ]
                         ],
                         "from"=>($page-1)*$page_size,
@@ -57,9 +82,12 @@ class SearchController extends BaseController
                             'pre_tags' => ["<em>"],
                             'post_tags' => ["</em>"],
                             'fields' => [
-                                "name" => new \stdClass()
+                                "name" => new \stdClass(),
+                                "mobile" => new \stdClass(),
                             ]
-                        ]
+
+                        ],
+                        'sort'=>['_score'=>["order"=>"desc"]]
                     ]
             ];
         $search_return = json_decode(json_encode($client->search($pa)),true);
@@ -67,8 +95,6 @@ class SearchController extends BaseController
         //日志记录
         $this->logger->info(json_encode($search_return_list));
         return $this->success(['company_user_list'=>$search_return_list]);
-        //$search_return = json_decode(json_encode($this->elasticsearch->search($pa)),true);
-        //return $this->success($search_return['hits']['hits']);
     }
     public function testAction()
     {
