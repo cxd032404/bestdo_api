@@ -58,8 +58,8 @@ class UserController extends BaseController
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
 
-		//$this->redis->set('login_'.$mobile,'{"code":123456}');
-		//$this->redis->expire('login_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->set('login_'.$mobile,'{"code":123456}');
+		$this->redis->expire('login_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
 
 		//调用手机号验证码登录方法
 		$return  = (new UserService)->mobileCodeLogin($mobile,$code);
@@ -89,8 +89,8 @@ class UserController extends BaseController
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
 		$newpassword = isset($data['newpassword'])?preg_replace('# #','',$data['newpassword']):"";
 
-		//$this->redis->set('forget_'.$mobile,'{"code":123456}');
-		//$this->redis->expire('forget_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->set('forget_'.$mobile,'{"code":123456}');
+		$this->redis->expire('forget_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
 
 		//调用忘记密码方法
 		$return  = (new UserService)->mobileForgetPwd($mobile,$code,$newpassword);
@@ -100,7 +100,7 @@ class UserController extends BaseController
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
 		}
-		return $this->success($return);
+		return $this->success();
 	}
 
 	/*
@@ -109,6 +109,7 @@ class UserController extends BaseController
      * mobile（必填）：账号
      * code（必填）：验证码
      * password（必填）：密码
+     * company_user_id（必填）：企业用户名单主键ID
      * */
 	public function mobileRegisterAction()
 	{
@@ -117,12 +118,13 @@ class UserController extends BaseController
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
 		$password = isset($data['password'])?preg_replace('# #','',$data['password']):"";
+		$company_user_id = isset($data['company_user_id'])?preg_replace('# #','',$data['company_user_id']):"";
 
-		//$this->redis->set('register_'.$mobile,'{"code":123456}');
-		//$this->redis->expire('register_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->set('register_'.$mobile,'{"code":123456}');
+		$this->redis->expire('register_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
 
 		//调用注册方法
-		$return  = (new UserService)->mobileRegister($mobile,$code,$password);
+		$return  = (new UserService)->mobileRegister($mobile,$code,$password,$company_user_id);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -155,7 +157,7 @@ class UserController extends BaseController
 		//短信验证码存入redis缓存中
 		$this->redis->set($code_name.$mobile,$return['data']);
 		$this->redis->expire($code_name.$mobile,60*5);
-		return $this->success($return);
+		return $this->success();
 	}
 
 	/*
@@ -179,7 +181,7 @@ class UserController extends BaseController
 		//短信验证码存入redis缓存中
 		$this->redis->set($code_name.$mobile,$return['data']);
 		$this->redis->expire($code_name.$mobile,60*5);
-		return $this->success($return);
+		return $this->success();
 	}
 
 	/*
@@ -203,28 +205,7 @@ class UserController extends BaseController
 		//短信验证码存入redis缓存中
 		$this->redis->set($code_name.$mobile,$return['data']);
 		$this->redis->expire($code_name.$mobile,60*5);
-		return $this->success($return);
-	}
-
-	/*
-     * 查询公司名称
-     * 参数
-     * company（必填）：公司名称
-     * */
-	public function getCompanyAction()
-	{
-		//接收参数并格式化
-		$data = $this->request->getQuery();
-		$company = isset($data['company'])?preg_replace('# #','',$data['company']):"";
-		//调用公司查询方法
-		$return  = (new UserService)->getCompany($company);
-		//日志记录
-		$this->logger->info(json_encode($return));
-		//返回值判断
-		if($return['result']!=1){
-			return $this->failure([],$return['msg'],$return['code']);
-		}
-		return $this->success($return['data']);
+		return $this->success();
 	}
 
 	/*
@@ -239,6 +220,27 @@ class UserController extends BaseController
 		$user_token = isset($data['user_token'])?preg_replace('# #','',$data['user_token']):"";
 		//调用user_token解密方法
 		$return  = (new UserService)->getDecrypt($user_token);
+		//日志记录
+		$this->logger->info(json_encode($return));
+		//返回值判断
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		return $this->success($return['data']);
+	}
+
+	/*
+     * 查询公司列表
+     * 参数
+     * company（必填）：公司名称
+     * */
+	public function getCompanyAction()
+	{
+		//接收参数并格式化
+		$data = $this->request->getQuery();
+		$company = isset($data['company'])?preg_replace('# #','',$data['company']):"";
+		//调用公司查询方法
+		$return  = (new UserService)->getCompany($company);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断

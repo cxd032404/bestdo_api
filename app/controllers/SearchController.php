@@ -18,6 +18,14 @@ use Monolog\Formatter\ElasticsearchFormatter;
 class SearchController extends BaseController
 {
 
+    /*
+     * 核对用户身份
+     * 参数
+     * company_id（必填）：企业对应ID
+     * query（必填）：用户名称
+     * page（选填）：分页数
+     * page_size（选填）：每页条数
+     * */
 	public function companyUserAction( $company_id = 0,$query = "",$page=1,$page_size=10 )
 	{
         $client = $this->elasticsearch;
@@ -54,8 +62,13 @@ class SearchController extends BaseController
                         ]
                     ]
             ];
-        $search_return = json_decode(json_encode($this->elasticsearch->search($pa)),true);
-        return $this->success($search_return['hits']['hits']);
+        $search_return = json_decode(json_encode($client->search($pa)),true);
+        $search_return_list = array_column($search_return['hits']['hits'],'_source');
+        //日志记录
+        $this->logger->info(json_encode($search_return_list));
+        return $this->success(['company_user_list'=>$search_return_list]);
+        //$search_return = json_decode(json_encode($this->elasticsearch->search($pa)),true);
+        //return $this->success($search_return['hits']['hits']);
     }
     public function testAction()
     {
