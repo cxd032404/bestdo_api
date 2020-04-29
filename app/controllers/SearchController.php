@@ -14,14 +14,13 @@ use Phalcon\Translate\Adapter\NativeArray;
 use Monolog\Logger;
 use Monolog\Handler\ElasticsearchHandler;
 use Monolog\Formatter\ElasticsearchFormatter;
-use Elasticsearch\ClientBuilder;
 
 class SearchController extends BaseController
 {
 
-	public function companyUserAction( $company ="",$query = "" )
+	public function companyUserAction( $company ="",$query = "",$page=1,$page_size=10 )
 	{
-        $client = ClientBuilder::create()->setHosts(["192.168.31.155:9200"])->build();
+        $client = $this->elasticsearch;
         $pa =
             [
                 'index'=>'company_user_'.$company,
@@ -30,15 +29,23 @@ class SearchController extends BaseController
                     ['query'=>
                         ['bool'=>
                             ['must'=>
-                                ['multi_match'=>
-                                    ['query'=>$query,'fields'=>['name','mobile','worker_id']]
+                                [
+                                    ['multi_match'=>
+                                        [
+                                            'query'=>$query,
+                                            "type"=>"most_fields",
+                                            'fields'=>['name','mobile','worker_id']
+                                        ]],
+                                    ['term'
+                                     => ['company_id'=>$company]]
                                 ],
-                                //['term'=>['company_id'=>$comp]]
                             ]
-                        ]
+                        ],
+                        "from"=>($page-1)*$page_size,
+                        "size"=>$page_size,
                     ]
             ];
-        $search_return = json_decode(json_encode($client->search($pa)),true);
+        $search_return = json_decode(json_encode($this->elasticsearch->search($pa)),true);
         return $this->success($search_return['hits']['hits']);
     }
 

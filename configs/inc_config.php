@@ -55,6 +55,12 @@ $config = [
         "persistent"    => false,
         'lifttime'      => 86400
     ],
+    'elasticsearch' => [
+        'adapter'       => 'Elasticsearch',
+        'host'          => ['192.168.31.155:9200'],
+        "persistent"    => false,
+        'lifttime'      => 86400
+    ],
     'autoload'=>[
        'path_tasks'     => ROOT_PATH . '/app/tasks/',
        'path_librarys'  => ROOT_PATH . '/app/librarys/',
