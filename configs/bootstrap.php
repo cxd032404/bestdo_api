@@ -21,6 +21,7 @@ use Phalcon\Cache\Backend\File as BackFile;
 use Phalcon\Cache\Frontend\Data as FrontData;
 use Phalcon\Mvc\View\Engine\Volt as PhVolt;
 use Predis\Client;
+use Elasticsearch\ClientBuilder;
 use Predis\Autoloader;
 
 class Bootstrap 
@@ -58,6 +59,7 @@ class Bootstrap
 			'WebPages', # 初始化页面服务
 			'Logger',	# 初始化写日志服务
             'Redis',    # 初始化Redis服务
+            'Elasticsearch',  # 初始化Elasiticsearch服务
 		];
 		foreach ($loaders as $service) {
 			$function = 'init' . $service;
@@ -254,6 +256,32 @@ class Bootstrap
 
 		*/
 	}
+
+    /**
+     *  初始化Elasticsearch 服务
+     * @access protected
+     * @author huzhichao502@gmail.com
+     *
+     * @param array $options 需要传值的数组对象
+     * @return void
+     */
+    protected function initElasticsearch( $options = [] ): void
+    {
+        $di = $this->di;
+
+        $config = $this->di['config'];
+        foreach($config as $k => $c)
+        {
+            if($c['adapter'] == "Elasticsearch")
+            {
+                $this->di[$k] = function() use ( $c ) {
+                    $hosts = json_decode(json_encode($c->host),true);
+                    $client =  ClientBuilder::create()->setHosts($hosts)->build();
+                    return $client;
+                };
+            }
+        }
+    }
 
 
 	/**
