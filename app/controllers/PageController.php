@@ -32,7 +32,7 @@ class PageController extends BaseController
         $paramsCheck = $pageService->checkPageParams($params,$page_sign);
         if(!$paramsCheck['result'])
         {
-            //return $this->failure($paramsCheck['detail'],$paramsCheck['code']);       
+            return $this->failure($paramsCheck['detail'],$paramsCheck['code']);       
         }
         $return  = $pageService->getPageInfo($page_sign,$params);
         $this->logger->info(json_encode($return));
