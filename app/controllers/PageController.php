@@ -20,14 +20,19 @@ class PageController extends BaseController
 
 	public function getPageAction( $company ="",$page_sign = "")
 	{
-	    $pageService = new PageService();
+	    $arr = ['user'=>['name'=>"a","first_name"=>"b","family"=>['father'=>"dad",'mother'=>"mum"]]];
+        $txt = json_encode($arr);
+        //echo json_encode($arr);
+        $pageService = new PageService();
         $params = $this->request->getQuery();
+        $params = $params['params']??"";
+        $params = $txt;
         $paramsCheck = $pageService->checkPageParams($params,$page_sign);
         if(!$paramsCheck['result'])
         {
-            return $this->failure($paramsCheck['detail'],$paramsCheck['code']);       
+            //return $this->failure($paramsCheck['detail'],$paramsCheck['code']);       
         }
-        $return  = $pageService->getPageInfo($page_sign);
+        $return  = $pageService->getPageInfo($page_sign,$params);
         $this->logger->info(json_encode($return));
         if($return['result'])
         {

@@ -5,7 +5,9 @@ class PageService extends BaseService
 {
 	private $msg = 'success';
 
-	public function getPageInfo($page_sign)
+    //根据页面标示获取页面信息
+    //$page_sign：页面标示
+    public function getPageInfo($page_sign,$params = "")
 	{
 	    //获取页面信息
 	    $pageInfo = $this->getPageBySign($page_sign);
@@ -16,6 +18,18 @@ class PageService extends BaseService
         }
 	    else
         {
+            $params = json_decode($params,true);
+            /*
+            $p = $this->getFromParams($params);
+            if(!$p)
+            {
+                echo "not found";
+            }
+            else
+            {
+                print_R($p);
+            }
+            */
             //转数组
             $pageInfo = $pageInfo->toArray();
             //获取页面元素详情
@@ -54,23 +68,17 @@ class PageService extends BaseService
             ]
         );
     }
+    //检查页面参数是否完整和类型正确
+    //$params:页面参数json串
     public function checkPageParams($params,$page_sign)
     {
-                //获取页面信息
+        //获取页面信息
         $pageInfo = $this->getPageBySign($page_sign,'page_id,detail')->toArray();
         $pageInfo['detail'] = json_decode($pageInfo['detail'],true);
-        if(count($pageInfo['detail']['params'])>0)
+        if(isset($pageInfo['detail']['params']) && count($pageInfo['detail']['params'])>0)
         {
-            $params = json_decode($params['params']??"",true);
-            if(!is_array($params))
-            {
-                $return  = ['result'=>1];
-            }
-            else
-            {
-                $return = ['result'=>1,'detail'=>['lack'=>[],'error'=>[]]];
-            }
-
+            $params = json_decode($params,true);
+            $return = ['result'=>1,'detail'=>['lack'=>[],'error'=>[]]];
             foreach($pageInfo['detail']['params'] as $paramsInfo)
             {
                 if(!isset($params[$paramsInfo['name']]))
@@ -97,5 +105,24 @@ class PageService extends BaseService
 
         }
         return $return;
+    }
+    //从页面参数重获取数据
+    //$params:页面参数json串
+    //$param_name: 变量名  .表示层级
+    public function getFromParams($params,$param_name = "user.family.sun")
+    {
+        $t = explode(".",$param_name);
+        foreach($t as $key)
+        {
+            if(isset($params[$key]))
+            {
+                $params = $params[$key];
+            }
+            else
+            {
+                return false;
+            }
+        }
+        return $params;
     }	
 }
