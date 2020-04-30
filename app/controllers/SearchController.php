@@ -55,7 +55,7 @@ class SearchController extends BaseController
                                             [
                                                 'query'=>$query,
                                                 "type"=>"most_fields",
-                                                "analyzer"=>"ik_smart",
+                                                //"analyzer"=>"ik_smart",
                                                 'fields'=>['name','mobile','worker_id']
                                             ]
                                     ],
