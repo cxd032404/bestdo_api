@@ -18,9 +18,16 @@ use Monolog\Formatter\ElasticsearchFormatter;
 class PageController extends BaseController
 {
 
-	public function getPageAction( $company ="",$page_sign = "" )
+	public function getPageAction( $company ="",$page_sign = "")
 	{
-	    $return  = (new PageService())->getPageInfo($page_sign);
+	    $pageService = new PageService();
+        $params = $this->request->getQuery();
+        $paramsCheck = $pageService->checkPageParams($params,$page_sign);
+        if(!$paramsCheck['result'])
+        {
+            return $this->failure($paramsCheck['detail'],$paramsCheck['code']);       
+        }
+        $return  = $pageService->getPageInfo($page_sign);
         $this->logger->info(json_encode($return));
         if($return['result'])
         {

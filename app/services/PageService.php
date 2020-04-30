@@ -54,5 +54,48 @@ class PageService extends BaseService
             ]
         );
     }
-	
+    public function checkPageParams($params,$page_sign)
+    {
+                //获取页面信息
+        $pageInfo = $this->getPageBySign($page_sign,'page_id,detail')->toArray();
+        $pageInfo['detail'] = json_decode($pageInfo['detail'],true);
+        if(count($pageInfo['detail']['params'])>0)
+        {
+            $params = json_decode($params['params']??"",true);
+            if(!is_array($params))
+            {
+                $return  = ['result'=>1];
+            }
+            else
+            {
+                $return = ['result'=>1,'detail'=>['lack'=>[],'error'=>[]]];
+            }
+
+            foreach($pageInfo['detail']['params'] as $paramsInfo)
+            {
+                if(!isset($params[$paramsInfo['name']]))
+                {
+                    $return['result'] = 0;
+                    $return['code'] = 500;
+                    $return['detail']['lack'][] = $paramsInfo['name'];
+                }
+                else
+                {
+                    $function_name  = "is_".$paramsInfo['type'];
+                    if(!$function_name($params[$paramsInfo['name']]))
+                    {
+                        $return['result'] = 0;
+                        $return['code'] = 500;
+                        $return['detail']['error'][] = $paramsInfo['name'];   
+                    }
+                }
+            }
+        }
+        else
+        {
+            $return  = ['result'=>1];
+
+        }
+        return $return;
+    }	
 }
