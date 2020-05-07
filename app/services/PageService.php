@@ -33,7 +33,7 @@ class PageService extends BaseService
             //转数组
             $pageInfo = $pageInfo->toArray();
             //获取页面元素详情
-	        $pageElementLlist  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_sign,element_type,detail")->toArray();
+	        $pageElementLlist  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_sign,element_type,detail",$params['page_sign']??[])->toArray();
 	        //数组解包
 	        foreach($pageElementLlist as $key => $elementDetail)
             {
@@ -58,14 +58,24 @@ class PageService extends BaseService
     //$page_id：页面ID
     //cloumns：数据库的字段列表
     //order：排序
-	public function getPageElementByPage($page_id,$columns = "element_id,element_type",$order = "element_type DESC")
+	public function getPageElementByPage($page_id,$columns = "element_id,element_type",$page_sign_list = ["pic_2"],$order = "element_type DESC")
     {
+        $params =             [
+            //"page_id = ".$page_id,
+            "columns" => $columns,
+            "order" => $order,
+            "bind" => ["pageSignList"=>$page_sign_list]
+        ];
+        if(count($page_sign_list))
+        {
+            $params[] = "page_id = $page_id and element_sign IN ({pageSignList:array})";
+        }
+        else
+        {
+            $params[] = "page_id = ".$page_id;
+        }
         return (new \HJ\PageElement())->find(
-            [
-                "page_id = ".$page_id,
-                "columns" => $columns,
-                "order" => $order
-            ]
+            $params
         );
     }
     //检查页面参数是否完整和类型正确
