@@ -33,6 +33,13 @@ $config = [
         'password' => 'Bestdo123',
         'dbname'   => 'hj_config'
     ],
+    'hj_user' => [ // 配置库
+        'adapter'  => 'Mysql',
+        'host'     => '192.168.31.155',
+        'username' => 'mbtest',
+        'password' => 'Bestdo123',
+        'dbname'   => 'hj_user'
+    ],
     'database' => [ // 测试库1
         'adapter'  => 'Mysql',
         'host'     => '127.0.0.1',

@@ -9,7 +9,6 @@ class AliyunService
         'BUCKET'=>'xrace-pic',
         'ACCESS_KEY_ID'=>'LTAI4FkbExDy9cEfwqNfb93X',
         'ACCESS_KEY_SECRET'=>'57iMpXwB0UYR71tXGuacAHmoCDtTaL'
-
     ];
     /*
     *

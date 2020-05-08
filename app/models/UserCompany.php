@@ -8,8 +8,8 @@ class UserCompany extends Model
     public function initialize()
     {
         $this->setSource("user_company");
-        $this->setConnectionService("database_1");
-        $this->setReadConnectionService("database_1");
-        $this->setWriteConnectionService("database_1");
+        $this->setConnectionService("hj_user");
+        $this->setReadConnectionService("hj_user");
+        $this->setWriteConnectionService("hj_user");
     }
 }

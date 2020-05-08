@@ -153,6 +153,8 @@ class BaseController extends Controller {
 		$result = ['success' => false, 'msg' => $msg];
 		if (!empty($data))
 			$result['data'] = $data;
+        if (!empty($code))
+            $result['code'] = $code;
 
 		$this -> json($result,$code);
 	}

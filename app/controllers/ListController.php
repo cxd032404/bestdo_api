@@ -21,27 +21,17 @@ class ListController extends BaseController
 
 	public function postAction( )
 	{
-        echo "here";
-	    if ($this->request->hasFiles() == true) {
-            $uploadedFile = [];
-            foreach ($this->request->getUploadedFiles() as $file){
-                $target = ROOT_PATH.'/upload/'.$file->getName();
-                $move = $file->moveTo($target);
-                if($move)
-                {
-                    $uploadedFile[] = ['root'=>$target,'file'=>$file->getName()];
-                }
-            }
-            $upload = (new AliyunService())->upload2Oss($uploadedFile);
-            print_R($upload);
-            die();
-            $oss_urls = array_column($upload->resultArr,'oss');
-            print_R($oss_urls);
-            die();
-        } else {
-            echo 'File not uploaded';
+	    $upload = (new UploadService())->getUploadedFile(['upload_img.1','upload_txt'],[],0,0);
+	    $listInfo  = (new ListService())->getListInfo(intval($this->request->getPost('list_id')));
+	    $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')),$this->request->getPost('detail'),$upload);
+        if($post['result'])
+        {
+            return $this->success($post['data']);
         }
-        die();
+        else
+        {
+            return $this->failure([],$post['data']['msg']);
+        }
     }
 
 }
