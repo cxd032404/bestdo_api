@@ -24,6 +24,14 @@ class PageService extends BaseService
 	        foreach($pageElementLlist as $key => $elementDetail)
             {
                 $pageElementLlist[$key]['detail'] = json_decode($elementDetail['detail'],true);
+                if($elementDetail['element_type'] == "list")
+                {
+                    if(isset($pageElementLlist[$key]['detail']['list_id']))
+                    {
+                        $data = (new PostsService())->getPosts($pageElementLlist[$key]['detail']['list_id'],"*","post_id DESC",1,3);
+                        print_R($data->toArray());
+                    }
+                }
             }
 	        $return = ['result'=>1,'code'=>200,'data'=>['pageInfo'=>$pageInfo,'pageElementList'=>$pageElementLlist]];
         }
