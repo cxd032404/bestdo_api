@@ -14,6 +14,7 @@ use Phalcon\Translate\Adapter\NativeArray;
 use Monolog\Logger;
 use Monolog\Handler\ElasticsearchHandler;
 use Monolog\Formatter\ElasticsearchFormatter;
+use AliyunService;
 
 class ListController extends BaseController
 {
@@ -22,13 +23,21 @@ class ListController extends BaseController
 	{
         echo "here";
 	    if ($this->request->hasFiles() == true) {
+            $uploadedFile = [];
             foreach ($this->request->getUploadedFiles() as $file){
-                print_R($file);
-                echo $file->getName(), ' ', $file->getSize(), '\n';
                 $target = ROOT_PATH.'/upload/'.$file->getName();
-                echo "target:".$target."\n";
-                $file->moveTo($target);
+                $move = $file->moveTo($target);
+                if($move)
+                {
+                    $uploadedFile[] = ['root'=>$target,'file'=>$file->getName()];
+                }
             }
+            $upload = (new AliyunService())->upload2Oss($uploadedFile);
+            print_R($upload);
+            die();
+            $oss_urls = array_column($upload->resultArr,'oss');
+            print_R($oss_urls);
+            die();
         } else {
             echo 'File not uploaded';
         }
