@@ -47,4 +47,22 @@ class PostsService extends BaseService
         }
         return $return;
     }
+    //根据列表ID获取列表
+    //$list_id：列表ID
+    //cloumns：数据库的字段列表
+    //order：排序
+    //page:页码
+    //pageSize：单页数量
+    public function getPosts($list_id,$columns = "*",$order = "post_id DESC",$page = 1,$pageSize =2)
+    {
+        $params =             [
+            "list_id = ".$list_id,
+            "columns" => $columns,
+            "order" => $order,
+            "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
+        ];
+        return (new \HJ\Posts())->find(
+            $params
+        );
+    }
 }
