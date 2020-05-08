@@ -19,21 +19,10 @@ class PageService extends BaseService
 	    else
         {
             $params = json_decode($params,true);
-            /*
-            $p = $this->getFromParams($params);
-            if(!$p)
-            {
-                echo "not found";
-            }
-            else
-            {
-                print_R($p);
-            }
-            */
             //转数组
             $pageInfo = $pageInfo->toArray();
             //获取页面元素详情
-	        $pageElementLlist  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
+	        $pageElementLlist  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_sign,element_type,detail",$params['element_sign_list']??[""])->toArray();
 	        //数组解包
 	        foreach($pageElementLlist as $key => $elementDetail)
             {
@@ -42,8 +31,7 @@ class PageService extends BaseService
                 {
                     if(isset($pageElementLlist[$key]['detail']['list_id']))
                     {
-                        $data = (new PostsService())->getPosts($pageElementLlist[$key]['detail']['list_id'],"*","post_id DESC",1,3);
-                        print_R($data->toArray());
+                        $pageElementLlist[$key]['data'] = (new PostsService())->getPosts($pageElementLlist[$key]['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page")??1,$this->getFromParams($params,"page_size")??3);
                     }
                 }
             }
