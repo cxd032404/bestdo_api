@@ -28,13 +28,20 @@ $router -> add('api/test/', [
     'controller' => 'api',
     'action' => 'test'
 ]);
+//获取页面数据
 $router -> add('page/getPage/{company}/{page_sign}', [
     'controller' => 'page',
     'action' => 'getPage'
 ]);
+//搜索导入的名单
 $router -> add('search/companyUser/{company_id}/{query}/{page}/{page_size}', [
     'controller' => 'search',
     'action' => 'companyUser'
+]);
+//提交文章
+$router -> add('list/post/', [
+    'controller' => 'list',
+    'action' => 'post'
 ]);
 
 
