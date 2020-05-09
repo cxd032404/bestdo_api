@@ -19,9 +19,7 @@ class UploadService extends BaseService
             $uploadedFile = [];
             foreach ($this->request->getUploadedFiles() as $file)
             {
-                echo "size:".$file->getSize()."<br>";
                 $pass = 0;
-
                 //过滤元素路径------
                 if(!self::checkKeys($file->getKey(),$keys))
                 {

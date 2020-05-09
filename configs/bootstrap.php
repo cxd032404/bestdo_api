@@ -60,6 +60,7 @@ class Bootstrap
 			'Logger',	# 初始化写日志服务
             'Redis',    # 初始化Redis服务
             'Elasticsearch',  # 初始化Elasiticsearch服务
+            'KeyConfig',    # 各类key的配置
 		];
 		foreach ($loaders as $service) {
 			$function = 'init' . $service;
@@ -82,6 +83,20 @@ class Bootstrap
 	{
 		$this->di['config'] = (new PhConfig( require_once (ROOT_PATH . '/configs/inc_config.php') ?? []));
 	}
+
+    /**
+     * 初始化Key配置文件
+     * @access protected
+     * @author huzhichao502@gmail.com
+     *
+     * @param array $options
+     * @return void
+     */
+    protected function initKeyConfig ( $options = [] ): void
+    {
+        $this->di['key_config'] = (new PhConfig( require_once (ROOT_PATH . '/configs/inc_key_config.php') ?? []));
+    }
+
 
 	/**
 	 * 初始化加载器

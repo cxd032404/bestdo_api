@@ -155,9 +155,9 @@ class SendCodeService extends BaseService
      */
     public function sendAliDaYuAuthCode($data)
     {
-        $accessKeyId = $this->config->aliyun_sms->accessKeyId;
-        $accessSecret = $this->config->aliyun_sms->accessSecret; //注意不要有空格
-        $signName = $this->config->aliyun_sms->signName; //配置签名
+        $accessKeyId = $this->key_config->aliyun->sms->accessKeyId;
+        $accessSecret = $this->key_config->aliyun->sms->accessSecret; //注意不要有空格
+        $signName = $this->key_config->aliyun->sms->signName; //配置签名
         $templateCode = $data['templateCode'];//配置短信模板编号
         $phoneNumber = $data['phoneNumber'];//目标手机号
         //TODO 短信模板变量替换JSON串,友情提示:如果JSON中需要带换行符,请参照标准的JSON协议。
