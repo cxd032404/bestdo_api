@@ -45,14 +45,14 @@ $config = [
         'host'     => '127.0.0.1',
         'username' => 'root',
         'password' => 'root',
-        'dbname'   => 'swoole_test'
+        'dbname'   => 'hj_config'
     ],
     'database_1' => [ // 测试库2
         'adapter'  => 'Mysql',
         'host'     => '127.0.0.1',
         'username' => 'root',
         'password' => 'root',
-        'dbname'   => 'swoole_test2'
+        'dbname'   => 'hj_user'
     ],
     'redis' => [
         'adapter'       => 'Redis',
@@ -96,10 +96,5 @@ $config = [
         'Content_Type' 	=> 'application/json;charset=utf-8',
         'Status_Code' 	=> 'okey!'
     ],
-    'aliyun_sms' => [
-        'accessKeyId' 	=> 'LTAIBfJoMGK90lWF',
-        'accessSecret' 	=> 'KF1XNkmImdTGwNRtccDbJ909wkLu5w',
-        'signName' 		=> 'willie',
-    ]
 ];
 return $config;
