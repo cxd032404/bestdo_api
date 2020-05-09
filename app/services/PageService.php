@@ -22,7 +22,7 @@ class PageService extends BaseService
             //转数组
             $pageInfo = $pageInfo->toArray();
             //获取页面元素详情
-	        $pageElementLlist  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_sign,element_type,detail",$params['element_sign_list']??[""])->toArray();
+	        $pageElementLlist  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
 	        //数组解包
 	        foreach($pageElementLlist as $key => $elementDetail)
             {
@@ -31,7 +31,7 @@ class PageService extends BaseService
                 {
                     if(isset($pageElementLlist[$key]['detail']['list_id']))
                     {
-                        $pageElementLlist[$key]['data'] = (new PostsService())->getPosts($pageElementLlist[$key]['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page")??1,$this->getFromParams($params,"page_size")??3);
+                        $pageElementLlist[$key]['data'] = (new PostsService())->getPosts($pageElementLlist[$key]['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                     }
                 }
             }
@@ -115,7 +115,7 @@ class PageService extends BaseService
     //从页面参数重获取数据
     //$params:页面参数json串
     //$param_name: 变量名  .表示层级
-    public function getFromParams($params,$param_name = "user.family.sun")
+    public function getFromParams($params,$param_name = "user.family.sun",$default = null)
     {
         $t = explode(".",$param_name);
         foreach($t as $key)
@@ -126,7 +126,7 @@ class PageService extends BaseService
             }
             else
             {
-                return false;
+                return $default;
             }
         }
         return $params;

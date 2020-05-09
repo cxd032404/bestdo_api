@@ -61,8 +61,15 @@ class PostsService extends BaseService
             "order" => $order,
             "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
         ];
-        return (new \HJ\Posts())->find(
-            $params
-        );
+        $params_count = [
+            "list_id = ".$list_id,
+            "columns" => "count(1) as count",
+        ];
+        $list = (new \HJ\Posts())->find($params);
+        $count = (new \HJ\Posts())->findFirst($params_count)['count']??0;
+        $return  = ['data'=>$list,
+        'count'=>$count,'total_page'=>ceil($count/$pageSize)];
+
+        return $return;
     }
 }
