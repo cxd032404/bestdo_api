@@ -96,10 +96,5 @@ $config = [
         'Content_Type' 	=> 'application/json;charset=utf-8',
         'Status_Code' 	=> 'okey!'
     ],
-    'aliyun_sms' => [
-        'accessKeyId' 	=> 'LTAIBfJoMGK90lWF',
-        'accessSecret' 	=> 'KF1XNkmImdTGwNRtccDbJ909wkLu5w',
-        'signName' 		=> 'willie',
-    ]
 ];
 return $config;

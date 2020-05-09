@@ -172,6 +172,7 @@ class UserController extends BaseController
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		//调用发送登录验证码方法
 		$return  = (new SendCodeService)->sendLoginCode($mobile,$code_name);
+
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
