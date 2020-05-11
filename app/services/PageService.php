@@ -22,20 +22,21 @@ class PageService extends BaseService
             //转数组
             $pageInfo = $pageInfo->toArray();
             //获取页面元素详情
-	        $pageElementLlist  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
+	        $pageElementList  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
 	        //数组解包
-	        foreach($pageElementLlist as $key => $elementDetail)
+	        foreach($pageElementList as $key => $elementDetail)
             {
-                $pageElementLlist[$key]['detail'] = json_decode($elementDetail['detail'],true);
+                $elementDetail['detail'] = json_decode($elementDetail['detail'],true);
                 if($elementDetail['element_type'] == "list")
                 {
-                    if(isset($pageElementLlist[$key]['detail']['list_id']))
+                    if(isset($elementDetail['detail']['list_id']))
                     {
-                        $pageElementLlist[$key]['data'] = (new PostsService())->getPostsList($pageElementLlist[$key]['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+                        $pageElementList[$key]['data'] = (new PostsService())->getPostsList($elementDetail['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                     }
                 }
             }
-	        $return = ['result'=>1,'code'=>200,'data'=>['pageInfo'=>$pageInfo,'pageElementList'=>$pageElementLlist]];
+	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));
+            $return = ['result'=>1,'code'=>200,'data'=>['pageInfo'=>$pageInfo,'pageElementList'=>$pageElementList]];
         }
         return $return;
 	}
