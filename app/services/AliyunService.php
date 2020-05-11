@@ -1,5 +1,4 @@
 <?php
-
 use OSS\Core\OssException;
 use OSS\OssClient;
 class AliyunService extends BaseService
