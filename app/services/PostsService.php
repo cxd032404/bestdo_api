@@ -104,7 +104,7 @@ class PostsService extends BaseService
             "list_id = ".$list_id,
             "columns" => "count(1) as count",
         ];
-        $list = (new \HJ\Posts())->find($params);
+        $list = (new \HJ\Posts())->find($params)->toArray();
         $count = (new \HJ\Posts())->findFirst($params_count)['count']??0;
         $return  = ['data'=>$list,
         'count'=>$count,'total_page'=>ceil($count/$pageSize)];
