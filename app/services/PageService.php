@@ -31,7 +31,7 @@ class PageService extends BaseService
                 {
                     if(isset($pageElementLlist[$key]['detail']['list_id']))
                     {
-                        $pageElementLlist[$key]['data'] = (new PostsService())->getPosts($pageElementLlist[$key]['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+                        $pageElementLlist[$key]['data'] = (new PostsService())->getPostsList($pageElementLlist[$key]['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                     }
                 }
             }
