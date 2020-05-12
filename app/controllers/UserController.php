@@ -28,7 +28,6 @@ class UserController extends BaseController
      * */
 	public function mobileLoginAction()
 	{
-		echo 111;
 		//接收参数并格式化
 		$data = $this->request->getQuery();
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
