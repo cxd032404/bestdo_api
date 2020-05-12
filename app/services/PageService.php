@@ -7,10 +7,10 @@ class PageService extends BaseService
 
     //根据页面标示获取页面信息
     //$page_sign：页面标示
-    public function getPageInfo($page_sign,$params = "")
+    public function getPageInfo($company_id,$page_sign,$params = "")
 	{
 	    //获取页面信息
-	    $pageInfo = $this->getPageBySign($page_sign);
+	    $pageInfo = $this->getPageBySign($company_id,$page_sign);
 	    //没如果获取到
 	    if(!$pageInfo)
         {
@@ -31,7 +31,17 @@ class PageService extends BaseService
                 {
                     if(isset($elementDetail['detail']['list_id']))
                     {
+                        $listInfo = (new ListService())->getListInfo($elementDetail['detail']['list_id'],"list_id,list_type");
                         $pageElementList[$key]['data'] = (new PostsService())->getPostsList($elementDetail['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+                        foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
+                        {
+                            $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
+                            $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
+                            if($pageElementList[$key]['data']['data'][$k]['list_type'] == "video")
+                            {
+                                $pageElementList[$key]['data']['data'][$k]['video_suffix'] = "?x-oss-process=video/snapshot,t_1000,f_jpg,w_300,h_300,m_fast";
+                            }
+                        }
                     }
                 }
             }
@@ -43,13 +53,13 @@ class PageService extends BaseService
     //根据页面标识获取页面
     //$page_sign：页面标识
     //cloumns：数据库的字段列表
-    public function getPageBySign($page_sign,$columns = "page_id,page_name")
+    public function getPageBySign($company_id,$page_sign,$columns = "page_id,page_name")
     {
-        return (new Page())->findFirst(
-            [
-                "page_sign = '$page_sign'",
-                "columns" => $columns
-            ]);
+        $params =             [
+            "page_sign = '$page_sign' and company_id = '$company_id'",
+            "columns" => $columns
+        ];
+        return (new Page())->findFirst($params);
     }
 	//根据页面ID获取元素列表
     //$page_id：页面ID
@@ -77,10 +87,18 @@ class PageService extends BaseService
     }
     //检查页面参数是否完整和类型正确
     //$params:页面参数json串
-    public function checkPageParams($params,$page_sign)
+    public function checkPageParams($params,$company,$page_sign)
     {
         //获取页面信息
-        $pageInfo = $this->getPageBySign($page_sign,'page_id,detail')->toArray();
+        $pageInfo = $this->getPageBySign($company,$page_sign,'page_id,detail');
+        if($pageInfo)
+        {
+            $pageInfo = $pageInfo->toArray();
+        }
+        else
+        {
+            return ['result'=>0,'code'=>404,'msg'=>"无此页面"];
+        }
         $pageInfo['detail'] = json_decode($pageInfo['detail'],true);
         if(isset($pageInfo['detail']['params']) && count($pageInfo['detail']['params'])>0)
         {
@@ -96,12 +114,15 @@ class PageService extends BaseService
                 }
                 else
                 {
-                    $function_name  = "is_".$paramsInfo['type'];
-                    if(!$function_name($params[$paramsInfo['name']]))
+                    if(in_array($paramsInfo['type'],['int']))
                     {
-                        $return['result'] = 0;
-                        $return['code'] = 500;
-                        $return['detail']['error'][] = $paramsInfo['name'];   
+                        $function_name  = "is_".$paramsInfo['type'];
+                        if(!$function_name($params[$paramsInfo['name']]))
+                        {
+                            $return['result'] = 0;
+                            $return['code'] = 500;
+                            $return['detail']['error'][] = $paramsInfo['name'];
+                        }
                     }
                 }
             }
