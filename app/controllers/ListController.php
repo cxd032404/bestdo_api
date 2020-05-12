@@ -14,7 +14,6 @@ use Phalcon\Translate\Adapter\NativeArray;
 use Monolog\Logger;
 use Monolog\Handler\ElasticsearchHandler;
 use Monolog\Formatter\ElasticsearchFormatter;
-use AliyunService;
 
 class ListController extends BaseController
 {
@@ -40,6 +39,22 @@ class ListController extends BaseController
         else
         {
             return $this->failure([],$post['data']['msg']);
+        }
+    }
+    public function source_removeAction()
+    {
+        $post_id = intval($this->request->getQuery('post_id')??0);
+        if($post_id > 0)
+        {
+            $remove = (new PostsService())->removeSource(intval($post_id),trim($this->request->getQuery('sid')??""));
+        }
+        if($remove['result'])
+        {
+            return $this->success($remove['data']);
+        }
+        else
+        {
+            return $this->failure([],$remove['data']['msg']);
         }
     }
 

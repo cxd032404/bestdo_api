@@ -21,9 +21,12 @@ class UploadService extends BaseService
             {
                 $pass = 0;
                 //过滤元素路径------
-                if(!self::checkKeys($file->getKey(),$keys))
+                if(count($keys)>0)
                 {
-                    $pass = 1;
+                    if(!self::checkKeys($file->getKey(),$keys))
+                    {
+                        $pass = 1;
+                    }
                 }
                 //过滤元素尺寸------
                 if(!self::checkSize($file->getSize(),$max_size,$min_size))

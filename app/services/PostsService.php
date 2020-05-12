@@ -52,7 +52,7 @@ class PostsService extends BaseService
     public function updatePosts($post_id,$detail,$uploadedFiles)
     {
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,content,source,update_time");
+        $postInfo = self::getPosts(intval($post_id),"post_id,content,source,update_time")->toArray();
         if(!isset($postInfo['post_id']))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
@@ -65,22 +65,57 @@ class PostsService extends BaseService
             }
             else
             {
-                $postInfo->source = json_decode($postInfo->source,true);
-                $postInfo->source = array_merge($postInfo->source,$uploadedFiles);
-                $postInfo->source = json_encode($postInfo->source);
-                $postInfo->content = trim(htmlspecialchars($detail['comment']));
-                $postInfo->update_time = date("Y-m-d H:i:s");
-                //$update = $postInfo->save();
+                $postInfo['source'] = json_decode($postInfo['source'],true);
+                $postInfo['source'] = array_merge($postInfo['source'],$uploadedFiles);
+                $postInfo['source'] = json_encode($postInfo['source']);
+                $postInfo['content'] = trim(htmlspecialchars($detail['comment']));
+                $postInfo['update_time'] = date("Y-m-d H:i:s");
                 $data = json_decode(json_encode($postInfo),true);
                 $update = self::updatePost($postInfo,$data);
 
                 if($update)
                 {
-                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
+                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
                 }
                 else
                 {
                     $return = ['result'=>false,'msg'=>"发布失败"];
+                }
+            }
+        }
+        return $return;
+    }
+    //提交更新文章 移除部分资源
+    //list_id：文章ID
+    //uploadedFiles：已经上传的资源
+    public function removeSource($post_id,$sid)
+    {
+        //获取列表信息
+        $postInfo = self::getPosts(intval($post_id),"post_id,source,update_time")->toArray();
+        if(!isset($postInfo['post_id']))
+        {
+            $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
+        }
+        else
+        {
+            $postInfo['source'] = json_decode($postInfo['source'],true);
+            if(!isset($postInfo['source'][$sid]))
+            {
+                $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
+            }
+            else
+            {
+                unset($postInfo['source'][$sid]);
+                $postInfo['source'] = json_encode($postInfo['source']);
+                $postInfo['update_time'] = date("Y-m-d H:i:s");
+                $update = self::updatePost($postInfo,$postInfo);
+                if($update)
+                {
+                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
+                }
+                else
+                {
+                    $return = ['result'=>false,'msg'=>"删除失败"];
                 }
             }
         }
