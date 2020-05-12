@@ -114,12 +114,15 @@ class PageService extends BaseService
                 }
                 else
                 {
-                    $function_name  = "is_".$paramsInfo['type'];
-                    if(!$function_name($params[$paramsInfo['name']]))
+                    if(in_array($paramsInfo['type'],['int']))
                     {
-                        $return['result'] = 0;
-                        $return['code'] = 500;
-                        $return['detail']['error'][] = $paramsInfo['name'];   
+                        $function_name  = "is_".$paramsInfo['type'];
+                        if(!$function_name($params[$paramsInfo['name']]))
+                        {
+                            $return['result'] = 0;
+                            $return['code'] = 500;
+                            $return['detail']['error'][] = $paramsInfo['name'];
+                        }
                     }
                 }
             }
