@@ -46,6 +46,7 @@ class UserService extends BaseService
         "activity_success"=>"报名成功！",
         "filluserinfo_success"=>"信息完善成功！",
         "filluserinfo_error"=>"信息完善失败！",
+        "companyuser_empty"=>"账户验证失败，当前账户尚未获得注册权限！",
     ];
 
     //手机号密码登录方法
@@ -59,7 +60,7 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['password_empty'];
         }else{
             //查询用户数据
-            $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','password','username','user_img']]);
+            $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','password','username','user_img','company_id']]);
             if(!isset($userinfo->user_id)){
                 $return['msg']  = $this->msgList['mobile_noregister'];
             }else if($userinfo->is_del==0){
@@ -69,7 +70,7 @@ class UserService extends BaseService
             }else{
                 //生成token值
                 $oJwt = new ThirdJwt();
-                $map = ['user_id' => $userinfo->user_id, 'username' => $userinfo->username, 'user_img' => $userinfo->user_img];
+                $map = ['user_id' => $userinfo->user_id, 'username' => $userinfo->username, 'user_img' => $userinfo->user_img,'company_id'=>$userinfo->company_id];
                 $token = $oJwt::getToken($map);
                 $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$map,'user_token'=>$token]];
             }
@@ -93,7 +94,7 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['sendcode_error'];
         }else{
             //查询用户数据
-            $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img']]);
+            $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id']]);
             if(!isset($userinfo->user_id)){
                 $return['msg']  = $this->msgList['mobile_noregister'];
             }else if($userinfo->is_del==0){
@@ -110,7 +111,7 @@ class UserService extends BaseService
                 }
                 //生成token值
                 $oJwt = new ThirdJwt();
-                $map = ['user_id' => $userinfo->user_id, 'username' => $userinfo->username, 'user_img' => $userinfo->user_img];
+                $map = ['user_id' => $userinfo->user_id, 'username' => $userinfo->username, 'user_img' => $userinfo->user_img,'company_id'=>$userinfo->company_id];
                 $token = $oJwt::getToken($map);
                 $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$map, 'user_token'=>$token]];
             }
@@ -146,7 +147,7 @@ class UserService extends BaseService
                     //启用事务
                     $manager = new TxManager();
                     //指定你需要的数据库
-                    $manager->setDbService("database_1");
+                    $manager->setDbService("hj_user");
                     // Request a transaction
                     $transaction = $manager->get();
                     //修改用户密码
@@ -194,54 +195,58 @@ class UserService extends BaseService
         }else if(empty($password)){
             $return['msg']  = $this->msgList['password_empty'];
         }else{
-            //查询用户数据
-            $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img']]);
-            if(isset($userinfo->user_id)){
-                $return['msg']  = $this->msgList['mobile_register'];
-                if($userinfo->is_del==0){
-                    $return['msg']  = $this->msgList['mobile_prohibit'];
-                }
+            //验证企业用户名单状态
+            $companyuserlist = CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$company_user_id], 'order'=>'id desc']);
+            if(!isset($companyuserlist->id)){
+                $return['msg']  = $this->msgList['companyuser_empty'];
             }else{
-                try {
-                    //启用事务
-                    $manager = new TxManager();
-                    //指定你需要的数据库
-                    $manager->setDbService("database_1");
-                    // Request a transaction
-                    $transaction = $manager->get();
-                    //添加用户
-                    $user = new UserInfo();
-                    $user->setTransaction($transaction);
-                    $user->username = $mobile;
-                    $user->password = md5($password);
-                    if ($user->create() === false) {
-                        $transaction->rollback($this->msgList['register_error']);
+                //查询用户数据
+                $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img']]);
+                if(isset($userinfo->user_id)){
+                    $return['msg']  = $this->msgList['mobile_register'];
+                    if($userinfo->is_del==0){
+                        $return['msg']  = $this->msgList['mobile_prohibit'];
                     }
-                    //修改验证码记录状态
-                    $sendcode = SendCode::findFirst(["to=:to: and type='mobile' and status=1 and code=:code:", 'bind'=>['to'=>$mobile, 'code'=>$code,], 'order'=>'id desc']);
-                    if($sendcode){
-                        $sendcode->setTransaction($transaction);
-                        if($sendcode->update(['status'=>0]) === false){
-                            $transaction->rollback($this->msgList['code_status_error']);
+                }else{
+                    try {
+                        //启用事务
+                        $manager = new TxManager();
+                        //指定你需要的数据库
+                        $manager->setDbService("hj_user");
+                        // Request a transaction
+                        $transaction = $manager->get();
+                        //添加用户
+                        $user = new UserInfo();
+                        $user->setTransaction($transaction);
+                        $user->username = $mobile;
+                        $user->password = md5($password);
+                        $user->company_id = $companyuserlist->company_id??1;
+                        if ($user->create() === false) {
+                            $transaction->rollback($this->msgList['register_error']);
                         }
-                    }
-                    //修改企业用户名单状态
-                    $companyuserlist = CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$company_user_id], 'order'=>'id desc']);
-                    if($companyuserlist){
+                        //修改验证码记录状态
+                        $sendcode = SendCode::findFirst(["to=:to: and type='mobile' and status=1 and code=:code:", 'bind'=>['to'=>$mobile, 'code'=>$code,], 'order'=>'id desc']);
+                        if($sendcode){
+                            $sendcode->setTransaction($transaction);
+                            if($sendcode->update(['status'=>0]) === false){
+                                $transaction->rollback($this->msgList['code_status_error']);
+                            }
+                        }
+                        //修改企业用户名单状态
                         $companyuserlist->setTransaction($transaction);
                         if($companyuserlist->update(['user_id'=>$user->user_id,'update_time'=>date('Y-m-d H:i:s',time())]) === false){
                             $transaction->rollback($this->msgList['companyuser_status_error']);
                         }
+                        //生成token
+                        $oJwt = new ThirdJwt();
+                        $map = ['user_id' => $user->user_id, 'username' => $user->username??"", 'user_img' => $user->user_img??"",'company_id'=>$companyuserlist->company_id??1];
+                        $token = $oJwt::getToken($map);
+                        $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$map, 'user_token'=>$token]];
+                        $transaction->commit($return);
+                    } catch (TxFailed $e) {
+                        // 捕获失败回滚的错误
+                        $return['msg']  = $e->getMessage();
                     }
-                    //生成token
-                    $oJwt = new ThirdJwt();
-                    $map = ['user_id' => $user->user_id, 'username' => $user->username??"", 'user_img' => $user->user_img??""];
-                    $token = $oJwt::getToken($map);
-                    $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$map, 'user_token'=>$token]];
-                    $transaction->commit($return);
-                } catch (TxFailed $e) {
-                    // 捕获失败回滚的错误
-                    $return['msg']  = $e->getMessage();
                 }
             }
         }
