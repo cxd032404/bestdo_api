@@ -48,7 +48,7 @@ class UserService extends BaseService
         "filluserinfo_error"=>"信息完善失败！",
         "companyuser_empty"=>"账户验证失败，当前账户尚未获得注册权限！",
     ];
-    
+
 
     //手机号密码登录方法
     public function mobileLogin($mobile="",$password="")
