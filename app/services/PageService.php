@@ -29,10 +29,10 @@ class PageService extends BaseService
                 $pageElementList[$key]['detail'] = json_decode($elementDetail['detail'],true);
                 if($elementDetail['element_type'] == "list")
                 {
-                    if(isset($elementDetail['detail']['list_id']))
+                    if(isset($pageElementList[$key]['detail']['list_id']))
                     {
-                        $listInfo = (new ListService())->getListInfo($elementDetail['detail']['list_id'],"list_id,list_type");
-                        $pageElementList[$key]['data'] = (new PostsService())->getPostsList($elementDetail['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+                        $listInfo = (new ListService())->getListInfo($pageElementList[$key]['detail']['list_id'],"list_id,list_type");
+                        $pageElementList[$key]['data'] = (new PostsService())->getPostsList($pageElementList[$key]['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                         foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
                         {
                             $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
@@ -42,6 +42,15 @@ class PageService extends BaseService
                                 $pageElementList[$key]['data']['data'][$k]['video_suffix'] = "?x-oss-process=video/snapshot,t_1000,f_jpg,w_300,h_300,m_fast";
                             }
                         }
+                    }
+                }
+                if($elementDetail['element_type'] == "slideNavi")
+                {
+                    if($pageElementList[$key]['detail']['source_from']=="from_vote")
+                    {
+                        $voteInfo = (new VoteService())->getVote($pageElementList[$key]['detail']['vote_id'])->toArray();
+                        $voteInfo['detail'] = json_decode($voteInfo['detail'],true);
+                        $pageElementList[$key]['detail']['vote_option'] = $voteInfo['detail'];
                     }
                 }
             }
