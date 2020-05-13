@@ -26,7 +26,7 @@ class PageService extends BaseService
 	        //数组解包
 	        foreach($pageElementList as $key => $elementDetail)
             {
-                $elementDetail['detail'] = json_decode($elementDetail['detail'],true);
+                $pageElementList[$key]['detail'] = json_decode($elementDetail['detail'],true);
                 if($elementDetail['element_type'] == "list")
                 {
                     if(isset($elementDetail['detail']['list_id']))
