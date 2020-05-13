@@ -20,10 +20,10 @@ class PageController extends BaseController
 
 	public function getPageAction( $company ="",$page_sign = "")
 	{
-	    /*
-	    $arr = ['page'=>2,'page_size'=>4,'user'=>['name'=>"a","first_name"=>"b","family"=>['father'=>"dad",'mother'=>"mum"]]];
-        $txt = json_encode($arr);
-        */
+
+	   // $arr = ['list_id'=>18,'page'=>2,'page_size'=>4,'user'=>['name'=>"a","first_name"=>"b","family"=>['father'=>"dad",'mother'=>"mum"]]];
+       // $txt = json_encode($arr);
+
         //echo json_encode($arr);
         $pageService = new PageService();
         $params = $this->request->getQuery();
