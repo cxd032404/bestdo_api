@@ -53,7 +53,6 @@ class UserService extends BaseService
     //手机号密码登录方法
     public function mobileLogin($mobile="",$password="")
     {
-        echo 123456;
         $common = new Common();
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>404];
         if( empty($mobile) || !$common->check_mobile($mobile) ){
