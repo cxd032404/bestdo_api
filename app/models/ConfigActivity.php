@@ -8,8 +8,8 @@ class ConfigActivity extends Model
     public function initialize()
     {
         $this->setSource("config_activity");
-        $this->setConnectionService("hj_user");
-        $this->setReadConnectionService("hj_user");
-        $this->setWriteConnectionService("hj_user");
+        $this->setConnectionService("hj_config");
+        $this->setReadConnectionService("hj_config");
+        $this->setWriteConnectionService("hj_config");
     }
 }

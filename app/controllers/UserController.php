@@ -172,6 +172,7 @@ class UserController extends BaseController
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		//调用发送登录验证码方法
 		$return  = (new SendCodeService)->sendLoginCode($mobile,$code_name);
+
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -241,6 +242,63 @@ class UserController extends BaseController
 		$company = isset($data['company'])?preg_replace('# #','',$data['company']):"";
 		//调用公司查询方法
 		$return  = (new UserService)->getCompany($company);
+		//日志记录
+		$this->logger->info(json_encode($return));
+		//返回值判断
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		return $this->success($return['data']);
+	}
+
+	/*
+     * 报名活动
+     * 参数
+     * mobiel（必填）：手机号
+     * user_name（必填）：用户姓名
+     * department（必填）：所属部门
+     * activity_id（必填）：活动id
+     * user_token（必填）：用户token
+     * */
+	public function activitySignAction()
+	{
+		//接收参数并格式化
+		$data = $this->request->getQuery();
+		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
+		$user_name = isset($data['user_name'])?preg_replace('# #','',$data['user_name']):"";
+		$department = isset($data['department'])?preg_replace('# #','',$data['department']):"";
+		$activity_id = isset($data['activity_id'])?intval($data['activity_id']):0;
+		$user_token = isset($data['user_token'])?preg_replace('# #','',$data['user_token']):"";
+		//调用手机号密码登录方法
+		$return  = (new UserService)->activitySign($mobile,$user_name,$department,$activity_id,$user_token);
+		//日志记录
+		$this->logger->info(json_encode($return));
+		//返回值判断
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		return $this->success($return['data']);
+
+	}
+
+	/*
+     * 完善用户信息
+     * 参数
+     * nick_name（选填）：用户昵称
+     * true_name（选填）：用户姓名
+     * sex（选填）：用户性别0保密1男2女  默认为零
+     * user_token（必填）：用户token
+     * */
+	public function fillUserinfoAction()
+	{
+		//接收参数并格式化
+		$data = $this->request->getQuery();
+		$nick_name = isset($data['nick_name'])?preg_replace('# #','',$data['nick_name']):"";
+		$true_name = isset($data['true_name'])?preg_replace('# #','',$data['true_name']):"";
+		$sex = isset($data['sex'])?preg_replace('# #','',$data['sex']):0;
+		$user_token = isset($data['user_token'])?preg_replace('# #','',$data['user_token']):"";
+		//调用完善用户方法
+		$return  = (new UserService)->fillUserinfo($nick_name,$true_name,$sex,$user_token);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断

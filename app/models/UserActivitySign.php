@@ -3,7 +3,8 @@
 use Phalcon\Mvc\Model;
 use Phalcon\Mvc\Model\Query;
 
-class UserActivitysign extends Model
+
+class UserActivitySign extends Model
 {
     public function initialize()
     {
