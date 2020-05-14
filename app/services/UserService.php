@@ -340,7 +340,7 @@ class UserService extends BaseService
                 $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
             }
         }else{
-            $return['data'] = ['user_info'=>$user_info];
+            $return['data'] =  ['user_info'=>$user_info];
         }
         return $return;
     }
