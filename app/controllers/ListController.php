@@ -18,7 +18,7 @@ use Monolog\Formatter\ElasticsearchFormatter;
 class ListController extends BaseController
 {
 
-	public function postAction( )
+	public function postAction()
 	{
 	    $upload = (new UploadService())->getUploadedFile([],[],0,0);
 	    $list_id = intval($this->request->getPost('list_id')??0);
