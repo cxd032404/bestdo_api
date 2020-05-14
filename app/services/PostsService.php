@@ -136,7 +136,7 @@ class PostsService extends BaseService
             "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
         ];
         $params_count = [
-            "list_id = ".$list_id,
+            "list_id = '".$list_id."'",
             "columns" => "count(1) as count",
         ];
         $list = (new \HJ\Posts())->find($params)->toArray();
