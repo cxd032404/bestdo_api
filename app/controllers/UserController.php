@@ -41,6 +41,7 @@ class UserController extends BaseController
 		}
 		//用户token存入redis缓存中
 		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
+		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->redis->lifttime);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
     }
 
@@ -56,11 +57,6 @@ class UserController extends BaseController
 		$data = $this->request->get();
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
-
-		//echo $this->redis->get('login_'.$mobile);
-		//$this->redis->set('login_'.$mobile,'{"code":123456}');
-		//$this->redis->expire('login_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
-
 		//调用手机号验证码登录方法
 		$return  = (new UserService)->mobileCodeLogin($mobile,$code);
 		//日志记录
@@ -71,7 +67,7 @@ class UserController extends BaseController
 		}
 		//用户token存入redis缓存中
 		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],3600);//设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->redis->lifttime);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
 
@@ -89,10 +85,6 @@ class UserController extends BaseController
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
 		$newpassword = isset($data['newpassword'])?preg_replace('# #','',$data['newpassword']):"";
-
-		//$this->redis->set('forget_'.$mobile,'{"code":123456}');
-		//$this->redis->expire('forget_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
-
 		//调用忘记密码方法
 		$return  = (new UserService)->mobileForgetPwd($mobile,$code,$newpassword);
 		//日志记录
@@ -120,10 +112,6 @@ class UserController extends BaseController
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
 		$password = isset($data['password'])?preg_replace('# #','',$data['password']):"";
 		$company_user_id = isset($data['company_user_id'])?preg_replace('# #','',$data['company_user_id']):"";
-
-		//$this->redis->set('register_'.$mobile,'{"code":123456}');
-		//$this->redis->expire('register_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
-
 		//调用注册方法
 		$return  = (new UserService)->mobileRegister($mobile,$code,$password,$company_user_id);
 		//日志记录
@@ -134,6 +122,7 @@ class UserController extends BaseController
 		}
 		//用户token存入redis缓存中
 		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
+		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->redis->lifttime);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
 
@@ -358,35 +347,8 @@ class UserController extends BaseController
 
 
 
-	public function ceshiWillieAction(){
-		//接收参数并格式化
-        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
-        //调用user_token解密方法
-        $return  = (new UserService)->getDecrypt($user_token);
-        //返回值判断
-        if($return['result']!=1){
-			$request_url = $this->request->get('_url');
-			print_r($request_url);
-			return $this->failure(['jump_url'=>'/login'],$return['msg'],$return['code']);
-		}
-		$request = $this->request;
-		var_dump($request->get());                          //默认获取所有的请求参数返回的是array效果和获取$_REQUEST相同
-		var_dump($request->get('_url'));                     //获取摸个特定请求参数key的valuer和$_REQUEST['key']相同
-		var_dump($request->getQuery('url', null, 'url'));   //获取get请求参数,第二个参数为过滤类型,第三个参数为默认值
-		var_dump($request->getMethod());                    //获取请求的类型如果是post请求会返回"POST"
-		var_dump($request->isAjax());                       //判断请求是否为Ajax请求
-		var_dump($request->isPost());                       //判断是否是Post请求类似的有(isGet,isPut,isPatch,isHead,isDelete,isOptions等)
-		var_dump($request->getHeaders());                   //获取所有的Header,返回结果为数组
-		var_dump($request->getHeader('UserToken'));      //获取Header中的的莫一个指定key的指
-		var_dump($request->getURI());                       //获取请求的URL比如phalcon.w-blog.cn/phalcon/Request获取的/phalcon/Request
-		var_dump($request->getHttpHost());                  //获取请求服务器的host比如phalcon.w-blog.cn/phalcon/Request获取的phalcon.w-blog.cn
-		var_dump($request->getServerAddress());             //获取当前服务器的IP地址
-		var_dump($request->getRawBody());                   //获取Raw请求json字符
-		var_dump($request->getJsonRawBody());               //获取Raw请求json字符并且转换成数组对象
-		var_dump($request->getScheme());                    //获取请求是http请求还是https请求
-		var_dump($request->getServer('REMOTE_ADDR'));       //等同于$_SERVER['REMOTE_ADDR']
-		return $this->success();
-	}
+
+
 
 
 }
