@@ -339,6 +339,8 @@ class UserService extends BaseService
             if(isset($page_info['need_login']) && $page_info['need_login']==1){
                 $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
             }
+        }else{
+            $return['data'] = ['user_info'=>$user_info];
         }
         return $return;
     }
