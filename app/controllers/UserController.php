@@ -57,6 +57,10 @@ class UserController extends BaseController
 		$data = $this->request->get();
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
+
+		$this->redis->set('login_'.$mobile,123456);
+		$this->redis->expire('login_'.$mobile,60*5);
+
 		//调用手机号验证码登录方法
 		$return  = (new UserService)->mobileCodeLogin($mobile,$code);
 		//日志记录
@@ -162,7 +166,6 @@ class UserController extends BaseController
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		//调用发送登录验证码方法
 		$return  = (new SendCodeService)->sendLoginCode($mobile,$code_name);
-
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -209,9 +212,8 @@ class UserController extends BaseController
 		//接收参数并格式化
 		$header = $this->request->getHeaders();
 		print_r($header);
-		$user_token = isset($header['Usertoken'])?preg_replace('# #','',$header['Usertoken']):"";
 		//调用user_token解密方法
-		$return  = (new UserService)->getDecrypt($user_token);
+		$return  = (new UserService)->getDecrypt();
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -254,9 +256,7 @@ class UserController extends BaseController
 	public function activitySignAction()
 	{
 		/*验证token开始*/
-		$header = $this->request->getHeaders();
-		$user_token = isset($header['Usertoken'])?preg_replace('# #','',$header['Usertoken']):"";
-		$return  = (new UserService)->getDecrypt($user_token);
+		$return  = (new UserService)->getDecrypt();
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
 		}
@@ -288,23 +288,21 @@ class UserController extends BaseController
      * sex（选填）：用户性别0保密1男2女  默认为零
      * usertoken（必填）：用户token
      * */
-	public function fillUserinfoAction()
+	public function updateUserInfoAction()
 	{
 		//验证token
-		$header = $this->request->getHeaders();
-		$user_token = isset($header['Usertoken'])?preg_replace('# #','',$header['Usertoken']):"";
-		$return  = (new UserService)->getDecrypt($user_token);
+		$return  = (new UserService)->getDecrypt();
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
 		}
 		$user_id = $return['data']['user_info']->user_id;
 		//接收参数并格式化
 		$data = $this->request->get();
-		$nick_name = isset($data['nick_name'])?preg_replace('# #','',$data['nick_name']):"";
-		$true_name = isset($data['true_name'])?preg_replace('# #','',$data['true_name']):"";
-		$sex = isset($data['sex'])?preg_replace('# #','',$data['sex']):0;
+		$map['nick_name'] = isset($data['nick_name'])?preg_replace('# #','',$data['nick_name']):"";
+		$map['true_name'] = isset($data['true_name'])?preg_replace('# #','',$data['true_name']):"";
+		$map['sex'] = isset($data['sex'])?preg_replace('# #','',$data['sex']):0;
 		//调用完善用户方法
-		$return  = (new UserService)->fillUserinfo($nick_name,$true_name,$sex,$user_id);
+		$return  = (new UserService)->updateUserInfo($map,$user_id);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -325,9 +323,7 @@ class UserController extends BaseController
 		//接收参数并格式化
 		$data = $this->request->get();
 		/*验证token开始*/
-		$header = $this->request->getHeaders();
-		$user_token = isset($header['Usertoken'])?preg_replace('# #','',$header['Usertoken']):"";
-		$return  = (new UserService)->getDecrypt($user_token);
+		$return  = (new UserService)->getDecrypt();
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
 		}

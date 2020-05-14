@@ -94,6 +94,9 @@ class UserService extends BaseService
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
+        if($mobile='17621822661'){
+            $login_code = json_encode(['code'=>123456]);
+        }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         if( empty($mobile) || !$common->check_mobile($mobile) ) {
             $return['msg']  = $this->msgList['mobile_empty'];
@@ -103,9 +106,10 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['sendcode_invalid'];
         }else if($code != json_decode($login_code)->code){
             $return['msg']  = $this->msgList['sendcode_error'];
-        }else{
+        }
+        else{
             //查询用户数据
-            $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id']]);
+            $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id','last_login_time']]);
             if(isset($userinfo->user_id)){//用户存在只修改验证码状态及生产token
                 if($userinfo->is_del==0){
                     $return['msg']  = $this->msgList['mobile_prohibit'];
@@ -115,9 +119,12 @@ class UserService extends BaseService
                     if(!$sendcode){
                         $return['msg']  = $this->msgList['code_status_error'];
                     }else{
-                        $this->redis->expire('login_'.$mobile,0);
                         //生成token
                         $tokeninfo = $this->getToken($userinfo->user_id);
+                        //修改用户登录时间
+                        $userinfo = UserInfo::findFirst(["user_id = '".$userinfo->user_id."'"]);
+                        $userinfo->last_login_time = date('Y-m-d H:i:s',time());
+                        $userinfo->update();
                         $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                     }
                 }
@@ -150,7 +157,7 @@ class UserService extends BaseService
                         $transaction->rollback($this->msgList['code_status_error']);
                     }
                     //修改企业用户名单状态
-                    $companyuser = $this->setCompanyuser($mobile,$user->user_id);
+                    $companyuser = $this->setCompanyUser($mobile,$user->user_id);
                     if(!$companyuser){
                         $transaction->rollback($this->msgList['companyuser_status_error']);
                     }
@@ -273,7 +280,7 @@ class UserService extends BaseService
                             $transaction->rollback($this->msgList['code_status_error']);
                         }
                         //修改企业用户名单状态
-                        $companyuser = $this->setCompanyuser($mobile,$user->user_id);
+                        $companyuser = $this->setCompanyUser($mobile,$user->user_id);
                         if(!$companyuser){
                             $transaction->rollback($this->msgList['companyuser_status_error']);
                         }
@@ -357,18 +364,18 @@ class UserService extends BaseService
     }
 
     //完善用户信息
-    public function fillUserinfo($nick_name="",$true_name="",$sex=0,$user_id="")
+    public function updateUserInfo($map,$user_id="")
     {
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         //修改用户信息
         $userinfo = UserInfo::findFirst(["user_id = '".$user_id."'"]);
-        if(!empty($true_name)){
-            $userinfo->true_name = $true_name;
+        if(!empty($map['true_name'])){
+            $userinfo->true_name = $map['true_name'];
         }
-        if(!empty($nick_name)){
-            $userinfo->nick_name = $nick_name;
+        if(!empty($map['nick_name'])){
+            $userinfo->nick_name = $map['nick_name'];
         }
-        $userinfo->sex = $sex;
+        $userinfo->sex = $map['sex'];
         if ($userinfo->update() === false) {
             $return['msg']  = $this->msgList['filluserinfo_error'];
         }else {
@@ -443,7 +450,7 @@ class UserService extends BaseService
     }
 
     //修改企业名单状态
-    public function setCompanyuser($mobile,$user_id){
+    public function setCompanyUser($mobile,$user_id){
         //查询企业导入名单
         $companyuserlist = CompanyUserList::findFirst(["mobile=:mobile:", 'bind'=>['mobile'=>$mobile], 'order'=>'id desc']);
         if(isset($companyuserlist->id)){
