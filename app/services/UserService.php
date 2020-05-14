@@ -364,18 +364,18 @@ class UserService extends BaseService
     }
 
     //完善用户信息
-    public function fillUserinfo($nick_name="",$true_name="",$sex=0,$user_id="")
+    public function updateUserInfo($map,$user_id="")
     {
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         //修改用户信息
         $userinfo = UserInfo::findFirst(["user_id = '".$user_id."'"]);
-        if(!empty($true_name)){
-            $userinfo->true_name = $true_name;
+        if(!empty($map['true_name'])){
+            $userinfo->true_name = $map['true_name'];
         }
-        if(!empty($nick_name)){
-            $userinfo->nick_name = $nick_name;
+        if(!empty($map['nick_name'])){
+            $userinfo->nick_name = $map['nick_name'];
         }
-        $userinfo->sex = $sex;
+        $userinfo->sex = $map['sex'];
         if ($userinfo->update() === false) {
             $return['msg']  = $this->msgList['filluserinfo_error'];
         }else {
