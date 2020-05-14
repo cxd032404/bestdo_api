@@ -127,16 +127,16 @@ class PostsService extends BaseService
     //order：排序
     //page:页码
     //pageSize：单页数量
-    public function getPostsList($list_id,$columns = "*",$order = "post_id DESC",$page = 1,$pageSize =2)
+    public function getPostsList($list_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =2)
     {
         $params =             [
-            "list_id = ".$list_id,
+            "list_id = '".$list_id."'"." ".($start>0?(" and post_id <".$start):"") ,
             "columns" => $columns,
             "order" => $order,
             "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
         ];
         $params_count = [
-            "list_id = ".$list_id,
+            "list_id = '".$list_id."'",
             "columns" => "count(1) as count",
         ];
         $list = (new \HJ\Posts())->find($params)->toArray();
