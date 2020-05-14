@@ -315,6 +315,7 @@ class UserService extends BaseService
     //用户token解密
     public function getDecrypt($user_token="")
     {
+        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
         if($user_info){
@@ -322,6 +323,22 @@ class UserService extends BaseService
             $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>['user_info'=>$user_info]];
         }else{
             $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>400, 'data'=>[]];
+        }
+        return $return;
+    }
+
+    //用户token解密
+    public function verifyToken($company="",$page_sign="")
+    {
+        $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>[]];
+        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
+        $oJwt = new ThirdJwt();
+        $user_info = $oJwt::getUserId($user_token);
+        if(!$user_info){
+            $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
+            if(isset($page_info['need_login']) && $page_info['need_login']==1){
+                $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
+            }
         }
         return $return;
     }
