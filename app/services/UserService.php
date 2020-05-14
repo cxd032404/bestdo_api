@@ -18,6 +18,7 @@ use Phalcon\Mvc\Model\Transaction\Manager as TxManager;
 
 class UserService extends BaseService
 {
+
     private $msgList = [
         "mobile_empty"=>"手机号无效，请填写正确的手机号码！",
         "password_empty"=>"密码无效，请填写正确的密码！",
@@ -81,9 +82,8 @@ class UserService extends BaseService
                 $return['msg']  = $this->msgList['password_error'];
             }else{
                 //生成token
-                $map = ['user_id' => $userinfo->user_id, 'username' => $userinfo->username, 'user_img' => $userinfo->user_img??"",'company_id'=>$userinfo->company_id??1];
-                $token = $this->gettoken($map);
-                $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$map,'user_token'=>$token]];
+                $tokeninfo = $this->getToken($userinfo->user_id);
+                $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'],'user_token'=>$tokeninfo['token']]];
             }
         }
         return $return;
@@ -95,7 +95,7 @@ class UserService extends BaseService
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
-        if( empty($mobile) || !$common->check_mobile($mobile) ){
+        if( empty($mobile) || !$common->check_mobile($mobile) ) {
             $return['msg']  = $this->msgList['mobile_empty'];
         }else if(empty($code)){
             $return['msg']  = $this->msgList['sendcode_empty'];
@@ -117,9 +117,8 @@ class UserService extends BaseService
                     }else{
                         $this->redis->expire('login_'.$mobile,0);
                         //生成token
-                        $map = ['user_id' => $userinfo->user_id, 'username' => $userinfo->username??"", 'user_img' => $userinfo->user_img??"",'company_id'=>$userinfo->company_id??1];
-                        $token = $this->gettoken($map);
-                        $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$map, 'user_token'=>$token]];
+                        $tokeninfo = $this->getToken($userinfo->user_id);
+                        $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                     }
                 }
             }else{//用户不存在 需创建用户+修改验证码状态+修改企业名单状态+生成token
@@ -156,9 +155,8 @@ class UserService extends BaseService
                         $transaction->rollback($this->msgList['companyuser_status_error']);
                     }
                     //生成token
-                    $map = ['user_id' => $user->user_id, 'username' => $user->username??"", 'user_img' => $user->user_img??"",'company_id'=>$company_id];
-                    $token = $this->gettoken($map);
-                    $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$map, 'user_token'=>$token]];
+                    $tokeninfo = $this->getToken($user->user_id);
+                    $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token'] ]];
                     $this->redis->expire('login_'.$mobile,0);
                     $transaction->commit($return);
                 } catch (TxFailed $e) {
@@ -280,9 +278,8 @@ class UserService extends BaseService
                             $transaction->rollback($this->msgList['companyuser_status_error']);
                         }
                         //生成token
-                        $map = ['user_id' => $user->user_id, 'username' => $user->username??"", 'user_img' => $user->user_img??"",'company_id'=>$companyuserlist->company_id??1];
-                        $token = $this->gettoken($map);
-                        $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$map, 'user_token'=>$token]];
+                        $tokeninfo = $this->getToken($user->user_id);
+                        $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                         $this->redis->expire('forget_'.$mobile,0);
                         $transaction->commit($return);
                     } catch (TxFailed $e) {
@@ -309,39 +306,6 @@ class UserService extends BaseService
             ]);
         }
         $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['usercompany'=>$usercompany]];
-        return $return;
-    }
-
-    //用户token解密
-    public function getDecrypt($user_token="")
-    {
-        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
-        $oJwt = new ThirdJwt();
-        $user_info = $oJwt::getUserId($user_token);
-        if($user_info){
-            $user_info = json_decode($user_info);
-            $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>['user_info'=>$user_info]];
-        }else{
-            $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>400, 'data'=>[]];
-        }
-        return $return;
-    }
-
-    //用户token解密
-    public function verifyToken($company="",$page_sign="")
-    {
-        $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>[]];
-        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
-        $oJwt = new ThirdJwt();
-        $user_info = $oJwt::getUserId($user_token);
-        if(!$user_info){
-            $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
-            if(isset($page_info['need_login']) && $page_info['need_login']==1){
-                $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
-            }
-        }else{
-            $return['data'] =  ['user_info'=>$user_info];
-        }
         return $return;
     }
 
@@ -492,9 +456,68 @@ class UserService extends BaseService
     }
 
     //获取用户token
-    public function gettoken($map){
+    public function getToken($user_id){
+        $userinfo = UserInfo::findFirst([
+            "user_id=:user_id:",
+            'bind'=>['user_id'=>$user_id], 'order'=>'user_id desc'
+        ]);
+        $company_name = "";
+        if(isset($userinfo->company_id)){
+            $configcompany = ConfigCompany::findFirst([
+                "company_id=:company_id:",
+                'bind'=>['company_id'=>$userinfo->user_id], 'order'=>'company_id desc'
+            ]);
+            if(isset($configcompany->company_id)){
+                $company_name = $configcompany->company_name;
+            }
+        }
+        $map = [
+            'user_id'=>$userinfo->user_id??0,
+            'username'=>$userinfo->username??"",
+            'nick_name'=>$userinfo->nick_name??"",
+            'true_name'=>$userinfo->true_name??"",
+            'user_img'=>$userinfo->user_img??"",
+            'mobile'=>$userinfo->mobile??"",
+            'company_id'=>$userinfo->company_id??"",
+            'company_name'=>$company_name,
+            'worker_id'=>$userinfo->worker_id??"",
+            'last_login_time'=>$userinfo->last_login_time??"",
+            'expire_time'=>time()+$this->config->redis->lifttime,
+        ];
         $oJwt = new ThirdJwt();
-        return $token = $oJwt::getToken($map);
+        $data['map'] = $map;
+        $data['token'] = $oJwt::getToken($map);
+        return $data;
+    }
+
+    //用户token解密
+    public function getDecrypt()
+    {
+        $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
+        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
+        $oJwt = new ThirdJwt();
+        $user_info = $oJwt::getUserId($user_token);
+        if($user_info){
+            $user_info = json_decode($user_info);
+            $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>['user_info'=>$user_info]];
+        }
+        return $return;
+    }
+
+    //用户token解密
+    public function verifyToken($company="",$page_sign="")
+    {
+        $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>[]];
+        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
+        $oJwt = new ThirdJwt();
+        $user_info = $oJwt::getUserId($user_token);
+        if(!$user_info){
+            $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
+            if(isset($page_info['need_login']) && $page_info['need_login']==1){
+                $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
+            }
+        }
+        return $return;
     }
 
 
