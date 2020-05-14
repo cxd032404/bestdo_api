@@ -20,6 +20,19 @@ class PageController extends BaseController
 
 	public function getPageAction( $company ="",$page_sign = "")
 	{
+        /*用户token验证开始*/
+        //接收参数并格式化
+        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
+        //调用user_token解密方法
+        $return  = (new UserService)->getDecrypt($user_token);
+        //返回值判断
+        if($return['result']!=1){
+            $page_info = (new PageService)->getPageBySign($company,$page_sign,"need_login");
+            if(isset($page_info['need_login']) && $page_info['need_login']!=0){
+                return $this->failure(['jump_url'=>'/login'],$return['msg'],$return['code']);
+            }
+        }
+        /*用户token验证结束*/
 	    /*
 	    $arr = ['page'=>2,'page_size'=>4,'user'=>['name'=>"a","first_name"=>"b","family"=>['father'=>"dad",'mother'=>"mum"]]];
         $txt = json_encode($arr);

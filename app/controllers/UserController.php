@@ -90,8 +90,8 @@ class UserController extends BaseController
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
 		$newpassword = isset($data['newpassword'])?preg_replace('# #','',$data['newpassword']):"";
 
-		$this->redis->set('forget_'.$mobile,'{"code":123456}');
-		$this->redis->expire('forget_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
+		//$this->redis->set('forget_'.$mobile,'{"code":123456}');
+		//$this->redis->expire('forget_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
 
 		//调用忘记密码方法
 		$return  = (new UserService)->mobileForgetPwd($mobile,$code,$newpassword);
@@ -121,8 +121,8 @@ class UserController extends BaseController
 		$password = isset($data['password'])?preg_replace('# #','',$data['password']):"";
 		$company_user_id = isset($data['company_user_id'])?preg_replace('# #','',$data['company_user_id']):"";
 
-		$this->redis->set('register_'.$mobile,'{"code":123456}');
-		$this->redis->expire('register_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
+		//$this->redis->set('register_'.$mobile,'{"code":123456}');
+		//$this->redis->expire('register_'.$mobile,60);//设置过期时间,不设置过去时间时，默认为永久保持
 
 		//调用注册方法
 		$return  = (new UserService)->mobileRegister($mobile,$code,$password,$company_user_id);
