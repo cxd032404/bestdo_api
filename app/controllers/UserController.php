@@ -57,6 +57,10 @@ class UserController extends BaseController
 		$data = $this->request->get();
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
+
+		$this->redis->set('login_'.$mobile,123456);
+		$this->redis->expire('login_'.$mobile,60*5);
+
 		//调用手机号验证码登录方法
 		$return  = (new UserService)->mobileCodeLogin($mobile,$code);
 		//日志记录
@@ -162,7 +166,6 @@ class UserController extends BaseController
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		//调用发送登录验证码方法
 		$return  = (new SendCodeService)->sendLoginCode($mobile,$code_name);
-
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -209,9 +212,8 @@ class UserController extends BaseController
 		//接收参数并格式化
 		$header = $this->request->getHeaders();
 		print_r($header);
-		$user_token = isset($header['Usertoken'])?preg_replace('# #','',$header['Usertoken']):"";
 		//调用user_token解密方法
-		$return  = (new UserService)->getDecrypt($user_token);
+		$return  = (new UserService)->getDecrypt();
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
