@@ -205,13 +205,12 @@ class UserController extends BaseController
 	/*
      * usertoken解密
      * 参数
-     * user_token（必填）：用户token值
+     * UserToken（必填）：用户token值
      * */
 	public function getDecryptAction()
 	{
 		//接收参数并格式化
 		$header = $this->request->getHeaders();
-		print_r($header);
 		//调用user_token解密方法
 		$return  = (new UserService)->getDecrypt();
 		//日志记录
@@ -251,7 +250,7 @@ class UserController extends BaseController
      * user_name（必填）：用户姓名
      * department（必填）：所属部门
      * activity_id（必填）：活动id
-     * usertoken（必填）：用户token
+     * UserToken（必填）：用户token
      * */
 	public function activitySignAction()
 	{
@@ -264,12 +263,12 @@ class UserController extends BaseController
 		$user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
 		//接收参数并格式化
 		$data = $this->request->get();
-		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
-		$user_name = isset($data['user_name'])?preg_replace('# #','',$data['user_name']):"";
-		$department = isset($data['department'])?preg_replace('# #','',$data['department']):"";
-		$activity_id = isset($data['activity_id'])?intval($data['activity_id']):0;
+		$map['mobile'] = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
+		$map['user_name'] = isset($data['user_name'])?preg_replace('# #','',$data['user_name']):"";
+		$map['department'] = isset($data['department'])?preg_replace('# #','',$data['department']):"";
+		$map['activity_id'] = isset($data['activity_id'])?intval($data['activity_id']):0;
 		//调用手机号密码登录方法
-		$return  = (new UserService)->activitySign($mobile,$user_name,$department,$activity_id,$user_id);
+		$return  = (new UserService)->activitySign($map,$user_id);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -286,7 +285,7 @@ class UserController extends BaseController
      * nick_name（选填）：用户昵称
      * true_name（选填）：用户姓名
      * sex（选填）：用户性别0保密1男2女  默认为零
-     * usertoken（必填）：用户token
+     * UserToken（必填）：用户token
      * */
 	public function updateUserInfoAction()
 	{
@@ -315,8 +314,8 @@ class UserController extends BaseController
 	/*
     * 点赞
     * 参数
-    * post_id（选填）：列表数据id
-    * usertoken（必填）：用户token
+    * post_id（必填）：列表内容id
+    * UserToken（必填）：用户token
     * */
 	public function setKudosIncAction()
 	{
@@ -328,10 +327,10 @@ class UserController extends BaseController
 			return $this->failure([],$return['msg'],$return['code']);
 		}
 		/*验证token结束*/
-		$user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+		$sender_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
 		$post_id = isset($data['post_id'])?preg_replace('# #','',$data['post_id']):0;
 		//调用完善用户方法
-		$return  = (new UserService)->setKudosInc($post_id,$user_id);
+		$return  = (new UserService)->setKudosInc($post_id,$sender_id);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -341,6 +340,34 @@ class UserController extends BaseController
 		return $this->success($return['data']);
 	}
 
+	/*
+    * 取消点赞
+    * 参数
+    * post_id（必填）：列表内容id
+    * UserToken（必填）：用户token
+    * */
+	public function setKudosDecAction()
+	{
+		//接收参数并格式化
+		$data = $this->request->get();
+		/*验证token开始*/
+		$return  = (new UserService)->getDecrypt();
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		/*验证token结束*/
+		$sender_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+		$post_id = isset($data['post_id'])?preg_replace('# #','',$data['post_id']):0;
+		//调用完善用户方法
+		$return  = (new UserService)->setKudosDec($post_id,$sender_id);
+		//日志记录
+		$this->logger->info(json_encode($return));
+		//返回值判断
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		return $this->success($return['data']);
+	}
 
 
 

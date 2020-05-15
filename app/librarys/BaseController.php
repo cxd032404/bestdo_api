@@ -168,7 +168,7 @@ class BaseController extends Controller {
 	public function json($data,$status_code=200) {
 		$result = json_encode($data);
 		$this -> response
-		-> setStatusCode($status_code, '')
+		//-> setStatusCode($status_code, '')
 		-> setContent($result) -> send();
 		exit;
 	}
