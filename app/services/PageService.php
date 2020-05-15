@@ -61,6 +61,10 @@ class PageService extends BaseService
                         $pageElementList[$key]['detail']['vote_option'] = $voteInfo['detail'];
                     }
                 }
+                if($elementDetail['element_type'] == "companyInfo")
+                {
+                    $pageElementList[$key]['company_info'] = (new CompanyService())->getCompanyInfo($company_id)->toArray();
+                }
             }
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));
             $return = ['result'=>1,'code'=>200,'data'=>['pageInfo'=>$pageInfo,'pageElementList'=>$pageElementList]];
