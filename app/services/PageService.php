@@ -65,6 +65,13 @@ class PageService extends BaseService
                 {
                     $pageElementList[$key]['company_info'] = (new CompanyService())->getCompanyInfo($company_id)->toArray();
                 }
+                if($elementDetail['element_type'] == "userInfo")
+                {
+                    $returnUserInfo  = (new UserService)->getDecrypt();
+                    if($returnUserInfo['result']==1){
+                        $pageElementList[$key]['detail']['user_info'] = $returnUserInfo['data']['user_info']??"";
+                    }
+                }
             }
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));
             $return = ['result'=>1,'code'=>200,'data'=>['pageInfo'=>$pageInfo,'pageElementList'=>$pageElementList]];

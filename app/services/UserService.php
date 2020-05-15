@@ -473,7 +473,7 @@ class UserService extends BaseService
             $posts->setTransaction($transaction);
             $posts->kudos = intval($posts->kudos-1);
             if ($posts->update() === false) {
-                $transaction->rollback($this->msgList['posts_remove_reeor']);
+                $transaction->rollback($this->msgList['posts_remove_error']);
             }
             //删除点赞记录
             $postskudos->setTransaction($transaction);
@@ -550,7 +550,7 @@ class UserService extends BaseService
             'company_name'=>$company_name,
             'worker_id'=>$userinfo->worker_id??"",
             'last_login_time'=>$userinfo->last_login_time??"",
-            'expire_time'=>time()+$this->config->redis->lifttime,
+            'expire_time'=>time()+3600*24*7,//$this->config->redis->lifttime
         ];
         $oJwt = new ThirdJwt();
         $data['map'] = $map;
