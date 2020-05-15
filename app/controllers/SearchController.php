@@ -92,6 +92,11 @@ class SearchController extends BaseController
             ];
         $search_return = json_decode(json_encode($client->search($pa)),true);
         $search_return_list = array_column($search_return['hits']['hits'],'_source');
+        $search_return_list_highlight = array_column($search_return['hits']['hits'],'highlight');
+        foreach($search_return_list as $key => $info)
+        {
+            $search_return_list[$key]['highlight'] = $search_return_list_highlight[$key];
+        }
         //日志记录
         $this->logger->info(json_encode($search_return_list));
         return $this->success(['company_user_list'=>$search_return_list]);
@@ -146,16 +151,21 @@ class SearchController extends BaseController
                             'pre_tags' => ["<em>"],
                             'post_tags' => ["</em>"],
                             'fields' => [
-                                "name" => new \stdClass(),
-                                "mobile" => new \stdClass(),
+                                "question" => new \stdClass(),
+                                "answer" => new \stdClass(),
+                                "detail.keywords" => new \stdClass(),
                             ]
-
                         ],
                         'sort'=>['_score'=>["order"=>"desc"]]
                     ]
             ];
         $search_return = json_decode(json_encode($client->search($pa)),true);
         $search_return_list = array_column($search_return['hits']['hits'],'_source');
+        $search_return_list_highlight = array_column($search_return['hits']['hits'],'highlight');
+        foreach($search_return_list as $key => $info)
+        {
+            $search_return_list[$key]['highlight'] = $search_return_list_highlight[$key]??[];
+        }
         //日志记录
         $this->logger->info(json_encode($search_return_list));
         return $this->success(['question_list'=>$search_return_list]);
