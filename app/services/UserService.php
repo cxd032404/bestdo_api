@@ -34,15 +34,18 @@ class UserService extends BaseService
         "changepwd_error"=>"密码修改失败！",
         "login_error"=>"登录失败！",
         "register_error"=>"注册失败！",
-        "decrypt_error"=>"解密失败！",
+        "decrypt_error"=>"用户token解析失败！",
         "code_status_error"=>"验证码状态修改失败！",
         "activity_error"=>"报名失败！",
         "filluserinfo_error"=>"信息完善失败！",
         "posts_error"=>"点赞失败！",
         "companyuser_status_error"=>"企业用户名单状态修改失败！",
         "posts_kudos_error"=>"点赞记录新增失败！",
+        "posts_remove_error"=>"取消点赞失败！",
+        "posts_kudos_update_error"=>"点赞记录修改失败！",
 
         "sendcode_invalid"=>"验证码已失效，请重新发送！",
+        "user_token_invalid"=>"用户token已失效，请登录！",
 
         "mobile_register"=>"手机号已注册，请填写正确的手机号码！",
         "mobile_noregister"=>"手机号尚未注册，请填写正确的手机号码！",
@@ -50,15 +53,20 @@ class UserService extends BaseService
         "login_success"=>"登录成功！",
         "changepwd_success"=>"密码修改成功！",
         "register_success"=>"注册成功！",
-        "decrypt_success"=>"解密成功！",
+        "decrypt_success"=>"用户token解析成功！",
         "activity_success"=>"报名成功！",
         "filluserinfo_success"=>"信息完善成功！",
         "posts_success"=>"点赞成功！",
+        "posts_remove_success"=>"取消点赞成功！",
 
         "mobile_prohibit"=>"手机号已被禁用！",
         "activity_signin"=>"您已报名本次活动，无法重复报名，请选择正确的活动！",
         "activity_expire"=>"当前时间不在报名时间内！",
         "posts_kudos_exist"=>"您已点赞过此内容，不可重复点赞！",
+        "posts_kudos_noexist"=>"您尚未点赞过此内容，不可取消点赞！",
+
+        "activity_not_no"=>"活动尚未开启，请耐心等待！",
+        "activity_ended"=>"活动已结束，不可报名！",
     ];
 
 
@@ -317,29 +325,33 @@ class UserService extends BaseService
     }
 
     //活动报名方法
-    public function activitySign($mobile="",$user_name="",$department="",$activity_id="",$user_id="")
+    public function activitySign($map,$user_id="")
     {
         $common = new Common();
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
-        if( empty($mobile) || !$common->check_mobile($mobile) ){
+        if( empty($map['mobile']) || !$common->check_mobile($map['mobile']) ){
             $return['msg']  = $this->msgList['mobile_empty'];
-        }else if(empty($user_name)){
+        }else if(empty($map['user_name'])){
             $return['msg']  = $this->msgList['user_name_empty'];
-        }else if(empty($department)){
+        }else if(empty($map['department'])){
             $return['msg']  = $this->msgList['department_empty'];
-        }else if(empty($activity_id)){
+        }else if(empty($map['activity_id'])){
             $return['msg']  = $this->msgList['activity_empty'];
         }else{
             //查询活动数据
-            $configactivity = ConfigActivity::findFirst(["activity_id = '".$activity_id."'","columns"=>['activity_id','apply_start_time','apply_end_time']]);
+            $configactivity = ConfigActivity::findFirst(["activity_id = '".$map['activity_id']."'","columns"=>['activity_id','apply_start_time','apply_end_time','start_time','end_time']]);
             if(!isset($configactivity->activity_id)){
                 $return['msg']  = $this->msgList['activity_empty'];
+            }else if(time()<strtotime($configactivity->start_time)){
+                $return['msg']  = $this->msgList['activity_not_no'];
+            }else if(time()>strtotime($configactivity->end_time)){
+                $return['msg']  = $this->msgList['activity_ended'];
             }else if(time()<strtotime($configactivity->apply_start_time) || time()>strtotime($configactivity->apply_end_time)){
                 $return['msg']  = $this->msgList['activity_expire'];
             }else{
                 $activitysign_info = UserActivitySign::findFirst([
                     "activity_id=:activity_id: and user_id=:user_id:",
-                    'bind'=>['activity_id'=>$activity_id, 'user_id'=>$user_id],
+                    'bind'=>['activity_id'=>$map['activity_id'], 'user_id'=>$user_id],
                     'order'=>'id desc'
                 ]);
                 if(isset($activitysign_info->id)){
@@ -348,10 +360,10 @@ class UserService extends BaseService
                     //添加用户
                     $useractivitysign = new UserActivitySign();
                     $useractivitysign->user_id = $user_id;
-                    $useractivitysign->activity_id = $activity_id;
-                    $useractivitysign->user_name = $user_name;
-                    $useractivitysign->mobile = $mobile;
-                    $useractivitysign->department = $department;
+                    $useractivitysign->activity_id = $map['activity_id'];
+                    $useractivitysign->user_name = $map['user_name'];
+                    $useractivitysign->mobile = $map['mobile'];
+                    $useractivitysign->department = $map['department'];
                     if ($useractivitysign->create() === false) {
                         $return['msg']  = $this->msgList['activity_error'];
                     }else{
@@ -385,7 +397,7 @@ class UserService extends BaseService
     }
 
     //点赞
-    public function setKudosInc($post_id=0,$user_id=0)
+    public function setKudosInc($post_id=0,$sender_id=0)
     {
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         try {
@@ -400,27 +412,76 @@ class UserService extends BaseService
             if(!isset($posts->post_id)){
                 $transaction->rollback($this->msgList['posts_empty']);
             }
+            //查询点赞记录
+            $postskudos_info = PostsKudos::findFirst([
+                "sender_id=:sender_id: and post_id=:post_id: and is_del=1",
+                'bind'=>['sender_id'=>$sender_id, 'post_id'=>$post_id]
+            ]);
+            if(isset($postskudos_info->id)){
+                $transaction->rollback($this->msgList['posts_kudos_exist']);
+            }
             //修改点赞次数
             $posts->setTransaction($transaction);
             $posts->kudos = intval($posts->kudos+1);
             if ($posts->update() === false) {
                 $transaction->rollback($this->msgList['posts_error']);
             }
-            //查询点赞记录
+            //新增点赞记录
             $postskudos = new PostsKudos();
-            $postskudos_info = $postskudos->findFirst(["user_id=:user_id: and post_id=:post_id:", 'bind'=>['user_id'=>$user_id, 'post_id'=>$post_id], 'order'=>'id desc']);
-            if(!isset($postskudos_info->id)){
-                //新增点赞记录
-                $postskudos->setTransaction($transaction);
-                $postskudos->user_id = $user_id;
-                $postskudos->post_id = $post_id;
-                if($postskudos->save() === false){
-                    $transaction->rollback($this->msgList['posts_kudos_error']);
-                }
-            }else{
-                $transaction->rollback($this->msgList['posts_kudos_exist']);
+            $postskudos->setTransaction($transaction);
+            $postskudos->sender_id = $sender_id;
+            $postskudos->receiver_id = $posts->user_id;
+            $postskudos->list_id = $posts->list_id;
+            $postskudos->post_id = $post_id;
+            if($postskudos->save() === false){
+                $transaction->rollback($this->msgList['posts_kudos_error']);
             }
             $return  = ['result'=>1, 'msg'=>$this->msgList['posts_success'], 'code'=>200, 'data'=>[]];
+            $transaction->commit($return);
+        } catch (TxFailed $e) {
+            // 捕获失败回滚的错误
+            $return['msg']  = $e->getMessage();
+        }
+        return $return;
+    }
+
+    //取消点赞
+    public function setKudosDec($post_id=0,$sender_id=0)
+    {
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
+        try {
+            //启用事务
+            $manager = new TxManager();
+            //指定你需要的数据库
+            $manager->setDbService("hj_user");
+            // Request a transaction
+            $transaction = $manager->get();
+            //查询列表内容
+            $posts = \HJ\Posts::findFirst(["post_id='".$post_id."'"]);
+            if(!isset($posts->post_id)){
+                $transaction->rollback($this->msgList['posts_empty']);
+            }
+            //查询点赞记录
+            $postskudos = PostsKudos::findFirst([
+                "sender_id=:sender_id: and post_id=:post_id: and is_del=1",
+                'bind'=>['sender_id'=>$sender_id, 'post_id'=>$post_id]
+            ]);
+            if(!isset($postskudos->id)){
+                $transaction->rollback($this->msgList['posts_kudos_noexist']);
+            }
+            //修改点赞次数
+            $posts->setTransaction($transaction);
+            $posts->kudos = intval($posts->kudos-1);
+            if ($posts->update() === false) {
+                $transaction->rollback($this->msgList['posts_remove_reeor']);
+            }
+            //删除点赞记录
+            $postskudos->setTransaction($transaction);
+            $postskudos->is_del = 0;
+            if($postskudos->update() === false){
+                $transaction->rollback($this->msgList['posts_kudos_update_error']);
+            }
+            $return  = ['result'=>1, 'msg'=>$this->msgList['posts_remove_success'], 'code'=>200, 'data'=>[]];
             $transaction->commit($return);
         } catch (TxFailed $e) {
             // 捕获失败回滚的错误
@@ -506,7 +567,11 @@ class UserService extends BaseService
         $user_info = $oJwt::getUserId($user_token);
         if($user_info){
             $user_info = json_decode($user_info);
-            $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>['user_info'=>$user_info]];
+            if($user_info->expire_time<time()){
+                $return['msg'] = $this->msgList['user_token_invalid'];
+            }else{
+                $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>['user_info'=>$user_info]];
+            }
         }
         return $return;
     }
@@ -518,7 +583,7 @@ class UserService extends BaseService
         $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
-        if(!$user_info){
+        if(!$user_info || ($user_info && json_decode($user_info)->expire_time<time())){
             $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
             if(isset($page_info['need_login']) && $page_info['need_login']==1){
                 $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
@@ -526,7 +591,6 @@ class UserService extends BaseService
         }
         return $return;
     }
-
 
 
 
