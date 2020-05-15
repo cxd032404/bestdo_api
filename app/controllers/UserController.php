@@ -41,7 +41,7 @@ class UserController extends BaseController
 		}
 		//用户token存入redis缓存中
 		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->redis->lifttime);//设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],3600*24*7);//$this->config->redis->lifttime设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
     }
 
@@ -71,7 +71,7 @@ class UserController extends BaseController
 		}
 		//用户token存入redis缓存中
 		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->redis->lifttime);//设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],3600*24*7);//$this->config->redis->lifttime设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
 
@@ -126,7 +126,7 @@ class UserController extends BaseController
 		}
 		//用户token存入redis缓存中
 		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->redis->lifttime);//设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],3600*24*7);//$this->config->redis->lifttime设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
 
