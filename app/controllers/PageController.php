@@ -27,10 +27,10 @@ class PageController extends BaseController
 
         /*用户token验证开始*/
         //调用user_token解密方法
-        $return  = (new UserService)->verifyToken($company,$page_sign);
+        $user_info  = (new UserService)->verifyToken($company,$page_sign);
         //返回值判断
-        if($return['result']!=1){
-            return $this->failure(['jump_url'=>'/login'],$return['msg'],$return['code']);
+        if($user_info['result']!=1){
+            return $this->failure(['jump_url'=>'/login'],$user_info['msg'],$user_info['code']);
         }
         /*用户token验证结束*/
 	    /*
@@ -48,7 +48,7 @@ class PageController extends BaseController
         {
             return $this->failure($paramsCheck['detail']??[],$paramsCheck['code']);
         }
-        $return  = $pageService->getPageInfo($company,$page_sign,$params);
+        $return  = $pageService->getPageInfo($company,$page_sign,$params,$user_info);
         $this->logger->info(json_encode($return));
         if($return['result'])
         {

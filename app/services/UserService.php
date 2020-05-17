@@ -583,8 +583,11 @@ class UserService extends BaseService
     //用户token解密
     public function verifyToken($company="",$page_sign="")
     {
+        //$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImp0aSI6IjNmMmc1N2E5MmFhIn0.eyJpc3MiOiJodHRwOlwvXC9hZG1pbmFwaS5weWcuY29tIiwiYXVkIjoiaHR0cDpcL1wvd3d3LnB5Zy5jb20iLCJqdGkiOiIzZjJnNTdhOTJhYSIsImlhdCI6MTU4OTcwMzcyOCwibmJmIjoxNTg5NzAzNzI3LCJleHAiOjE1ODk3OTAxMjgsImRhdGEiOiJ7XCJ1c2VyX2lkXCI6XCIxMTg3OVwiLFwidXNlcm5hbWVcIjpcIjE3MDgyMTcwNzg3XCIsXCJuaWNrX25hbWVcIjpcImFzZHNhZHNhZFwiLFwidHJ1ZV9uYW1lXCI6XCJ0cnllXCIsXCJ1c2VyX2ltZ1wiOlwiXCIsXCJtb2JpbGVcIjpcIlwiLFwiY29tcGFueV9pZFwiOlwiM1wiLFwiY29tcGFueV9uYW1lXCI6XCJcIixcIndvcmtlcl9pZFwiOlwiXCIsXCJsYXN0X2xvZ2luX3RpbWVcIjpcIjIwMjAtMDQtMjYgMTM6NTI6NTlcIixcIm1hbmFnZXJfaWRcIjpcIjJcIixcImV4cGlyZV90aW1lXCI6MTU5MDMwODUyOH0ifQ.UeTj-2VTftdshJQjYq08C5tFH3cLqQMJGXmW79Bp_6A";
         $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>[]];
-        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
+        $user_token = $data = $this->request->get("UserToken")??$this->request->getHeader('UserToken');
+        //$user_token = $token;
+        $user_token = $user_token?preg_replace('# #','',$user_token):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
         if(!$user_info || ($user_info && json_decode($user_info)->expire_time<time())){
@@ -592,6 +595,10 @@ class UserService extends BaseService
             if(isset($page_info['need_login']) && $page_info['need_login']==1){
                 $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
             }
+        }
+        else
+        {
+            $return['data']  = json_decode($user_info,true);
         }
         return $return;
     }

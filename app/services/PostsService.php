@@ -127,18 +127,34 @@ class PostsService extends BaseService
     //order：排序
     //page:页码
     //pageSize：单页数量
-    public function getPostsList($list_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =2)
+    public function getPostsList($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =2)
     {
-        $params =             [
-            "list_id = '".$list_id."'"." ".($start>0?(" and post_id <".$start):"") ,
-            "columns" => $columns,
-            "order" => $order,
-            "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
-        ];
-        $params_count = [
-            "list_id = '".$list_id."'",
-            "columns" => "count(1) as count",
-        ];
+        if(is_array($list_id))
+        {
+            $params =             [
+                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id in (".implode(",",$list_id).")"." ".($start>0?(" and post_id <".$start):"") ,
+                "columns" => $columns,
+                "order" => $order,
+                "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
+            ];
+            $params_count = [
+                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id in (".implode(",",$list_id).")",
+                "columns" => "count(1) as count",
+            ];
+        }
+        else
+        {
+            $params =             [
+                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id = '".$list_id."'"." ".($start>0?(" and post_id <".$start):"") ,
+                "columns" => $columns,
+                "order" => $order,
+                "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
+            ];
+            $params_count = [
+                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id = '".$list_id."'",
+                "columns" => "count(1) as count",
+            ];
+        }
         $list = (new \HJ\Posts())->find($params)->toArray();
         $count = (new \HJ\Posts())->findFirst($params_count)['count']??0;
         $return  = ['data'=>$list,
