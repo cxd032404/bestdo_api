@@ -397,8 +397,11 @@ class UserController extends BaseController
     * */
 	public function createTokenForManagerAction()
 	{
+		//接收参数并格式化
+		$data = $this->request->get();
+		$manager_id = isset($data['manager_id'])?preg_replace('# #','',$data['manager_id']):0;
 		//调用完善用户方法
-		$return  = (new UserService)->createTokenForManager();
+		$return  = (new UserService)->createTokenForManager($manager_id);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
