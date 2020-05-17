@@ -209,6 +209,27 @@ class UserController extends BaseController
      * */
 	public function getDecryptAction()
 	{
+
+		$data = '{
+			"jump_urls":{
+				"\u6d3b\u52a8\u4fe1\u606f":"\"\/culture\/culture_datails?id=1#activity\"",
+				"\u4e13\u5bb6\u6307\u5bfc":"\"\/culture\/culture_expert_datails?id=1#expert\"",
+				"\u53c2\u9009\u4f5c\u54c1":"\"\/culture\/culture_works_datails?id=1#works\"",
+				"\u6392\u884c\u699c":"\"\/culture\/culture_list_datails?id=1#list\""
+			}
+		}';
+		$data = \GuzzleHttp\json_decode($data);
+		$navList = [];$i=0;
+		foreach ($data->jump_urls as $key=>$value) {
+			$navList[$i]['name'] = $key;
+			$nav_type = explode('#',str_replace('"', '', $value));
+			$navList[$i]['url'] = '"'.reset($nav_type).'"';
+			$navList[$i]['type'] = end($nav_type);
+			$i++;
+		}
+		print_r($navList);
+		die;
+
 		//接收参数并格式化
 		$header = $this->request->getHeaders();
 		//调用user_token解密方法
@@ -360,6 +381,24 @@ class UserController extends BaseController
 		$post_id = isset($data['post_id'])?preg_replace('# #','',$data['post_id']):0;
 		//调用完善用户方法
 		$return  = (new UserService)->setKudosDec($post_id,$sender_id);
+		//日志记录
+		$this->logger->info(json_encode($return));
+		//返回值判断
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		return $this->success($return['data']);
+	}
+
+	/*
+    * 后台获取用户token
+    * 参数
+    * manager_id（必填）：后台用户id
+    * */
+	public function createTkoenForManagerAction()
+	{
+		//调用完善用户方法
+		$return  = (new UserService)->createTkoenForManager();
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断

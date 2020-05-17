@@ -43,6 +43,7 @@ class UserService extends BaseService
         "posts_kudos_error"=>"点赞记录新增失败！",
         "posts_remove_error"=>"取消点赞失败！",
         "posts_kudos_update_error"=>"点赞记录修改失败！",
+        "manager_id_error"=>"后台用户id无效！",
 
         "sendcode_invalid"=>"验证码已失效，请重新发送！",
         "user_token_invalid"=>"用户token已失效，请登录！",
@@ -58,6 +59,7 @@ class UserService extends BaseService
         "filluserinfo_success"=>"信息完善成功！",
         "posts_success"=>"点赞成功！",
         "posts_remove_success"=>"取消点赞成功！",
+        "token_for_manager_success"=>"获取token成功！",
 
         "mobile_prohibit"=>"手机号已被禁用！",
         "activity_signin"=>"您已报名本次活动，无法重复报名，请选择正确的活动！",
@@ -550,6 +552,7 @@ class UserService extends BaseService
             'company_name'=>$company_name,
             'worker_id'=>$userinfo->worker_id??"",
             'last_login_time'=>$userinfo->last_login_time??"",
+            'manager_id'=>$userinfo->manager_id??0,
             'expire_time'=>time()+3600*24*7,//$this->config->redis->lifttime
         ];
         $oJwt = new ThirdJwt();
@@ -592,6 +595,47 @@ class UserService extends BaseService
         return $return;
     }
 
+    //后台获取用户token
+    public function createTkoenForManager(){
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
+        //接收参数并格式化
+        $data = $this->request->get();
+        $manager_id = isset($data['manager_id'])?preg_replace('# #','',$data['manager_id']):0;
+        print_r($manager_id);
+        if($manager_id==0){
+            $return['msg']  = $this->msgList['manager_id_error'];
+        }else{
+            $userinfo = UserInfo::findFirst([
+                "manager_id=:manager_id:",
+                'bind'=>['manager_id'=>$manager_id], 'order'=>'user_id desc'
+            ]);
+            if(!isset($userinfo->manager_id)){
+                $return['msg']  = $this->msgList['manager_id_error'];
+            }else{
+                $tokeninfo = $this->getToken($userinfo->user_id);
+                $return  = ['result'=>1, 'msg'=>$this->msgList['token_for_manager_success'], 'code'=>200, 'data'=>['user_token'=>$tokeninfo['token']]];
+            }
+        }
+        return $return;
+    }
+
+    //检测list提交次数
+    public function checkList()
+    {
+        $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
+        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
+        $oJwt = new ThirdJwt();
+        $user_info = $oJwt::getUserId($user_token);
+        if($user_info){
+            $user_info = json_decode($user_info);
+            if($user_info->expire_time<time()){
+                $return['msg'] = $this->msgList['user_token_invalid'];
+            }else{
+                $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>['user_info'=>$user_info]];
+            }
+        }
+        return $return;
+    }
 
 
 

@@ -60,6 +60,16 @@ class PageService extends BaseService
                         $voteInfo['detail'] = json_decode($voteInfo['detail'],true);
                         $pageElementList[$key]['detail']['vote_option'] = $voteInfo['detail'];
                     }
+                    //滑动导航数据转化
+                    $navList = [];$i=0;
+                    foreach ($pageElementList[$key]['detail']['jump_urls'] as $navkey=>$nacvalue) {
+                        $navList[$i]['name'] = $navkey;
+                        $nav_type = explode('#',str_replace('"', '', $nacvalue));
+                        $navList[$i]['url'] = reset($nav_type);
+                        $navList[$i]['type'] = explode('.',str_replace('"', '', end($nav_type)));
+                        $i++;
+                    }
+                    $pageElementList[$key]['detail']['jump_urls'] = $navList;
                 }
                 if($elementDetail['element_type'] == "companyInfo")
                 {
