@@ -565,7 +565,8 @@ class UserService extends BaseService
     public function getDecrypt()
     {
         $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
-        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
+        $user_token = $data = $this->request->get("UserToken")??$this->request->getHeader('UserToken');
+        $user_token = $user_token?preg_replace('# #','',$user_token):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
         if($user_info){

@@ -20,6 +20,12 @@ class ListController extends BaseController
 
 	public function postAction()
 	{
+        //调用user_token解密方法
+        $tokenInfo  = (new UserService)->getDecrypt();
+        //返回值判断
+        if($tokenInfo['result']!=1){
+            return $this->failure(['jump_url'=>'/login'],$tokenInfo['msg'],$tokenInfo['code']);
+        }
 	    $upload = (new UploadService())->getUploadedFile([],[],0,0);
 	    $list_id = intval($this->request->getPost('list_id')??0);
         $post_id = intval($this->request->getPost('post_id')??0);
@@ -30,7 +36,7 @@ class ListController extends BaseController
         else
         {
             $listInfo  = (new ListService())->getListInfo(intval($this->request->getPost('list_id')));
-            $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')),$this->request->getPost('detail'),$upload);
+            $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')),$tokenInfo['data']['user_info']->user_id,$this->request->getPost('detail'),$upload);
         }
         if($post['result'])
         {

@@ -8,7 +8,7 @@ class PostsService extends BaseService
 	//提交文章
     //list_id：列表ID
     //uploadedFiles：已经上传的资源
-	public function addPosts($list_id,$detail,$uploadedFiles)
+	public function addPosts($list_id,$user_id,$detail,$uploadedFiles)
     {
         //获取列表信息
         $listInfo = (new ListService())->getListInfo(intval($list_id));
@@ -31,7 +31,7 @@ class PostsService extends BaseService
                 $postInfo->content = trim(htmlspecialchars($detail['comment']));
                 $postInfo->source = json_encode($uploadedFiles);
                 $postInfo->create_time = $postInfo->update_time = date("Y-m-d H:i:s");
-                $postInfo->user_id = 1;
+                $postInfo->user_id = $user_id;
                 $create = $postInfo->create();
                 if($create)
                 {
