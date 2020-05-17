@@ -596,7 +596,7 @@ class UserService extends BaseService
     }
 
     //后台获取用户token
-    public function createTkoenForManager(){
+    public function createTokenForManager(){
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         //接收参数并格式化
         $data = $this->request->get();
