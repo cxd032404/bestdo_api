@@ -601,7 +601,6 @@ class UserService extends BaseService
         //接收参数并格式化
         $data = $this->request->get();
         $manager_id = isset($data['manager_id'])?preg_replace('# #','',$data['manager_id']):0;
-        print_r($manager_id);
         if($manager_id==0){
             $return['msg']  = $this->msgList['manager_id_error'];
         }else{
