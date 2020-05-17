@@ -395,10 +395,10 @@ class UserController extends BaseController
     * 参数
     * manager_id（必填）：后台用户id
     * */
-	public function createTkoenForManagerAction()
+	public function createTokenForManagerAction()
 	{
 		//调用完善用户方法
-		$return  = (new UserService)->createTkoenForManager();
+		$return  = (new UserService)->createTokenForManager();
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
