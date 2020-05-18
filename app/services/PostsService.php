@@ -8,32 +8,44 @@ class PostsService extends BaseService
 	//提交文章
     //list_id：列表ID
     //uploadedFiles：已经上传的资源
-	public function addPosts($list_id,$user_id,$detail,$uploadedFiles)
+	public function addPosts($list_id,$user_id,$detail)
     {
+        $oUpload = new UploadService();
         //获取列表信息
-        $listInfo = (new ListService())->getListInfo(intval($list_id));
+        $listInfo = (new ListService())->getListInfo($list_id,"list_id,detail")->toArray();
+        $listInfo['detail'] = json_decode($listInfo['detail'],true);
         if(!isset($listInfo['list_id']))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章列表不存在"]];
         }
         else
         {
-            //初始化数据
-            $postInfo = new \HJ\Posts();
-            $postInfo->list_id = $listInfo['list_id'];
-            $postInfo->company_id = $listInfo['company_id'];
-            $postInfo->content = trim(htmlspecialchars($detail['comment']));
-            $postInfo->source = json_encode($uploadedFiles);
-            $postInfo->create_time = $postInfo->update_time = date("Y-m-d H:i:s");
-            $postInfo->user_id = $user_id;
-            $create = $postInfo->create();
-            if($create)
+            //计算可用的文件数量
+            $count = $oUpload->getAvailableSoureCount([],$listInfo['detail']);
+            $upload = $oUpload->getUploadedFile([],[],0,0,$count);
+            if(isset($upload['name']))
             {
-                $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
+                $return = ['result'=>false,'data'=>['msg'=>"您所发布的".$upload['name']."数量已经超过限制，请重新提交"]];
             }
             else
             {
-                $return = ['result'=>false,'msg'=>"发布失败"];
+                //初始化数据
+                $postInfo = new \HJ\Posts();
+                $postInfo->list_id = $listInfo['list_id'];
+                $postInfo->company_id = $listInfo['company_id'];
+                $postInfo->content = trim(htmlspecialchars($detail['comment']));
+                $postInfo->source = json_encode($uploadedFiles);
+                $postInfo->create_time = $postInfo->update_time = date("Y-m-d H:i:s");
+                $postInfo->user_id = $user_id;
+                $create = $postInfo->create();
+                if($create)
+                {
+                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
+                }
+                else
+                {
+                    $return = ['result'=>false,'msg'=>"发布失败"];
+                }
             }
         }
         return $return;
@@ -52,11 +64,14 @@ class PostsService extends BaseService
         }
         else
         {
+            //获取列表信息
             $listInfo = (new ListService())->getListInfo($postInfo['list_id'],"list_id,detail")->toArray();
             $listInfo['detail'] = json_decode($listInfo['detail'],true);
             $postInfo['source'] = json_decode($postInfo['source'],true);
+            //计算可用的文件数量
             $count = $oUpload->getAvailableSoureCount($postInfo['source'],$listInfo['detail']);
-            $upload = (new UploadService())->getUploadedFile([],[],0,0,$count);
+            $upload = $oUpload->getUploadedFile([],[],0,0,$count);
+            //如果返回类型名称
             if(isset($upload['name']))
             {
                 $return = ['result'=>false,'data'=>['msg'=>"您所发布的".$upload['name']."数量已经超过限制，请重新提交"]];

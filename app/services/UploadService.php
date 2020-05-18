@@ -15,6 +15,7 @@ class UploadService extends BaseService
     //exts：扩展名列表
     //max_size：最大文件尺寸
     //min_size：最小文件尺寸
+    //limit：上传文件数量限制
 	public function getUploadedFile($keys = ['upload_files'],$exts = [],$max_size=0,$min_size=0,$limit)
     {
         $upload = [];
@@ -52,6 +53,9 @@ class UploadService extends BaseService
                     if($l<=0 && isset($this->file_type[$type]))
                     {
                         return ['result'=>0,'name'=>$this->file_type[$type]['name']];
+                    }
+                    else{
+                        $limit[$type]--;
                     }
                     if($type)
                     {
