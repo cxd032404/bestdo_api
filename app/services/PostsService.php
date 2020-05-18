@@ -51,14 +51,12 @@ class PostsService extends BaseService
         }
         else
         {
-            if(strlen(trim(htmlspecialchars($detail['comment'])))<=3)
-            {
-                $return = ['result'=>false,'data'=>['msg'=>"输入的内容有点少哦"]];
-            }
-            else
-            {
                 $postInfo['source'] = json_decode($postInfo['source'],true);
-                $postInfo['source'] = array_merge($postInfo['source'],$uploadedFiles);
+                foreach($uploadedFiles as $name => $file)
+                {
+                    $postInfo['source'][$name.count($uploadedFiles)] = $file;
+                }
+                $postInfo['source'] = (new UploadService())->sortUpload($postInfo['source']);
                 $postInfo['source'] = json_encode($postInfo['source']);
                 $postInfo['content'] = trim(htmlspecialchars($detail['comment']));
                 $postInfo['update_time'] = date("Y-m-d H:i:s");
@@ -73,7 +71,7 @@ class PostsService extends BaseService
                 {
                     $return = ['result'=>false,'msg'=>"发布失败"];
                 }
-            }
+
         }
         return $return;
     }
@@ -98,6 +96,21 @@ class PostsService extends BaseService
             else
             {
                 unset($postInfo['source'][$sid]);
+                $source = (new UploadService())->sortUpload($postInfo['source']);
+                $sid = explode(".",$sid);
+                $t = [];
+                foreach($postInfo['source'] as $k => $file)
+                {
+                    if(substr($k,0,strlen($sid['0'])+1)==$sid['0'].".")
+                    {
+                        $t[$sid['0'].".".(count($t)+1)] = $file;
+                        unset($postInfo['source'][$k]);
+                    }
+                }
+                foreach($t as $k => $file)
+                {
+                    $postInfo['source'][$k] = $file;
+                }
                 $postInfo['source'] = json_encode($postInfo['source']);
                 $postInfo['update_time'] = date("Y-m-d H:i:s");
                 $update = self::updatePost($postInfo,$postInfo);

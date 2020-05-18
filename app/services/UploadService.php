@@ -49,7 +49,7 @@ class UploadService extends BaseService
                     {
                         $target = ROOT_PATH.'/upload/'.$type.'/'.$file->getName();
                         $upload[$type] = ($upload[$type]??0)+1;
-                        $k = $type.'.'.$upload[$type];
+                        $k = 'upload_'.$type.'.'.$upload[$type];
                     }
                     $target = ROOT_PATH.'/upload/'.$file->getName();
                     $move = $file->moveTo($target);
@@ -61,18 +61,7 @@ class UploadService extends BaseService
             }
             $upload = (new AliyunService())->upload2Oss($uploadedFile);
         }
-        $return = [];
-        foreach($this->file_type as $type => $extList)
-        {
-            foreach($upload as $name => $root)
-            {
-                if(substr($name,0,strlen($type))==$type)
-                {
-                    $return["upload_".$name] = $root;
-                }
-            }
-        }
-        return $return;
+        return $this->sortUpload($upload);
     }
     private function checkKeys($key,$keys)
     {
@@ -119,5 +108,25 @@ class UploadService extends BaseService
             }
         }
         return false;
+    }
+    public function sortUpload($fileArr)
+    {
+        $fileList = [];$return = [];
+        foreach($this->file_type as $type => $extList)
+        {
+            foreach($fileArr as $name => $path)
+            {
+                $t = explode(".",$name);
+                if($t['0'] == "upload_".$type)
+                {
+                    $fileList[$t['0']][count($fileList[$t['0']]??[])+1] = $path;
+                }
+            }
+            foreach($fileList["upload_".$type]??[] as $k => $path)
+            {
+                $return["upload_".$type.".".$k] = $path;
+            }
+        }
+        return $return;
     }
 }
