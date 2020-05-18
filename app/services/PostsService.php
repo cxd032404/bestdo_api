@@ -195,6 +195,5 @@ class PostsService extends BaseService
             $posts->$key = $value;
         }
         return $posts->save();
-
     }
 }

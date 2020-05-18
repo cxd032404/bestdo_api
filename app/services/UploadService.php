@@ -129,4 +129,22 @@ class UploadService extends BaseService
         }
         return $return;
     }
+    public function parthSource($sourceList)
+    {
+        $return = [];
+        foreach($sourceList as $name => $path)
+        {
+            foreach($this->file_type as $type => $extList)
+            {
+                $t = explode(".",$path);
+                $ext = $t[count($t)-1];
+                if(in_array($ext,$extList))
+                {
+                    $fileArr = ['path'=>$path,'name'=>$name,'type'=>$type,'suffix'=>($type=="video")?"?x-oss-process=video/snapshot,t_1000,f_jpg,w_300,h_300,m_fast":""];
+                    $return[] = $fileArr;
+                }
+            }
+        }
+        return $return;
+    }
 }

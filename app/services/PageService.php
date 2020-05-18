@@ -45,11 +45,8 @@ class PageService extends BaseService
                     foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
                     {
                         $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
+                        $pageElementList[$key]['data']['data'][$k]['source'] = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
                         $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
-                        if($pageElementList[$key]['data']['data'][$k]['list_type'] == "video")
-                        {
-                            $pageElementList[$key]['data']['data'][$k]['video_suffix'] = "?x-oss-process=video/snapshot,t_1000,f_jpg,w_300,h_300,m_fast";
-                        }
                     }
                 }
                 elseif($elementDetail['element_type'] == "slideNavi")
@@ -113,26 +110,14 @@ class PageService extends BaseService
                             $pageElementList[$key]['detail']['available'] = 0;
                         }
                     }
-
-
-//                    //获取列表信息
-//                    $listInfo = (new ListService())->getListInfo($pageElementList[$key]['detail']['list_id'],"list_id,activity_id");
-//                    //指定比赛
-//                    if($listInfo['activity_id']>0)
-//                    {
-//                        $list = (new ListService())->getListByActivity($listInfo['activity_id']);
-//                        if(count($list)>0)
-//                        {
-//                            $listIds = array_column($list->toArray(),"list_id");
-//                        }
-//                        $postExists = (new PostsService())->getPostsList($listIds,$user_info['data']['user_id'],"post_id","post_id DESC",0,1,1);
-//                        //已经提交过
-//                        if($postExists['count']>0)
-//                        {
-//                            $pageElementList[$key]['detail']['available'] = 0;
-//                        }
-//                    }
-
+                }
+                elseif($elementDetail['element_type'] == "postsDetail")
+                {
+                    $post_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
+                    $postsInfo = (new PostsService())->getPosts($post_id,"post_id,user_id,content,source,views,kudos,create_time,update_time")->toArray();
+                    $postsInfo['source'] = json_decode($postsInfo['source'],true);
+                    $postsInfo['source'] = (new UploadService())->parthSource($postsInfo['source']);
+                    $pageElementList[$key]['detail'] = $postsInfo;
                 }
             }
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));
