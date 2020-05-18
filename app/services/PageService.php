@@ -114,10 +114,14 @@ class PageService extends BaseService
                 elseif($elementDetail['element_type'] == "postsDetail")
                 {
                     $post_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
-                    $postsInfo = (new PostsService())->getPosts($post_id,"post_id,user_id,content,source,views,kudos,create_time,update_time")->toArray();
-                    $postsInfo['source'] = json_decode($postsInfo['source'],true);
-                    $postsInfo['source'] = (new UploadService())->parthSource($postsInfo['source']);
-                    $pageElementList[$key]['detail'] = $postsInfo;
+                    $postsInfo = (new PostsService())->getPosts($post_id,"post_id,user_id,content,source,views,kudos,create_time,update_time");
+                    if(isset($postsInfo->post_id))
+                    {
+                        $postsInfo = $postsInfo->toArray();
+                        $postsInfo['source'] = json_decode($postsInfo['source'],true);
+                        $postsInfo['source'] = (new UploadService())->parthSource($postsInfo['source']);
+                        $pageElementList[$key]['detail'] = $postsInfo;
+                    }
                 }
             }
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));
