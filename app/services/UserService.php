@@ -564,18 +564,21 @@ class UserService extends BaseService
     }
 
     //用户token解密
-    public function getDecrypt()
+    public function getDecrypt($user_token=null)
     {
         $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
-        $user_token = $data = $this->request->get("UserToken")??$this->request->getHeader('UserToken');
+        $user_token = $user_token??($this->request->get("UserToken")??$this->request->getHeader('UserToken'));
         $user_token = $user_token?preg_replace('# #','',$user_token):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
-        if($user_info){
-            $user_info = json_decode($user_info);
-            if($user_info->expire_time<time()){
+        if($user_info)
+        {
+            $user_info = json_decode($user_info,true);
+            if($user_info['expire_time']<time())
+            {
                 $return['msg'] = $this->msgList['user_token_invalid'];
-            }else{
+            }
+            else{
                 $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>['user_info'=>$user_info]];
             }
         }
@@ -590,17 +593,15 @@ class UserService extends BaseService
         $user_token = $data = $this->request->get("UserToken")??$this->request->getHeader('UserToken');
         //$user_token = $token;
         $user_token = $user_token?preg_replace('# #','',$user_token):"";
-        $oJwt = new ThirdJwt();
-        $user_info = $oJwt::getUserId($user_token);
-        if(!$user_info || ($user_info && json_decode($user_info)->expire_time<time())){
-            $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
-            if(isset($page_info['need_login']) && $page_info['need_login']==1){
-                $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
-            }
+        $user_info  = $this->getDecrypt($user_token);
+        $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
+        if($user_info['result']!=1 && (isset($page_info['need_login']) && $page_info['need_login']==1) )
+        {
+            $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
         }
         else
         {
-            $return['data']  = json_decode($user_info,true);
+            $return['data']  = $user_info['data']['user_info'];
         }
         return $return;
     }

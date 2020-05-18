@@ -209,7 +209,6 @@ class UserController extends BaseController
      * */
 	public function getDecryptAction()
 	{
-
 		$data = '{
 			"jump_urls":{
 				"\u6d3b\u52a8\u4fe1\u606f":"\"\/culture\/culture_datails?id=1#activity\"",
@@ -281,7 +280,7 @@ class UserController extends BaseController
 			return $this->failure([],$return['msg'],$return['code']);
 		}
 		/*验证token结束*/
-		$user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+		$user_id = isset($return['data']['user_info']['user_id'])?$return['data']['user_info']['user_id']:0;
 		//接收参数并格式化
 		$data = $this->request->get();
 		$map['mobile'] = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
@@ -315,7 +314,7 @@ class UserController extends BaseController
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
 		}
-		$user_id = $return['data']['user_info']->user_id;
+		$user_id = $return['data']['user_info']['user_id'];
 		//接收参数并格式化
 		$data = $this->request->get();
 		$map['nick_name'] = isset($data['nick_name'])?preg_replace('# #','',$data['nick_name']):"";
@@ -348,7 +347,7 @@ class UserController extends BaseController
 			return $this->failure([],$return['msg'],$return['code']);
 		}
 		/*验证token结束*/
-		$sender_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+		$sender_id = isset($return['data']['user_info']['user_id'])?$return['data']['user_info']['user_id']:0;
 		$post_id = isset($data['post_id'])?preg_replace('# #','',$data['post_id']):0;
 		//调用完善用户方法
 		$return  = (new UserService)->setKudosInc($post_id,$sender_id);
@@ -377,7 +376,7 @@ class UserController extends BaseController
 			return $this->failure([],$return['msg'],$return['code']);
 		}
 		/*验证token结束*/
-		$sender_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+		$sender_id = isset($return['data']['user_info']['user_id'])?$return['data']['user_info']['user_id']:0;
 		$post_id = isset($data['post_id'])?preg_replace('# #','',$data['post_id']):0;
 		//调用完善用户方法
 		$return  = (new UserService)->setKudosDec($post_id,$sender_id);

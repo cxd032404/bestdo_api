@@ -41,16 +41,22 @@ class PostsService extends BaseService
     //提交更新文章
     //list_id：文章ID
     //uploadedFiles：已经上传的资源
-    public function updatePosts($post_id,$detail,$uploadedFiles)
+    public function updatePosts($post_id,$user_id,$detail,$uploadedFiles)
     {
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,content,source,update_time")->toArray();
+        $postInfo = self::getPosts(intval($post_id),"post_id,user_id,content,source,update_time")->toArray();
         if(!isset($postInfo['post_id']))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
         }
         else
         {
+            if($user_id!=$postInfo['user_id'])
+            {
+                $return = ['result'=>false,'data'=>['msg'=>"文章作者不匹配"]];
+            }
+            else
+            {
                 $postInfo['source'] = json_decode($postInfo['source'],true);
                 foreach($uploadedFiles as $name => $file)
                 {
@@ -71,7 +77,7 @@ class PostsService extends BaseService
                 {
                     $return = ['result'=>false,'msg'=>"发布失败"];
                 }
-
+            }
         }
         return $return;
     }
