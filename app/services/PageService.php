@@ -86,8 +86,18 @@ class PageService extends BaseService
                 elseif($elementDetail['element_type'] == "post")
                 {
                     $pageElementList[$key]['detail']['available'] = 1;
+
+                    if(isset($pageElementList[$key]['detail']['list_id']))
+                    {
+                        $list_id = $pageElementList[$key]['detail']['list_id'];
+                    }
+                    else
+                    {
+                        $list_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
+                    }
+                    $pageElementList[$key]['detail']['available'] = 1;
                     //获取列表信息
-                    $listInfo = (new ListService())->getListInfo($pageElementList[$key]['detail']['list_id'],"list_id,activity_id");
+                    $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id");
                     //指定比赛
                     if($listInfo['activity_id']>0)
                     {
@@ -103,6 +113,25 @@ class PageService extends BaseService
                             $pageElementList[$key]['detail']['available'] = 0;
                         }
                     }
+
+
+//                    //获取列表信息
+//                    $listInfo = (new ListService())->getListInfo($pageElementList[$key]['detail']['list_id'],"list_id,activity_id");
+//                    //指定比赛
+//                    if($listInfo['activity_id']>0)
+//                    {
+//                        $list = (new ListService())->getListByActivity($listInfo['activity_id']);
+//                        if(count($list)>0)
+//                        {
+//                            $listIds = array_column($list->toArray(),"list_id");
+//                        }
+//                        $postExists = (new PostsService())->getPostsList($listIds,$user_info['data']['user_id'],"post_id","post_id DESC",0,1,1);
+//                        //已经提交过
+//                        if($postExists['count']>0)
+//                        {
+//                            $pageElementList[$key]['detail']['available'] = 0;
+//                        }
+//                    }
 
                 }
             }
