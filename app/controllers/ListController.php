@@ -27,11 +27,12 @@ class ListController extends BaseController
             return $this->failure(['jump_url'=>'/login'],$tokenInfo['msg'],$tokenInfo['code']);
         }
 	    $upload = (new UploadService())->getUploadedFile([],[],0,0);
-	    $list_id = intval($this->request->getPost('list_id')??0);
+	    //$upload = [];
+        $list_id = intval($this->request->getPost('list_id')??0);
         $post_id = intval($this->request->getPost('post_id')??0);
         if($post_id > 0)
         {
-            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$this->request->getPost('detail'),$upload);
+            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$this->request->getPost('detail'));
         }
         else
         {

@@ -2,17 +2,20 @@
 class UploadService extends BaseService
 {
 	private $msg = 'success';
-    private $file_type = ['video'=>['mp4'],'pic'=>['jpg','jpeg','png','bmp']];
+    private $file_type = ['video'=>['list'=>['mp4'],'name'=>"视频"],
+        'pic'=>['list'=>['jpg','jpeg','png','bmp'],'name'=>"图片"],
+        'txt'=>['list'=>['txt','doc'],'name'=>"文本"],
+        ];
     public function getFileTypeList()
     {
-        return $this->file_type();
+        return $this->file_type;
     }
     //从post中上传文件
     //keys：页面元素的key   a.b.c形式
     //exts：扩展名列表
     //max_size：最大文件尺寸
     //min_size：最小文件尺寸
-	public function getUploadedFile($keys = ['upload_files'],$exts = [],$max_size=0,$min_size=0)
+	public function getUploadedFile($keys = ['upload_files'],$exts = [],$max_size=0,$min_size=0,$limit)
     {
         $upload = [];
         foreach($keys as $k => $v)
@@ -45,6 +48,11 @@ class UploadService extends BaseService
                 if($pass==0)
                 {
                     $type = self::getFileType($file->getExtension());
+                    $l = $limit[$type]??0;
+                    if($l<=0 && isset($this->file_type[$type]))
+                    {
+                        return ['result'=>0,'name'=>$this->file_type[$type]['name']];
+                    }
                     if($type)
                     {
                         $target = ROOT_PATH.'/upload/'.$type.'/'.$file->getName();
@@ -99,10 +107,9 @@ class UploadService extends BaseService
     }
     public function getFileType($ext)
     {
-        $typeList = $this->file_type;
-        foreach($this->file_type as $type => $extList)
+        foreach($this->file_type as $type => $type_info)
         {
-            if(in_array($ext,$extList))
+            if(in_array($ext,$type_info['list']))
             {
                 return $type;
             }
@@ -112,7 +119,7 @@ class UploadService extends BaseService
     public function sortUpload($fileArr)
     {
         $fileList = [];$return = [];
-        foreach($this->file_type as $type => $extList)
+        foreach($this->file_type as $type => $type_info)
         {
             foreach($fileArr as $name => $path)
             {
@@ -134,11 +141,11 @@ class UploadService extends BaseService
         $return = [];
         foreach($sourceList as $name => $path)
         {
-            foreach($this->file_type as $type => $extList)
+            foreach($this->file_type as $type => $type_info)
             {
                 $t = explode(".",$path);
                 $ext = $t[count($t)-1];
-                if(in_array($ext,$extList))
+                if(in_array($ext,$type_info['list']))
                 {
                     $fileArr = ['path'=>$path,'name'=>$name,'type'=>$type,'suffix'=>($type=="video")?"?x-oss-process=video/snapshot,t_1000,f_jpg,w_300,h_300,m_fast":""];
                     $return[] = $fileArr;
@@ -146,5 +153,27 @@ class UploadService extends BaseService
             }
         }
         return $return;
+    }
+    public function getAvailableSoureCount($current,$limit)
+    {
+        $return = [];
+        foreach($current as $name => $file)
+        {
+            $t = explode(".",$file);
+            $ext = $t[count($t)-1];
+            foreach($this->file_type as $type => $type_info)
+            {
+                if(in_array($ext,$type_info['list']))
+                {
+                    $return[$type] = ($return[$type]??0)+1;
+                }
+                break;
+            }
+        }
+        foreach($limit['limit']??[] as $type => $count)
+        {
+            $limit['limit'][$type] = $count-($return[$type]??0);
+        }
+        return $limit['limit'];
     }
 }

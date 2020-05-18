@@ -43,20 +43,31 @@ class PostsService extends BaseService
     //uploadedFiles：已经上传的资源
     public function updatePosts($post_id,$detail,$uploadedFiles)
     {
+        $oUpload = new UploadService();
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,content,source,update_time")->toArray();
+        $postInfo = self::getPosts(intval($post_id),"post_id,list_id,content,source,update_time")->toArray();
         if(!isset($postInfo['post_id']))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
         }
         else
         {
-                $postInfo['source'] = json_decode($postInfo['source'],true);
+            $listInfo = (new ListService())->getListInfo($postInfo['list_id'],"list_id,detail")->toArray();
+            $listInfo['detail'] = json_decode($listInfo['detail'],true);
+            $postInfo['source'] = json_decode($postInfo['source'],true);
+            $count = $oUpload->getAvailableSoureCount($postInfo['source'],$listInfo['detail']);
+            $upload = (new UploadService())->getUploadedFile([],[],0,0,$count);
+            if(isset($upload['name']))
+            {
+                $return = ['result'=>false,'data'=>['msg'=>"您所发布的".$upload['name']."数量已经超过限制，请重新提交"]];
+            }
+            else
+            {
                 foreach($uploadedFiles as $name => $file)
                 {
                     $postInfo['source'][$name.count($uploadedFiles)] = $file;
                 }
-                $postInfo['source'] = (new UploadService())->sortUpload($postInfo['source']);
+                $postInfo['source'] = $oUpload->sortUpload($postInfo['source']);
                 $postInfo['source'] = json_encode($postInfo['source']);
                 $postInfo['content'] = trim(htmlspecialchars($detail['comment']));
                 $postInfo['update_time'] = date("Y-m-d H:i:s");
@@ -69,9 +80,9 @@ class PostsService extends BaseService
                 }
                 else
                 {
-                    $return = ['result'=>false,'msg'=>"发布失败"];
+                    $return = ['result'=>false,'data'=>['msg'=>"发布失败"]];
                 }
-
+            }
         }
         return $return;
     }
