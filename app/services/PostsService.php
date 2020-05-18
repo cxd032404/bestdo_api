@@ -18,31 +18,23 @@ class PostsService extends BaseService
         }
         else
         {
-            if(strlen(trim(htmlspecialchars($detail['comment'])))<=3)
+            //初始化数据
+            $postInfo = new \HJ\Posts();
+            $postInfo->list_id = $listInfo['list_id'];
+            $postInfo->company_id = $listInfo['company_id'];
+            $postInfo->content = trim(htmlspecialchars($detail['comment']));
+            $postInfo->source = json_encode($uploadedFiles);
+            $postInfo->create_time = $postInfo->update_time = date("Y-m-d H:i:s");
+            $postInfo->user_id = $user_id;
+            $create = $postInfo->create();
+            if($create)
             {
-                $return = ['result'=>false,'data'=>['msg'=>"输入的内容有点少哦"]];
+                $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
             }
             else
             {
-                //初始化数据
-                $postInfo = new \HJ\Posts();
-                $postInfo->list_id = $listInfo['list_id'];
-                $postInfo->company_id = $listInfo['company_id'];
-                $postInfo->content = trim(htmlspecialchars($detail['comment']));
-                $postInfo->source = json_encode($uploadedFiles);
-                $postInfo->create_time = $postInfo->update_time = date("Y-m-d H:i:s");
-                $postInfo->user_id = $user_id;
-                $create = $postInfo->create();
-                if($create)
-                {
-                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
-                }
-                else
-                {
-                    $return = ['result'=>false,'msg'=>"发布失败"];
-                }
+                $return = ['result'=>false,'msg'=>"发布失败"];
             }
-
         }
         return $return;
     }

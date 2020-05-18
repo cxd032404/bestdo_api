@@ -2,13 +2,17 @@
 class UploadService extends BaseService
 {
 	private $msg = 'success';
-
+    private $file_type = ['video'=>['mp4'],'pic'=>['jpg','jpeg','png','bmp']];
+    public function getFileTypeList()
+    {
+        return $this->file_type();
+    }
     //从post中上传文件
     //keys：页面元素的key   a.b.c形式
     //exts：扩展名列表
     //max_size：最大文件尺寸
     //min_size：最小文件尺寸
-	public function getUploadedFile($keys = ['upload_img'],$exts = [],$max_size=0,$min_size=0)
+	public function getUploadedFile($keys = ['upload_files'],$exts = [],$max_size=0,$min_size=0)
     {
         $upload = [];
         foreach($keys as $k => $v)
@@ -40,17 +44,35 @@ class UploadService extends BaseService
                 }
                 if($pass==0)
                 {
+                    $type = self::getFileType($file->getExtension());
+                    if($type)
+                    {
+                        $target = ROOT_PATH.'/upload/'.$type.'/'.$file->getName();
+                        $upload[$type] = ($upload[$type]??0)+1;
+                        $k = $type.'.'.$upload[$type];
+                    }
                     $target = ROOT_PATH.'/upload/'.$file->getName();
                     $move = $file->moveTo($target);
                     if($move)
                     {
-                        $uploadedFile[$file->getKey()] = ['root'=>$target,'file'=>$file->getName()];
+                        $uploadedFile[$k] = ['root'=>$target,'file'=>$file->getName(),'type'=>$type];
                     }
                 }
             }
             $upload = (new AliyunService())->upload2Oss($uploadedFile);
         }
-        return $upload;
+        $return = [];
+        foreach($this->file_type as $type => $extList)
+        {
+            foreach($upload as $name => $root)
+            {
+                if(substr($name,0,strlen($type))==$type)
+                {
+                    $return["upload_".$name] = $root;
+                }
+            }
+        }
+        return $return;
     }
     private function checkKeys($key,$keys)
     {
@@ -85,5 +107,17 @@ class UploadService extends BaseService
             return false;
         }
         return true;
+    }
+    public function getFileType($ext)
+    {
+        $typeList = $this->file_type;
+        foreach($this->file_type as $type => $extList)
+        {
+            if(in_array($ext,$extList))
+            {
+                return $type;
+            }
+        }
+        return false;
     }
 }
