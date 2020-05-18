@@ -15,4 +15,15 @@ class ListService extends BaseService
                 "columns" => $columns
             ]);
     }
+    //根据id获取列表信息
+    //$list_id：列表id
+    //cloumns：数据库的字段列表
+    public function getListByActivity($activity_id,$columns = "list_id,company_id,detail")
+    {
+        return (new ListModel())->find(
+            [
+                "activity_id = $activity_id",
+                "columns" => $columns
+            ]);
+    }
 }

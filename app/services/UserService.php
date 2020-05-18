@@ -44,6 +44,8 @@ class UserService extends BaseService
         "posts_remove_error"=>"取消点赞失败！",
         "posts_kudos_update_error"=>"点赞记录修改失败！",
         "manager_id_error"=>"后台用户id无效！",
+        "manager_id_invalid"=>"后台用户id无效,无对应用户信息！",
+        "activity_list_error"=>"您已提交过本次活动作品，不可重复提交！",
 
         "sendcode_invalid"=>"验证码已失效，请重新发送！",
         "user_token_invalid"=>"用户token已失效，请登录！",
@@ -357,7 +359,7 @@ class UserService extends BaseService
                     'order'=>'id desc'
                 ]);
                 if(isset($activitysign_info->id)){
-                    $return['msg']  = $this->msgList['activity_signin'];
+                    $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[]];
                 }else{
                     //添加用户
                     $useractivitysign = new UserActivitySign();
@@ -565,7 +567,8 @@ class UserService extends BaseService
     public function getDecrypt()
     {
         $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
-        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
+        $user_token = $data = $this->request->get("UserToken")??$this->request->getHeader('UserToken');
+        $user_token = $user_token?preg_replace('# #','',$user_token):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
         if($user_info){
@@ -582,8 +585,11 @@ class UserService extends BaseService
     //用户token解密
     public function verifyToken($company="",$page_sign="")
     {
+        //$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImp0aSI6IjNmMmc1N2E5MmFhIn0.eyJpc3MiOiJodHRwOlwvXC9hZG1pbmFwaS5weWcuY29tIiwiYXVkIjoiaHR0cDpcL1wvd3d3LnB5Zy5jb20iLCJqdGkiOiIzZjJnNTdhOTJhYSIsImlhdCI6MTU4OTcwMzcyOCwibmJmIjoxNTg5NzAzNzI3LCJleHAiOjE1ODk3OTAxMjgsImRhdGEiOiJ7XCJ1c2VyX2lkXCI6XCIxMTg3OVwiLFwidXNlcm5hbWVcIjpcIjE3MDgyMTcwNzg3XCIsXCJuaWNrX25hbWVcIjpcImFzZHNhZHNhZFwiLFwidHJ1ZV9uYW1lXCI6XCJ0cnllXCIsXCJ1c2VyX2ltZ1wiOlwiXCIsXCJtb2JpbGVcIjpcIlwiLFwiY29tcGFueV9pZFwiOlwiM1wiLFwiY29tcGFueV9uYW1lXCI6XCJcIixcIndvcmtlcl9pZFwiOlwiXCIsXCJsYXN0X2xvZ2luX3RpbWVcIjpcIjIwMjAtMDQtMjYgMTM6NTI6NTlcIixcIm1hbmFnZXJfaWRcIjpcIjJcIixcImV4cGlyZV90aW1lXCI6MTU5MDMwODUyOH0ifQ.UeTj-2VTftdshJQjYq08C5tFH3cLqQMJGXmW79Bp_6A";
         $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>[]];
-        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
+        $user_token = $data = $this->request->get("UserToken")??$this->request->getHeader('UserToken');
+        //$user_token = $token;
+        $user_token = $user_token?preg_replace('# #','',$user_token):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
         if(!$user_info || ($user_info && json_decode($user_info)->expire_time<time())){
@@ -592,15 +598,16 @@ class UserService extends BaseService
                 $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
             }
         }
+        else
+        {
+            $return['data']  = json_decode($user_info,true);
+        }
         return $return;
     }
 
     //后台获取用户token
-    public function createTokenForManager(){
+    public function createTokenForManager($manager_id){
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
-        //接收参数并格式化
-        $data = $this->request->get();
-        $manager_id = isset($data['manager_id'])?preg_replace('# #','',$data['manager_id']):0;
         if($manager_id==0){
             $return['msg']  = $this->msgList['manager_id_error'];
         }else{
@@ -608,8 +615,8 @@ class UserService extends BaseService
                 "manager_id=:manager_id:",
                 'bind'=>['manager_id'=>$manager_id], 'order'=>'user_id desc'
             ]);
-            if(!isset($userinfo->manager_id)){
-                $return['msg']  = $this->msgList['manager_id_error'];
+            if(!isset($userinfo->user_id)){
+                $return['msg']  = $this->msgList['manager_id_invalid'];
             }else{
                 $tokeninfo = $this->getToken($userinfo->user_id);
                 $return  = ['result'=>1, 'msg'=>$this->msgList['token_for_manager_success'], 'code'=>200, 'data'=>['user_token'=>$tokeninfo['token']]];
@@ -618,23 +625,6 @@ class UserService extends BaseService
         return $return;
     }
 
-    //检测list提交次数
-    public function checkList()
-    {
-        $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
-        $user_token = $this->request->getHeader('UserToken')?preg_replace('# #','',$this->request->getHeader('UserToken')):"";
-        $oJwt = new ThirdJwt();
-        $user_info = $oJwt::getUserId($user_token);
-        if($user_info){
-            $user_info = json_decode($user_info);
-            if($user_info->expire_time<time()){
-                $return['msg'] = $this->msgList['user_token_invalid'];
-            }else{
-                $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>['user_info'=>$user_info]];
-            }
-        }
-        return $return;
-    }
 
 
 	

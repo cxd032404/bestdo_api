@@ -7,7 +7,7 @@ class PageService extends BaseService
 
     //根据页面标示获取页面信息
     //$page_sign：页面标示
-    public function getPageInfo($company_id,$page_sign,$params = "")
+    public function getPageInfo($company_id,$page_sign,$params = "",$user_info)
 	{
 	    //获取页面信息
 	    $pageInfo = $this->getPageBySign($company_id,$page_sign);
@@ -41,7 +41,7 @@ class PageService extends BaseService
                     }
                     //获取列表
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,list_type");
-                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],"*","post_id DESC",$this->getFromParams($params,"start",30),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],0,"*","post_id DESC",$this->getFromParams($params,"start",30),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                     foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
                     {
                         $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
@@ -52,7 +52,7 @@ class PageService extends BaseService
                         }
                     }
                 }
-                if($elementDetail['element_type'] == "slideNavi")
+                elseif($elementDetail['element_type'] == "slideNavi")
                 {
                     if($pageElementList[$key]['detail']['source_from']=="from_vote")
                     {
@@ -60,27 +60,79 @@ class PageService extends BaseService
                         $voteInfo['detail'] = json_decode($voteInfo['detail'],true);
                         $pageElementList[$key]['detail']['vote_option'] = $voteInfo['detail'];
                     }
-                    //滑动导航数据转化
-                    $navList = [];$i=0;
-                    foreach ($pageElementList[$key]['detail']['jump_urls'] as $navkey=>$nacvalue) {
-                        $navList[$i]['name'] = $navkey;
-                        $nav_type = explode('#',str_replace('"', '', $nacvalue));
-                        $navList[$i]['url'] = reset($nav_type);
-                        $navList[$i]['type'] = explode('.',str_replace('"', '', end($nav_type)));
-                        $i++;
+                    if(isset($pageElementList[$key]['detail']['jump_urls']))
+                    {
+                        //滑动导航数据转化
+                        $navList = [];
+                        foreach ($pageElementList[$key]['detail']['jump_urls'] as $navkey=>$nacvalue) {
+                            $data['name'] = $navkey;
+                            $nav_type = explode('#',str_replace('"', '', $nacvalue));
+                            $data['url'] = reset($nav_type);
+                            $data['type'] = explode('.',str_replace('"', '', end($nav_type)));
+                            $navList[] = $data;
+                        }
+                        $pageElementList[$key]['detail']['jump_urls'] = $navList;
                     }
-                    $pageElementList[$key]['detail']['jump_urls'] = $navList;
+
                 }
-                if($elementDetail['element_type'] == "companyInfo")
+                elseif($elementDetail['element_type'] == "companyInfo")
                 {
-                    $pageElementList[$key]['company_info'] = (new CompanyService())->getCompanyInfo($company_id)->toArray();
+                    $pageElementList[$key]['detail'] = (new CompanyService())->getCompanyInfo($company_id)->toArray();
                 }
-                if($elementDetail['element_type'] == "userInfo")
+                elseif($elementDetail['element_type'] == "userInfo")
                 {
-                    $returnUserInfo  = (new UserService)->getDecrypt();
-                    if($returnUserInfo['result']==1){
-                        $pageElementList[$key]['detail']['user_info'] = $returnUserInfo['data']['user_info']??"";
+                    $pageElementList[$key]['detail']['user_info'] = $user_info;
+                }
+                elseif($elementDetail['element_type'] == "post")
+                {
+                    $pageElementList[$key]['detail']['available'] = 1;
+
+                    if(isset($pageElementList[$key]['detail']['list_id']))
+                    {
+                        $list_id = $pageElementList[$key]['detail']['list_id'];
                     }
+                    else
+                    {
+                        $list_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
+                    }
+                    $pageElementList[$key]['detail']['available'] = 1;
+                    //获取列表信息
+                    $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id");
+                    //指定比赛
+                    if($listInfo['activity_id']>0)
+                    {
+                        $list = (new ListService())->getListByActivity($listInfo['activity_id']);
+                        if(count($list)>0)
+                        {
+                            $listIds = array_column($list->toArray(),"list_id");
+                        }
+                        $postExists = (new PostsService())->getPostsList($listIds,$user_info['data']['user_id'],"post_id","post_id DESC",0,1,1);
+                        //已经提交过
+                        if($postExists['count']>0)
+                        {
+                            $pageElementList[$key]['detail']['available'] = 0;
+                        }
+                    }
+
+
+//                    //获取列表信息
+//                    $listInfo = (new ListService())->getListInfo($pageElementList[$key]['detail']['list_id'],"list_id,activity_id");
+//                    //指定比赛
+//                    if($listInfo['activity_id']>0)
+//                    {
+//                        $list = (new ListService())->getListByActivity($listInfo['activity_id']);
+//                        if(count($list)>0)
+//                        {
+//                            $listIds = array_column($list->toArray(),"list_id");
+//                        }
+//                        $postExists = (new PostsService())->getPostsList($listIds,$user_info['data']['user_id'],"post_id","post_id DESC",0,1,1);
+//                        //已经提交过
+//                        if($postExists['count']>0)
+//                        {
+//                            $pageElementList[$key]['detail']['available'] = 0;
+//                        }
+//                    }
+
                 }
             }
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));
