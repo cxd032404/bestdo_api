@@ -94,22 +94,17 @@ class PageService extends BaseService
                     }
                     $pageElementList[$key]['detail']['available'] = 1;
                     //获取列表信息
-                    $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id");
-                    //指定比赛
-                    if($listInfo['activity_id']>0)
+                    $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
+                    //数据解包
+                    $listInfo['detail'] = json_decode($listInfo['detail'],true);
+                    $postExists = (new PostsService())->getPostsList($list_id,$user_info['data']['user_id'],"post_id","post_id DESC",0,1,1);
+                    //已经提交过
+                    if($postExists['count']>0)
                     {
-                        $list = (new ListService())->getListByActivity($listInfo['activity_id']);
-                        if(count($list)>0)
-                        {
-                            $listIds = array_column($list->toArray(),"list_id");
-                        }
-                        $postExists = (new PostsService())->getPostsList($listIds,$user_info['data']['user_id'],"post_id","post_id DESC",0,1,1);
-                        //已经提交过
-                        if($postExists['count']>0)
-                        {
-                            $pageElementList[$key]['detail']['available'] = 0;
-                        }
+                        $pageElementList[$key]['detail']['available'] = 0;
                     }
+                    $afterActions = (new ListService())->processAfterPostAction($listInfo['list_id'],$user_info['data']['user_id'],$listInfo['detail']);
+                    $pageElementList[$key]['detail']['after_action'] = $afterActions;
                 }
                 elseif($elementDetail['element_type'] == "postsDetail")
                 {
