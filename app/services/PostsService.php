@@ -12,7 +12,7 @@ class PostsService extends BaseService
     {
         $oUpload = new UploadService();
         //获取列表信息
-        $listInfo = (new ListService())->getListInfo($list_id,"list_id,detail")->toArray();
+        $listInfo = (new ListService())->getListInfo($list_id,"list_id,company_id,detail")->toArray();
         $listInfo['detail'] = json_decode($listInfo['detail'],true);
         if(!isset($listInfo['list_id']))
         {
@@ -34,7 +34,7 @@ class PostsService extends BaseService
                 $postInfo->list_id = $listInfo['list_id'];
                 $postInfo->company_id = $listInfo['company_id'];
                 $postInfo->content = trim(htmlspecialchars($detail['comment']));
-                $postInfo->source = json_encode($uploadedFiles);
+                $postInfo->source = json_encode($upload);
                 $postInfo->create_time = $postInfo->update_time = date("Y-m-d H:i:s");
                 $postInfo->user_id = $user_id;
                 $create = $postInfo->create();
