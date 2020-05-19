@@ -29,7 +29,6 @@ class ListService extends BaseService
 
     public function processAfterPostAction($list_id,$user_id,$detail)
     {
-        print_R($detail);
         $return = ['after_url'=>'','params'=>[]];
         $detail['after_action'] = $detail['after_action']??0;
         $detail['after_url'] = str_replace("#list_id#",$list_id,$detail['after_url']);
