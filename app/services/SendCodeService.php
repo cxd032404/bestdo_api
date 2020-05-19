@@ -36,12 +36,16 @@ class SendCodeService extends BaseService
     //注册发送短信验证码方法
     public function sendRegisterCode($mobile,$code_name)
     {
-        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>404];
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         $register_code = $this->redis->get($code_name.$mobile);
         $common = new Common();
         if(!isset($mobile) || !$common->check_mobile($mobile)){
             $return['msg']  = $this->msgList['mobile_error'];
         }else if($register_code){//判断redis缓存内是否存在记录，如存在则返回成功，不存在调用发送代码发送验证码
+            $return['msg']  = $this->msgList['sendcode_many'];
+        }else if(!$this->checkoutSendHour($mobile)){//判断验证码每小时内限制
+            $return['msg']  = $this->msgList['sendcode_many'];
+        }else if(!$this->checkoutSendDay($mobile)){//判断验证码每天内限制
             $return['msg']  = $this->msgList['sendcode_many'];
         }else{
             $data['phoneNumber'] = $mobile;//获取目标手机号
@@ -71,12 +75,16 @@ class SendCodeService extends BaseService
     //登录发送短信验证码方法
     public function sendLoginCode($mobile,$code_name)
     {
-        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>404];
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         $login_code = $this->redis->get($code_name.$mobile);
         $common = new Common();
         if(!isset($mobile) || !$common->check_mobile($mobile)){
             $return['msg']  = $this->msgList['mobile_error'];
         }else if($login_code){//判断redis缓存内是否存在记录，如存在则返回成功，不存在调用发送代码发送验证码
+            $return['msg']  = $this->msgList['sendcode_many'];
+        }else if(!$this->checkoutSendHour($mobile)){//判断验证码每小时内限制
+            $return['msg']  = $this->msgList['sendcode_many'];
+        }else if(!$this->checkoutSendDay($mobile)){//判断验证码每天内限制
             $return['msg']  = $this->msgList['sendcode_many'];
         }else{
             $data['phoneNumber'] = $mobile;//获取目标手机号
@@ -106,12 +114,16 @@ class SendCodeService extends BaseService
     //忘记密码发送短信验证码方法
     public function sendForgetCode($mobile,$code_name)
     {
-        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>404];
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         $forget_code = $this->redis->get($code_name.$mobile);
         $common = new Common();
         if(!isset($mobile) || !$common->check_mobile($mobile)){
             $return['msg']  = $this->msgList['mobile_error'];
         }else if($forget_code){//判断redis缓存内是否存在记录，如存在则返回成功，不存在调用发送代码发送验证码
+            $return['msg']  = $this->msgList['sendcode_many'];
+        }else if(!$this->checkoutSendHour($mobile)){//判断验证码每小时内限制
+            $return['msg']  = $this->msgList['sendcode_many'];
+        }else if(!$this->checkoutSendDay($mobile)){//判断验证码每天内限制
             $return['msg']  = $this->msgList['sendcode_many'];
         }else{
             $data['phoneNumber'] = $mobile;//获取目标手机号
@@ -138,8 +150,29 @@ class SendCodeService extends BaseService
         return $return;
     }
 
+    //限制短信发送次数
+    public function checkoutSendHour($mobile){
+        $sendcode_hour = SendCode::count([
+            "to=:to: and type='mobile' and create_time>:starttime:",
+            'bind'=>['to'=>$mobile,'starttime'=>date('Y-m-d H:i:s',time()-3600)]
+        ]);
+        if($sendcode_hour>=4){
+            return false;
+        }
+        return true;
+    }
 
-
+    //限制短信发送次数
+    public function checkoutSendDay($mobile){
+        $sendcode_day = SendCode::count([
+            "to=:to: and type='mobile' and create_time>:starttime:",
+            'bind'=>['to'=>$mobile,'starttime'=>date('Y-m-d H:i:s',time()-3600*24)]
+        ]);
+        if($sendcode_day>=10){
+            return false;
+        }
+        return true;
+    }
 
 
 

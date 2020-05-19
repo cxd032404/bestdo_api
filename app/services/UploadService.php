@@ -2,13 +2,21 @@
 class UploadService extends BaseService
 {
 	private $msg = 'success';
-
+    private $file_type = ['video'=>['list'=>['mp4'],'name'=>"视频"],
+        'pic'=>['list'=>['jpg','jpeg','png','bmp'],'name'=>"图片"],
+        'txt'=>['list'=>['txt','doc'],'name'=>"文本"],
+        ];
+    public function getFileTypeList()
+    {
+        return $this->file_type;
+    }
     //从post中上传文件
     //keys：页面元素的key   a.b.c形式
     //exts：扩展名列表
     //max_size：最大文件尺寸
     //min_size：最小文件尺寸
-	public function getUploadedFile($keys = ['upload_img'],$exts = [],$max_size=0,$min_size=0)
+    //limit：上传文件数量限制
+	public function getUploadedFile($keys = ['upload_files'],$exts = [],$max_size=0,$min_size=0,$limit)
     {
         $upload = [];
         foreach($keys as $k => $v)
@@ -40,17 +48,32 @@ class UploadService extends BaseService
                 }
                 if($pass==0)
                 {
+                    $type = self::getFileType($file->getExtension());
+                    $l = $limit[$type]??0;
+                    if($l<=0 && isset($this->file_type[$type]))
+                    {
+                        return ['result'=>0,'name'=>$this->file_type[$type]['name']];
+                    }
+                    else{
+                        $limit[$type]--;
+                    }
+                    if($type)
+                    {
+                        $target = ROOT_PATH.'/upload/'.$type.'/'.$file->getName();
+                        $upload[$type] = ($upload[$type]??0)+1;
+                        $k = 'upload_'.$type.'.'.$upload[$type];
+                    }
                     $target = ROOT_PATH.'/upload/'.$file->getName();
                     $move = $file->moveTo($target);
                     if($move)
                     {
-                        $uploadedFile[$file->getKey()] = ['root'=>$target,'file'=>$file->getName()];
+                        $uploadedFile[$k] = ['root'=>$target,'file'=>$file->getName(),'type'=>$type];
                     }
                 }
             }
             $upload = (new AliyunService())->upload2Oss($uploadedFile);
         }
-        return $upload;
+        return $this->sortUpload($upload);
     }
     private function checkKeys($key,$keys)
     {
@@ -85,5 +108,76 @@ class UploadService extends BaseService
             return false;
         }
         return true;
+    }
+    public function getFileType($ext)
+    {
+        foreach($this->file_type as $type => $type_info)
+        {
+            if(in_array($ext,$type_info['list']))
+            {
+                return $type;
+            }
+        }
+        return false;
+    }
+    public function sortUpload($fileArr)
+    {
+        $fileList = [];$return = [];
+        foreach($this->file_type as $type => $type_info)
+        {
+            foreach($fileArr as $name => $path)
+            {
+                $t = explode(".",$name);
+                if($t['0'] == "upload_".$type)
+                {
+                    $fileList[$t['0']][count($fileList[$t['0']]??[])+1] = $path;
+                }
+            }
+            foreach($fileList["upload_".$type]??[] as $k => $path)
+            {
+                $return["upload_".$type.".".$k] = $path;
+            }
+        }
+        return $return;
+    }
+    public function parthSource($sourceList)
+    {
+        $return = [];
+        foreach($sourceList as $name => $path)
+        {
+            foreach($this->file_type as $type => $type_info)
+            {
+                $t = explode(".",$path);
+                $ext = $t[count($t)-1];
+                if(in_array($ext,$type_info['list']))
+                {
+                    $fileArr = ['path'=>$path,'name'=>$name,'type'=>$type,'suffix'=>($type=="video")?"?x-oss-process=video/snapshot,t_1000,f_jpg,w_300,h_300,m_fast":""];
+                    $return[] = $fileArr;
+                }
+            }
+        }
+        return $return;
+    }
+    public function getAvailableSoureCount($current,$limit)
+    {
+        $return = [];
+        foreach($current as $name => $file)
+        {
+            $t = explode(".",$file);
+            $ext = $t[count($t)-1];
+            foreach($this->file_type as $type => $type_info)
+            {
+                if(in_array($ext,$type_info['list']))
+                {
+                    $return[$type] = ($return[$type]??0)+1;
+                }
+                break;
+            }
+        }
+        foreach($limit['limit']??[] as $type => $count)
+        {
+            $limit['limit'][$type] = $count-($return[$type]??0);
+        }
+        return $limit['limit'];
     }
 }

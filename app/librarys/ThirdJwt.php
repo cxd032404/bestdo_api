@@ -70,7 +70,7 @@ class ThirdJwt
             $data->setIssuer(self::$_config['issuer']);//验证的签发人
             $data->setAudience(self::$_config['audience']);//验证的接收人
             $data->setId(self::$_config['id']);//验证token标识
-            if (!$token->validate($data)) {echo 1111;
+            if (!$token->validate($data)) {
                 //token验证失败
                 return $user_info;
             }

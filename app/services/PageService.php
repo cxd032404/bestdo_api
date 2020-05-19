@@ -7,7 +7,7 @@ class PageService extends BaseService
 
     //根据页面标示获取页面信息
     //$page_sign：页面标示
-    public function getPageInfo($company_id,$page_sign,$params = "")
+    public function getPageInfo($company_id,$page_sign,$params = "",$user_info)
 	{
 	    //获取页面信息
 	    $pageInfo = $this->getPageBySign($company_id,$page_sign);
@@ -22,27 +22,97 @@ class PageService extends BaseService
             //转数组
             $pageInfo = $pageInfo->toArray();
             //获取页面元素详情
-	        $pageElementList  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
-	        //数组解包
+	        $pageElementList  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_name,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
 	        foreach($pageElementList as $key => $elementDetail)
             {
-                $elementDetail['detail'] = json_decode($elementDetail['detail'],true);
+                //数组解包
+                $pageElementList[$key]['detail'] = json_decode($elementDetail['detail'],true);
+                //列表
                 if($elementDetail['element_type'] == "list")
                 {
-                    if(isset($elementDetail['detail']['list_id']))
+                    //指定数据
+                    if(isset($pageElementList[$key]['detail']['list_id']))
                     {
-                        $listInfo = (new ListService())->getListInfo($elementDetail['detail']['list_id'],"list_id,list_type");
-                        $pageElementList[$key]['data'] = (new PostsService())->getPostsList($elementDetail['detail']['list_id'],"*","post_id DESC",$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
-                        foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
-                        {
-                            $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
-                            $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
-                            if($pageElementList[$key]['data']['data'][$k]['list_type'] == "video")
-                            {
-                                $pageElementList[$key]['data']['data'][$k]['video_suffix'] = "?x-oss-process=video/snapshot,t_1000,f_jpg,w_300,h_300,m_fast";
-                            }
-                        }
+                        $list_id = $pageElementList[$key]['detail']['list_id'];
                     }
+                    else//页面获取
+                    {
+                        $list_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
+                    }
+                    //获取列表
+                    $listInfo = (new ListService())->getListInfo($list_id,"list_id,list_type");
+                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],0,"*","post_id DESC",$this->getFromParams($params,"start",30),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+                    foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
+                    {
+                        $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
+                        $pageElementList[$key]['data']['data'][$k]['source'] = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
+                        $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
+                    }
+                }
+                elseif($elementDetail['element_type'] == "slideNavi")
+                {
+                    if($pageElementList[$key]['detail']['source_from']=="from_vote")
+                    {
+                        $voteInfo = (new VoteService())->getVote($pageElementList[$key]['detail']['vote_id'])->toArray();
+                        $voteInfo['detail'] = json_decode($voteInfo['detail'],true);
+                        $pageElementList[$key]['detail']['vote_option'] = $voteInfo['detail'];
+                    }
+                    if(isset($pageElementList[$key]['detail']['jump_urls']))
+                    {
+                        //滑动导航数据转化
+                        $navList = [];
+                        foreach ($pageElementList[$key]['detail']['jump_urls'] as $navkey=>$nacvalue) {
+                            $data['name'] = $navkey;
+                            $nav_type = explode('#',str_replace('"', '', $nacvalue));
+                            $data['url'] = reset($nav_type);
+                            $data['type'] = explode('.',str_replace('"', '', end($nav_type)));
+                            $navList[] = $data;
+                        }
+                        $pageElementList[$key]['detail']['jump_urls'] = $navList;
+                    }
+
+                }
+                elseif($elementDetail['element_type'] == "companyInfo")
+                {
+                    $pageElementList[$key]['detail'] = (new CompanyService())->getCompanyInfo($company_id)->toArray();
+                }
+                elseif($elementDetail['element_type'] == "userInfo")
+                {
+                    $pageElementList[$key]['detail']['user_info'] = $user_info;
+                }
+                elseif($elementDetail['element_type'] == "post")
+                {
+                    $pageElementList[$key]['detail']['available'] = 1;
+
+                    if(isset($pageElementList[$key]['detail']['list_id']))
+                    {
+                        $list_id = $pageElementList[$key]['detail']['list_id'];
+                    }
+                    else
+                    {
+                        $list_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
+                    }
+                    $pageElementList[$key]['detail']['available'] = 1;
+                    //获取列表信息
+                    $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
+                    //数据解包
+                    $listInfo['detail'] = json_decode($listInfo['detail'],true);
+                    $postExists = (new PostsService())->getPostsList($list_id,$user_info['data']['user_id'],"post_id","post_id DESC",0,1,1);
+                    //已经提交过
+                    if($postExists['count']>0)
+                    {
+                        $pageElementList[$key]['detail']['available'] = 0;
+                    }
+                    $afterActions = (new ListService())->processAfterPostAction($listInfo['list_id'],$user_info['data']['user_id'],$listInfo['detail']);
+                    $pageElementList[$key]['detail']['after_action'] = $afterActions;
+                }
+                elseif($elementDetail['element_type'] == "postsDetail")
+                {
+                    $post_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
+                    $postsInfo = (new PostsService())->getPosts($post_id,"post_id,user_id,content,source,views,kudos,create_time,update_time")->toArray();
+                    $postsInfo['source'] = json_decode($postsInfo['source'],true);
+                    $postsInfo['source'] = (new UploadService())->parthSource($postsInfo['source']);
+                    $pageElementList[$key]['detail'] = $postsInfo;
                 }
             }
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));

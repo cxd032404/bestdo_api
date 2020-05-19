@@ -26,7 +26,7 @@ class BaseController extends Controller {
 	 * @param $dispatcher 分发器
 	 * @return void || bool
 	 */
-	public function beforeExecuteRoute($dispatcher) {
+	public function beforeExecuteRoute() {
 	    //echo '<h1>beforeExecuteRoute!</h1>\n';
 	}
 	/**
@@ -38,7 +38,6 @@ class BaseController extends Controller {
 	 * @return void || bool
 	 */
 	public function afterExecuteRoute() {
-
     	//echo '<h1>afterExecuteRoute!</h1>\n';
 	}
 	/**
@@ -169,7 +168,7 @@ class BaseController extends Controller {
 	public function json($data,$status_code=200) {
 		$result = json_encode($data);
 		$this -> response
-		-> setStatusCode($status_code, '')
+		//-> setStatusCode($status_code, '')
 		-> setContent($result) -> send();
 		exit;
 	}

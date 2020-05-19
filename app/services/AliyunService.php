@@ -16,7 +16,7 @@ class AliyunService extends BaseService
             if(!isset($file['error']) || $file['error'] == 0)
             {
                 $local_file = $file['root'];
-                $object = "public/xrace/images".$file['file'];
+                $object = "public/upload/".$file['type']."/".$file['file'];
                 try {
                     $res = $client->uploadFile($bucket, $object, $local_file);
                     $returnArr[$key] = $res['info']['url']??"";
