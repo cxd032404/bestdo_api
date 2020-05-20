@@ -50,6 +50,7 @@ class ListController extends BaseController
     public function source_removeAction()
     {
         $post_id = intval($this->request->getQuery('post_id')??0);
+        $remove = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
         if($post_id > 0)
         {
             $remove = (new PostsService())->removeSource(intval($post_id),trim($this->request->getQuery('sid')??""));
