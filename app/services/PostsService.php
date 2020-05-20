@@ -44,7 +44,7 @@ class PostsService extends BaseService
                 $create = $postInfo->create();
                 if($create)
                 {
-                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'source'=>array_keys($upload)]];
+                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'new_key'=>array_keys($upload)]];
                 }
                 else
                 {
@@ -111,7 +111,7 @@ class PostsService extends BaseService
 
                 if($update)
                 {
-                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id'],'source'=>$new_add]];
+                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id'],'new_key'=>$new_add]];
                 }
                 else
                 {
