@@ -8,7 +8,7 @@ class PostsService extends BaseService
 	//提交文章
     //list_id：列表ID
     //uploadedFiles：已经上传的资源
-	public function addPosts($list_id,$user_id,$detail)
+	public function addPosts($list_id,$user_id,$detail,$visible)
     {
         $oUpload = new UploadService();
         //获取列表信息
@@ -20,6 +20,7 @@ class PostsService extends BaseService
         }
         else
         {
+
             //计算可用的文件数量
             $count = $oUpload->getAvailableSoureCount([],$listInfo['detail']);
             $upload = $oUpload->getUploadedFile([],[],0,0,$count);
@@ -31,6 +32,9 @@ class PostsService extends BaseService
             {
                 //初始化数据
                 $postInfo = new \HJ\Posts();
+                if($visible>0){
+                    $postInfo->visible = 1;
+                }
                 $postInfo->list_id = $listInfo['list_id'];
                 $postInfo->company_id = $listInfo['company_id'];
                 $postInfo->content = trim(htmlspecialchars($detail['comment']));
@@ -40,7 +44,7 @@ class PostsService extends BaseService
                 $create = $postInfo->create();
                 if($create)
                 {
-                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
+                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'source'=>array_keys($upload)]];
                 }
                 else
                 {
@@ -53,7 +57,7 @@ class PostsService extends BaseService
     //提交更新文章
     //list_id：文章ID
     //uploadedFiles：已经上传的资源
-    public function updatePosts($post_id,$detail,$uploadedFiles)
+    public function updatePosts($post_id,$detail,$visible)
     {
         $oUpload = new UploadService();
         //获取列表信息
@@ -78,11 +82,27 @@ class PostsService extends BaseService
             }
             else
             {
-                foreach($uploadedFiles as $name => $file)
+                foreach($upload as $name => $file)
                 {
-                    $postInfo['source'][$name.count($uploadedFiles)] = $file;
+                    $postInfo['source'][$name.count($upload)] = $file;
+                }
+                if($visible>0){
+                    $postInfo['visible'] = 1;
                 }
                 $postInfo['source'] = $oUpload->sortUpload($postInfo['source']);
+                //查询当前提交的文件key值
+                $new_add = [];
+                foreach($upload as $name => $file)
+                {
+                    foreach(array_reverse($postInfo['source']) as $key => $file_2)
+                    {
+                        if($file == $file_2)
+                        {
+                            $new_add[] = $key;
+                            break;
+                        }
+                    }
+                }
                 $postInfo['source'] = json_encode($postInfo['source']);
                 $postInfo['content'] = trim(htmlspecialchars($detail['comment']));
                 $postInfo['update_time'] = date("Y-m-d H:i:s");
@@ -91,7 +111,7 @@ class PostsService extends BaseService
 
                 if($update)
                 {
-                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
+                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id'],'source'=>$new_add]];
                 }
                 else
                 {

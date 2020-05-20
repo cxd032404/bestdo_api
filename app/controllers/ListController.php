@@ -26,16 +26,17 @@ class ListController extends BaseController
         if($tokenInfo['result']!=1){
             return $this->failure(['jump_url'=>'/login'],$tokenInfo['msg'],$tokenInfo['code']);
         }
+        $visible = intval($this->request->getPost('visible')??0);
         $list_id = intval($this->request->getPost('list_id')??0);
         $post_id = intval($this->request->getPost('post_id')??0);
         if($post_id > 0)
         {
-            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$this->request->getPost('detail'));
+            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$this->request->getPost('detail'),$visible);
         }
         else
         {
             $listInfo  = (new ListService())->getListInfo(intval($this->request->getPost('list_id')));
-            $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')),$tokenInfo['data']['user_info']->user_id,$this->request->getPost('detail'));
+            $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')),$tokenInfo['data']['user_info']->user_id,$this->request->getPost('detail'),$visible);
         }
         if($post['result'])
         {
