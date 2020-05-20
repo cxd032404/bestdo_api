@@ -28,23 +28,37 @@ $config = [
     ],
     'hj_config' => [ // 配置库
         'adapter'  => 'Mysql',
-        'host'     => 'rm-uf68e0u64uqojk4p1.mysql.rds.aliyuncs.com',
-        'username' => 'hj_cxd',
-        'password' => '&P5m!GWdZ6K@P2lN',
+        'host'     => '192.168.31.155',
+        'username' => 'mbtest',
+        'password' => 'Bestdo123',
         'dbname'   => 'hj_config'
     ],
     'hj_user' => [ // 配置库
         'adapter'  => 'Mysql',
-        'host'     => 'rm-uf68e0u64uqojk4p1.mysql.rds.aliyuncs.com',
-        'username' => 'hj_cxd',
-        'password' => '&P5m!GWdZ6K@P2lN',
+        'host'     => '192.168.31.155',
+        'username' => 'mbtest',
+        'password' => 'Bestdo123',
         'dbname'   => 'hj_user'
+    ],
+    'database' => [ // 测试库1
+        'adapter'  => 'Mysql',
+        'host'     => '127.0.0.1',
+        'username' => 'root',
+        'password' => 'root',
+        'dbname'   => 'swoole_test'
+    ],
+    'database_1' => [ // 测试库2
+        'adapter'  => 'Mysql',
+        'host'     => '127.0.0.1',
+        'username' => 'root',
+        'password' => 'root',
+        'dbname'   => 'swoole_test2'
     ],
     'redis' => [
         'adapter'       => 'Redis',
-        'host'          => 'r-uf6nx1m4r5ed4djrcg.redis.rds.aliyuncs.com:6379',
+        'host'          => '127.0.0.1:6379',
         //'port'   		=> 6379,
-        'auth_password' => 'unionfit@2020',
+        'auth_password' => '123456',
         "persistent"    => false,
         'lifttime'      => 86400
     ],
