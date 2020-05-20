@@ -54,6 +54,20 @@ class PageService extends BaseService
                             'order'=>'user_id desc'
                         ]);
                         $pageElementList[$key]['data']['data'][$k]['user_info'] = $userInfo;
+                        //获取用户今日是否可以点赞
+                        $postskudos_info = PostsKudos::findFirst([
+                            "sender_id=:sender_id: and post_id=:post_id: and is_del=1 and create_time between :starttime: AND :endtime: ",
+                            'bind'=>[
+                                'sender_id'=>$user_info['data']['user_id'],
+                                'post_id'=>$pageElementList[$key]['data']['data'][$k]['post_id'],
+                                'starttime'=>date('Y-m-d').' 00:00:00',
+                                'endtime'=>date('Y-m-d').' 23:59:59',
+                            ]
+                        ]);
+                        $pageElementList[$key]['data']['data'][$k]['is_kudos'] = 0;
+                        if(isset($postskudos_info->id)){
+                            $pageElementList[$key]['data']['data'][$k]['is_kudos'] = 1;
+                        }
                     }
                 }
                 elseif($elementDetail['element_type'] == "slideNavi")

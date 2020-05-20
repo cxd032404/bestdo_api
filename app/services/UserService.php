@@ -66,8 +66,8 @@ class UserService extends BaseService
         "mobile_prohibit"=>"手机号已被禁用！",
         "activity_signin"=>"您已报名本次活动，无法重复报名，请选择正确的活动！",
         "activity_expire"=>"当前时间不在报名时间内！",
-        "posts_kudos_exist"=>"您已点赞过此内容，不可重复点赞！",
-        "posts_kudos_noexist"=>"您尚未点赞过此内容，不可取消点赞！",
+        "posts_kudos_exist"=>"您今天已点赞过此内容，不可重复点赞！",
+        "posts_kudos_noexist"=>"您今天尚未点赞过此内容，不可取消点赞！",
 
         "activity_not_no"=>"活动尚未开启，请耐心等待！",
         "activity_ended"=>"活动已结束，不可报名！",
@@ -353,22 +353,22 @@ class UserService extends BaseService
             }else if(time()<strtotime($configactivity->apply_start_time) || time()>strtotime($configactivity->apply_end_time)){
                 $return['msg']  = $this->msgList['activity_expire'];
             }else{
-                $activitysign_info = UserActivitySign::findFirst([
+                $activitylog_info = UserActivityLog::findFirst([
                     "activity_id=:activity_id: and user_id=:user_id:",
                     'bind'=>['activity_id'=>$map['activity_id'], 'user_id'=>$user_id],
                     'order'=>'id desc'
                 ]);
-                if(isset($activitysign_info->id)){
+                if(isset($activitylog_info->id)){
                     $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[json_decode($configactivity['detail'])]];
                 }else{
                     //添加用户
-                    $useractivitysign = new UserActivitySign();
-                    $useractivitysign->user_id = $user_id;
-                    $useractivitysign->activity_id = $map['activity_id'];
-                    $useractivitysign->user_name = $map['user_name'];
-                    $useractivitysign->mobile = $map['mobile'];
-                    $useractivitysign->department = $map['department'];
-                    if ($useractivitysign->create() === false) {
+                    $useractivitylog = new UserActivityLog();
+                    $useractivitylog->user_id = $user_id;
+                    $useractivitylog->activity_id = $map['activity_id'];
+                    $useractivitylog->user_name = $map['user_name'];
+                    $useractivitylog->mobile = $map['mobile'];
+                    $useractivitylog->department = $map['department'];
+                    if ($useractivitylog->create() === false) {
                         $return['msg']  = $this->msgList['activity_error'];
                     }else{
                         $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[json_decode($configactivity['detail'])]];
@@ -418,8 +418,13 @@ class UserService extends BaseService
             }
             //查询点赞记录
             $postskudos_info = PostsKudos::findFirst([
-                "sender_id=:sender_id: and post_id=:post_id: and is_del=1",
-                'bind'=>['sender_id'=>$sender_id, 'post_id'=>$post_id]
+                "sender_id=:sender_id: and post_id=:post_id: and is_del=1 and create_time between :starttime: AND :endtime: ",
+                'bind'=>[
+                    'sender_id'=>$sender_id,
+                    'post_id'=>$post_id,
+                    'starttime'=>date('Y-m-d').' 00:00:00',
+                    'endtime'=>date('Y-m-d').' 23:59:59',
+                ]
             ]);
             if(isset($postskudos_info->id)){
                 $transaction->rollback($this->msgList['posts_kudos_exist']);
@@ -440,7 +445,7 @@ class UserService extends BaseService
             if($postskudos->save() === false){
                 $transaction->rollback($this->msgList['posts_kudos_error']);
             }
-            $return  = ['result'=>1, 'msg'=>$this->msgList['posts_success'], 'code'=>200, 'data'=>[]];
+            $return  = ['result'=>1, 'msg'=>$this->msgList['posts_success'], 'code'=>200, 'data'=>['kudos'=>intval($posts->kudos)]];
             $transaction->commit($return);
         } catch (TxFailed $e) {
             // 捕获失败回滚的错误
@@ -485,7 +490,7 @@ class UserService extends BaseService
             if($postskudos->update() === false){
                 $transaction->rollback($this->msgList['posts_kudos_update_error']);
             }
-            $return  = ['result'=>1, 'msg'=>$this->msgList['posts_remove_success'], 'code'=>200, 'data'=>[]];
+            $return  = ['result'=>1, 'msg'=>$this->msgList['posts_remove_success'], 'code'=>200, 'data'=>['kudos'=>intval($posts->kudos)]];
             $transaction->commit($return);
         } catch (TxFailed $e) {
             // 捕获失败回滚的错误
