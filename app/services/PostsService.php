@@ -103,6 +103,7 @@ class PostsService extends BaseService
                         }
                     }
                 }
+                
                 $postInfo['source'] = json_encode($postInfo['source']);
                 $postInfo['content'] = trim(htmlspecialchars($detail['comment']));
                 $postInfo['update_time'] = date("Y-m-d H:i:s");
