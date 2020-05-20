@@ -47,7 +47,7 @@ class PageService extends BaseService
                         $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
                         $pageElementList[$key]['data']['data'][$k]['source'] = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
                         $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
-                        //获取列表作者信息
+                        //获取列表作者信息 
                         $userInfo = UserInfo::findFirst([
                             "user_id='".$pageElementList[$key]['data']['data'][$k]['user_id']."'",
                             'columns'=>'nick_name,true_name,user_img',
