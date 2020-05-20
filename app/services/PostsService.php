@@ -57,66 +57,69 @@ class PostsService extends BaseService
     //提交更新文章
     //list_id：文章ID
     //uploadedFiles：已经上传的资源
-    public function updatePosts($post_id,$detail,$visible)
+    public function updatePosts($post_id,$user_id,$detail,$visible)
     {
         $oUpload = new UploadService();
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,list_id,content,source,update_time")->toArray();
+        $postInfo = self::getPosts(intval($post_id),"post_id,user_id,list_id,content,source,update_time")->toArray();
         if(!isset($postInfo['post_id']))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
         }
         else
         {
-            //获取列表信息
-            $listInfo = (new ListService())->getListInfo($postInfo['list_id'],"list_id,detail")->toArray();
-            $listInfo['detail'] = json_decode($listInfo['detail'],true);
-            $postInfo['source'] = json_decode($postInfo['source'],true);
-            //计算可用的文件数量
-            $count = $oUpload->getAvailableSoureCount($postInfo['source'],$listInfo['detail']);
-            $upload = $oUpload->getUploadedFile([],[],0,0,$count);
-            //如果返回类型名称
-            if(isset($upload['name']))
+            if($postInfo['user_id']!=$user_id)
             {
-                $return = ['result'=>false,'data'=>['msg'=>"您所发布的".$upload['name']."数量已经超过限制，请重新提交"]];
-            }
-            else
-            {
-                foreach($upload as $name => $file)
+                $return = ['result'=>false,'data'=>['msg'=>"文章作者不匹配"]];
+            }else{
+                //获取列表信息
+                $listInfo = (new ListService())->getListInfo($postInfo['list_id'],"list_id,detail")->toArray();
+                $listInfo['detail'] = json_decode($listInfo['detail'],true);
+                $postInfo['source'] = json_decode($postInfo['source'],true);
+                //计算可用的文件数量
+                $count = $oUpload->getAvailableSoureCount($postInfo['source'],$listInfo['detail']);
+                $upload = $oUpload->getUploadedFile([],[],0,0,$count);
+                //如果返回类型名称
+                if(isset($upload['name']))
                 {
-                    $postInfo['source'][$name.count($upload)] = $file;
-                }
-                if($visible>0){
-                    $postInfo['visible'] = 1;
-                }
-                $postInfo['source'] = $oUpload->sortUpload($postInfo['source']);
-                //查询当前提交的文件key值
-                $new_add = [];
-                foreach($upload as $name => $file)
-                {
-                    foreach(array_reverse($postInfo['source']) as $key => $file_2)
-                    {
-                        if($file == $file_2)
-                        {
-                            $new_add[] = $key;
-                            break;
-                        }
-                    }
-                }
-                
-                $postInfo['source'] = json_encode($postInfo['source']);
-                $postInfo['content'] = trim(htmlspecialchars($detail['comment']));
-                $postInfo['update_time'] = date("Y-m-d H:i:s");
-                $data = json_decode(json_encode($postInfo),true);
-                $update = self::updatePost($postInfo,$data);
-
-                if($update)
-                {
-                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id'],'new_key'=>$new_add]];
+                    $return = ['result'=>false,'data'=>['msg'=>"您所发布的".$upload['name']."数量已经超过限制，请重新提交"]];
                 }
                 else
                 {
-                    $return = ['result'=>false,'data'=>['msg'=>"发布失败"]];
+                    foreach($upload as $name => $file)
+                    {
+                        $postInfo['source'][$name.count($upload)] = $file;
+                    }
+                    if($visible>0){
+                        $postInfo['visible'] = 1;
+                    }
+                    $postInfo['source'] = $oUpload->sortUpload($postInfo['source']);
+                    //查询当前提交的文件key值
+                    $new_add = [];
+                    foreach($upload as $name => $file)
+                    {
+                        foreach(array_reverse($postInfo['source']) as $key => $file_2)
+                        {
+                            if($file == $file_2)
+                            {
+                                $new_add[] = $key;
+                                break;
+                            }
+                        }
+                    }
+                    $postInfo['source'] = json_encode($postInfo['source']);
+                    $postInfo['content'] = trim(htmlspecialchars($detail['comment']));
+                    $postInfo['update_time'] = date("Y-m-d H:i:s");
+                    $data = json_decode(json_encode($postInfo),true);
+                    $update = self::updatePost($postInfo,$data);
+                    if($update)
+                    {
+                        $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id'],'new_key'=>$new_add]];
+                    }
+                    else
+                    {
+                        $return = ['result'=>false,'data'=>['msg'=>"发布失败"]];
+                    }
                 }
             }
         }
