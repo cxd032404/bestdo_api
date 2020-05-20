@@ -41,7 +41,7 @@ class PageService extends BaseService
                     }
                     //获取列表
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,list_type");
-                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],0,"*","post_id DESC",$this->getFromParams($params,"start",30),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],0,"*","post_id DESC",$this->getFromParams($params,"start",0),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                     foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
                     {
                         $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);

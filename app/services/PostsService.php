@@ -193,7 +193,7 @@ class PostsService extends BaseService
                 "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
             ];
             $params_count = [
-                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id in (".implode(",",$list_id).")",
+                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id in (".implode(",",$list_id).")"." and visible=1",
                 "columns" => "count(1) as count",
             ];
         }
@@ -206,7 +206,7 @@ class PostsService extends BaseService
                 "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
             ];
             $params_count = [
-                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id = '".$list_id."'",
+                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id = '".$list_id."'"." and visible=1",
                 "columns" => "count(1) as count",
             ];
         }
