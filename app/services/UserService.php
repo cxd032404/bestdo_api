@@ -343,7 +343,7 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['activity_empty'];
         }else{
             //查询活动数据
-            $configactivity = ConfigActivity::findFirst(["activity_id = '".$map['activity_id']."'","columns"=>['activity_id','apply_start_time','apply_end_time','start_time','end_time']]);
+            $configactivity = ConfigActivity::findFirst(["activity_id = '".$map['activity_id']."'","columns"=>['activity_id','apply_start_time','apply_end_time','start_time','end_time','detail']]);
             if(!isset($configactivity->activity_id)){
                 $return['msg']  = $this->msgList['activity_empty'];
             }else if(time()<strtotime($configactivity->start_time)){
@@ -359,7 +359,7 @@ class UserService extends BaseService
                     'order'=>'id desc'
                 ]);
                 if(isset($activitysign_info->id)){
-                    $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[]];
+                    $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[json_decode($configactivity['detail'])]];
                 }else{
                     //添加用户
                     $useractivitysign = new UserActivitySign();
@@ -371,7 +371,7 @@ class UserService extends BaseService
                     if ($useractivitysign->create() === false) {
                         $return['msg']  = $this->msgList['activity_error'];
                     }else{
-                        $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[]];
+                        $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[json_decode($configactivity['detail'])]];
                     }
                 }
             }
@@ -571,7 +571,7 @@ class UserService extends BaseService
         $user_token = $user_token?preg_replace('# #','',$user_token):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
-        if($user_info){
+        if(isset($user_info)){
             $user_info = json_decode($user_info);
             if($user_info->expire_time<time()){
                 $return['msg'] = $this->msgList['user_token_invalid'];
@@ -592,7 +592,7 @@ class UserService extends BaseService
         $user_token = $user_token?preg_replace('# #','',$user_token):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
-        if(!$user_info || ($user_info && json_decode($user_info)->expire_time<time())){
+        if(!isset($user_info) || (isset($user_info) && json_decode($user_info)->expire_time<time())){
             $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
             if(isset($page_info['need_login']) && $page_info['need_login']==1){
                 $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];

@@ -58,9 +58,6 @@ class UserController extends BaseController
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
 
-		$this->redis->set('login_'.$mobile,123456);
-		$this->redis->expire('login_'.$mobile,60*5);
-
 		//调用手机号验证码登录方法
 		$return  = (new UserService)->mobileCodeLogin($mobile,$code);
 		//日志记录
@@ -209,29 +206,6 @@ class UserController extends BaseController
      * */
 	public function getDecryptAction()
 	{
-
-		$data = '{
-			"jump_urls":{
-				"\u6d3b\u52a8\u4fe1\u606f":"\"\/culture\/culture_datails?id=1#activity\"",
-				"\u4e13\u5bb6\u6307\u5bfc":"\"\/culture\/culture_expert_datails?id=1#expert\"",
-				"\u53c2\u9009\u4f5c\u54c1":"\"\/culture\/culture_works_datails?id=1#works\"",
-				"\u6392\u884c\u699c":"\"\/culture\/culture_list_datails?id=1#list\""
-			}
-		}';
-		$data = \GuzzleHttp\json_decode($data);
-		$navList = [];$i=0;
-		foreach ($data->jump_urls as $key=>$value) {
-			$navList[$i]['name'] = $key;
-			$nav_type = explode('#',str_replace('"', '', $value));
-			$navList[$i]['url'] = '"'.reset($nav_type).'"';
-			$navList[$i]['type'] = end($nav_type);
-			$i++;
-		}
-		print_r($navList);
-		die;
-
-		//接收参数并格式化
-		$header = $this->request->getHeaders();
 		//调用user_token解密方法
 		$return  = (new UserService)->getDecrypt();
 		//日志记录
@@ -335,6 +309,7 @@ class UserController extends BaseController
 	/*
     * 点赞
     * 参数
+	 *
     * post_id（必填）：列表内容id
     * UserToken（必填）：用户token
     * */
