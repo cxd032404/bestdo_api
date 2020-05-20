@@ -47,9 +47,14 @@ class ListController extends BaseController
             return $this->failure([],$post['data']['msg']);
         }
     }
+
     public function source_removeAction()
     {
-        
+        $referer = $this->request->getHTTPReferer();
+        if(strpos($referer,"admin."))
+        {
+            $this->redirect($referer);
+        }
         $post_id = intval($this->request->getQuery('post_id')??0);
         $remove = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
         if($post_id > 0)
@@ -58,12 +63,21 @@ class ListController extends BaseController
         }
         if($remove['result'])
         {
+            if(strpos($referer,"admin."))
+            {
+                $this->redirect($referer);
+            }
             return $this->success($remove['data']);
         }
         else
         {
+            if(strpos($referer,"admin."))
+            {
+                $this->redirect($referer);
+            }
             return $this->failure([],$remove['data']['msg']);
         }
     }
+
 
 }
