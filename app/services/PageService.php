@@ -41,12 +41,33 @@ class PageService extends BaseService
                     }
                     //获取列表
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,list_type");
-                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],0,"*","post_id DESC",$this->getFromParams($params,"start",30),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],0,"*","post_id DESC",$this->getFromParams($params,"start",0),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                     foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
                     {
                         $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
                         $pageElementList[$key]['data']['data'][$k]['source'] = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
                         $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
+                        //获取列表作者信息 
+                        $userInfo = UserInfo::findFirst([
+                            "user_id='".$pageElementList[$key]['data']['data'][$k]['user_id']."'",
+                            'columns'=>'nick_name,true_name,user_img',
+                            'order'=>'user_id desc'
+                        ]);
+                        $pageElementList[$key]['data']['data'][$k]['user_info'] = $userInfo;
+                        //获取用户今日是否可以点赞
+                        $postskudos_info = PostsKudos::findFirst([
+                            "sender_id=:sender_id: and post_id=:post_id: and is_del=1 and create_time between :starttime: AND :endtime: ",
+                            'bind'=>[
+                                'sender_id'=>$user_info['data']['user_id'],
+                                'post_id'=>$pageElementList[$key]['data']['data'][$k]['post_id'],
+                                'starttime'=>date('Y-m-d').' 00:00:00',
+                                'endtime'=>date('Y-m-d').' 23:59:59',
+                            ]
+                        ]);
+                        $pageElementList[$key]['data']['data'][$k]['is_kudos'] = 0;
+                        if(isset($postskudos_info->id)){
+                            $pageElementList[$key]['data']['data'][$k]['is_kudos'] = 1;
+                        }
                     }
                 }
                 elseif($elementDetail['element_type'] == "slideNavi")
@@ -109,10 +130,19 @@ class PageService extends BaseService
                 elseif($elementDetail['element_type'] == "postsDetail")
                 {
                     $post_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
-                    $postsInfo = (new PostsService())->getPosts($post_id,"post_id,user_id,content,source,views,kudos,create_time,update_time")->toArray();
-                    $postsInfo['source'] = json_decode($postsInfo['source'],true);
-                    $postsInfo['source'] = (new UploadService())->parthSource($postsInfo['source']);
-                    $pageElementList[$key]['detail'] = $postsInfo;
+                    $postsInfo = (new PostsService())->getPosts($post_id,"post_id,user_id,content,source,views,kudos,create_time,update_time");
+                    if($postsInfo)
+                    {
+                        $postsInfo = $postsInfo->toArray();
+                        $postsInfo['source'] = json_decode($postsInfo['source'],true);
+                        $postsInfo['source'] = (new UploadService())->parthSource($postsInfo['source']);
+                        $postsInfo['editable'] = 0;
+                        if($postsInfo['user_id']==$user_info['data']['user_id'] && strtotime($postsInfo['create_time'])>time()-1800){
+                            $postsInfo['editable'] = 1;
+                        }
+                        $pageElementList[$key]['detail'] = $postsInfo;
+                    }
+
                 }
             }
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));

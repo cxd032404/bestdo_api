@@ -26,16 +26,17 @@ class ListController extends BaseController
         if($tokenInfo['result']!=1){
             return $this->failure(['jump_url'=>'/login'],$tokenInfo['msg'],$tokenInfo['code']);
         }
+        $visible = intval($this->request->getPost('visible')??0);
         $list_id = intval($this->request->getPost('list_id')??0);
         $post_id = intval($this->request->getPost('post_id')??0);
         if($post_id > 0)
         {
-            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$this->request->getPost('detail'));
+            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$tokenInfo['data']['user_info']->user_id,$this->request->getPost('detail'),$visible);
         }
         else
         {
             $listInfo  = (new ListService())->getListInfo(intval($this->request->getPost('list_id')));
-            $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')),$tokenInfo['data']['user_info']->user_id,$this->request->getPost('detail'));
+            $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')),$tokenInfo['data']['user_info']->user_id,$this->request->getPost('detail'),$visible);
         }
         if($post['result'])
         {
@@ -46,21 +47,37 @@ class ListController extends BaseController
             return $this->failure([],$post['data']['msg']);
         }
     }
+
     public function source_removeAction()
     {
-        $post_id = intval($this->request->getQuery('post_id')??0);
+        $referer = $this->request->getHTTPReferer();
+        if(strpos($referer,"admin."))
+        {
+            $this->redirect($referer);
+        }
+        $post_id = intval($this->request->get('post_id')??0);
+        $remove = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
         if($post_id > 0)
         {
-            $remove = (new PostsService())->removeSource(intval($post_id),trim($this->request->getQuery('sid')??""));
+            $remove = (new PostsService())->removeSource(intval($post_id),trim($this->request->get('sid')??""));
         }
         if($remove['result'])
         {
+            if(strpos($referer,"admin."))
+            {
+                $this->redirect($referer);
+            }
             return $this->success($remove['data']);
         }
         else
         {
+            if(strpos($referer,"admin."))
+            {
+                $this->redirect($referer);
+            }
             return $this->failure([],$remove['data']['msg']);
         }
     }
+
 
 }
