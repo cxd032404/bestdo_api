@@ -31,7 +31,7 @@ class ListController extends BaseController
         $post_id = intval($this->request->getPost('post_id')??0);
         if($post_id > 0)
         {
-            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$this->request->getPost('detail'),$visible);
+            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$tokenInfo['data']['user_info']->user_id,$this->request->getPost('detail'),$visible);
         }
         else
         {
