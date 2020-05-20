@@ -40,7 +40,7 @@ class PageController extends BaseController
 
         //echo json_encode($arr);
         $pageService = new PageService();
-        $params = $this->request->getQuery();
+        $params = $this->request->get();
         $params = $params['params']??"";
         //$params = $txt;
         $paramsCheck = $pageService->checkPageParams($params,$company,$page_sign);

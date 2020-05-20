@@ -187,7 +187,7 @@ class PostsService extends BaseService
         if(is_array($list_id))
         {
             $params =             [
-                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id in (".implode(",",$list_id).")"." ".($start>0?(" and post_id <".$start):"") ,
+                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id in (".implode(",",$list_id).")"." ".($start>0?(" and post_id <".$start):"")." and visible=1" ,
                 "columns" => $columns,
                 "order" => $order,
                 "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
@@ -200,7 +200,7 @@ class PostsService extends BaseService
         else
         {
             $params =             [
-                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id = '".$list_id."'"." ".($start>0?(" and post_id <".$start):"") ,
+                ($user_id>0?("user_id = '".$user_id."' and "):"")."list_id = '".$list_id."'"." ".($start>0?(" and post_id <".$start):"")." and visible=1" ,
                 "columns" => $columns,
                 "order" => $order,
                 "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
