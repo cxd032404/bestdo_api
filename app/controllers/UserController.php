@@ -309,7 +309,6 @@ class UserController extends BaseController
 	/*
     * 点赞
     * 参数
-	 *
     * post_id（必填）：列表内容id
     * UserToken（必填）：用户token
     * */
@@ -389,6 +388,7 @@ class UserController extends BaseController
 
 
 
+	
 
 
 }
