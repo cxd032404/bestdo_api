@@ -472,8 +472,13 @@ class UserService extends BaseService
             }
             //查询点赞记录
             $postskudos = PostsKudos::findFirst([
-                "sender_id=:sender_id: and post_id=:post_id: and is_del=1",
-                'bind'=>['sender_id'=>$sender_id, 'post_id'=>$post_id]
+                "sender_id=:sender_id: and post_id=:post_id: and is_del=1 and create_time between :starttime: AND :endtime: ",
+                'bind'=>[
+                    'sender_id'=>$sender_id,
+                    'post_id'=>$post_id,
+                    'starttime'=>date('Y-m-d').' 00:00:00',
+                    'endtime'=>date('Y-m-d').' 23:59:59',
+                ]
             ]);
             if(!isset($postskudos->id)){
                 $transaction->rollback($this->msgList['posts_kudos_noexist']);
