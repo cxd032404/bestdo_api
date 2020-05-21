@@ -630,6 +630,18 @@ class UserService extends BaseService
         return $return;
     }
 
+    public function searchForCompanyUser($params)
+    {
+        $searchParams = [
+            "company_id = '".$params['company_id']."' and ((name like '%".$params['query']."%') or (mobile like '%".$params['query']."%') or (worker_id like '%".$params['query']."%'))",
+            "columns" => "*",
+            "order" => "name desc",
+            "limit" => ["offset"=>($params['page']-1)*$params['page_size'],"number"=>$params['page_size']]
+        ];
+        $userList = CompanyUserList::find($searchParams);
+        return $userList;
+    }
+
 
 
 	

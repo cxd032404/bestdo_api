@@ -28,7 +28,11 @@ class SearchController extends BaseController
      * */
 	public function companyUserAction( $company_id = 0,$query = "",$page=1,$page_size=10 )
 	{
-        $client = $this->elasticsearch;
+        $params = ['query'=>$query,'company_id'=>$company_id,'page'=>$page,'page_size'=>$page_size];
+        $search_return = (new UserService())->searchForCompanyUser($params);
+        $search_return = $search_return?$search_return->toArray():[];
+        /*
+	    $client = $this->elasticsearch;
         $index_name = "company_user_list_".$company_id;
         $pa =
             [
@@ -90,13 +94,16 @@ class SearchController extends BaseController
                         'sort'=>['_score'=>["order"=>"desc"]]
                     ]
             ];
+        */
+        $search_return_list = $search_return;
+        /*
         $search_return = json_decode(json_encode($client->search($pa)),true);
         $search_return_list = array_column($search_return['hits']['hits'],'_source');
         $search_return_list_highlight = array_column($search_return['hits']['hits'],'highlight');
         foreach($search_return_list as $key => $info)
         {
             $search_return_list[$key]['highlight'] = $search_return_list_highlight[$key];
-        }
+        }*/
         //日志记录
         $this->logger->info(json_encode($search_return_list));
         return $this->success(['company_user_list'=>$search_return_list]);
