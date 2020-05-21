@@ -59,7 +59,7 @@ class Bootstrap
 			'WebPages', # 初始化页面服务
 			'Logger',	# 初始化写日志服务
             'Redis',    # 初始化Redis服务
-            'Elasticsearch',  # 初始化Elasiticsearch服务
+            //'Elasticsearch',  # 初始化Elasiticsearch服务
             'KeyConfig',    # 各类key的配置
 		];
 		foreach ($loaders as $service) {
