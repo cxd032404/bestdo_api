@@ -118,6 +118,10 @@ class SearchController extends BaseController
   * */
     public function faqAction( $activity_id = 0,$query = "",$page=1,$page_size=10 )
     {
+        $params = ['query'=>$query,'activity_id'=>$activity_id,'page'=>$page,'page_size'=>$page_size];
+        $search_return = (new QuestionService())->searchForQuestion($params);
+        $search_return = $search_return?$search_return->toArray():[];
+        /*
         $client = $this->elasticsearch;
         $index_name = 'question_list_'.$activity_id;
         $pa =
@@ -173,6 +177,8 @@ class SearchController extends BaseController
         {
             $search_return_list[$key]['highlight'] = $search_return_list_highlight[$key]??[];
         }
+        */
+        $search_return_list = $search_return;
         //日志记录
         $this->logger->info(json_encode($search_return_list));
         return $this->success(['question_list'=>$search_return_list]);
