@@ -41,7 +41,18 @@ class PageService extends BaseService
                     }
                     //获取列表
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,list_type");
-                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],0,"*","post_id DESC",$this->getFromParams($params,"start",0),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+                    //获取符合查询条件用户
+                    $search_content = $this->getFromParams($params,"search_content","");
+                    $userList = [];
+                    if($search_content){
+                        $userList = UserInfo::find([
+                            "nick_name like '%".$search_content."%' and is_del=1 and company_id='".$company_id."'",
+                            'columns'=>'user_id',
+                            'order'=>'user_id desc'
+                        ])->toArray();
+                        $userList = array_column($userList,'user_id');
+                    }
+                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],$userList,"*","post_id DESC",$this->getFromParams($params,"start",0),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                     foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
                     {
                         $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
@@ -49,7 +60,7 @@ class PageService extends BaseService
                         $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
                         //获取列表作者信息 
                         $userInfo = UserInfo::findFirst([
-                            "user_id='".$pageElementList[$key]['data']['data'][$k]['user_id']."'",
+                            "user_id='".$pageElementList[$key]['data']['data'][$k]['user_id']."' and is_del=1",
                             'columns'=>'nick_name,true_name,user_img',
                             'order'=>'user_id desc'
                         ]);
@@ -118,7 +129,7 @@ class PageService extends BaseService
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
                     //数据解包
                     $listInfo['detail'] = json_decode($listInfo['detail'],true);
-                    $postExists = (new PostsService())->getPostsList($list_id,$user_info['data']['user_id'],"post_id","post_id DESC",0,1,1);
+                    $postExists = (new PostsService())->getPostsList($list_id,[$user_info['data']['user_id']],"post_id","post_id DESC",0,1,1);
                     //已经提交过
                     if($postExists['count']>0)
                     {
@@ -136,13 +147,54 @@ class PageService extends BaseService
                         $postsInfo = $postsInfo->toArray();
                         $postsInfo['source'] = json_decode($postsInfo['source'],true);
                         $postsInfo['source'] = (new UploadService())->parthSource($postsInfo['source']);
+                        //是否可以修改
                         $postsInfo['editable'] = 0;
-                        if($postsInfo['user_id']==$user_info['data']['user_id'] && strtotime($postsInfo['create_time'])>time()-1800){
-                            $postsInfo['editable'] = 1;
-                        }
+//                        if($postsInfo['user_id']==$user_info['data']['user_id'] && strtotime($postsInfo['create_time'])>time()-1800){
+//                            $postsInfo['editable'] = 1;
+//                        }
                         $pageElementList[$key]['detail'] = $postsInfo;
                     }
 
+                }
+                elseif($elementDetail['element_type'] == "rankByKudos")
+                {
+                    //指定数据
+                    if(isset($pageElementList[$key]['detail']['list_id']))
+                    {
+                        $list_id = $pageElementList[$key]['detail']['list_id'];
+                    }
+                    else//页面获取
+                    {
+                        $list_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
+                    }
+                    $groups = ['user_id'];
+                    //查询列表内容
+                    $posts = \HJ\Posts::find([
+                        "list_id='".$list_id."' and visible=1",
+                        "columns"=>array_merge($groups,['count(1) as count']),
+                        "group"=>$groups
+                    ])->toArray();
+                    array_multisort(array_column($posts,'count'),SORT_DESC,$posts);
+                    foreach($posts as $p_key=>$p_val){
+                        $userinfo = UserInfo::findFirst([
+                            "user_id = '".$p_val['user_id']."'",
+                            "columns"=>"user_id,nick_name,true_name,user_img,company_id"
+                        ]);
+                        if(isset($userinfo->user_id) && $userinfo->user_id==$user_info['data']['user_id']){
+                            $self['user_id'] = $userinfo->user_id??"";
+                            $self['nick_name'] = $userinfo->nick_name??"";
+                            $self['true_name'] = $userinfo->true_name??"";
+                            $self['user_img'] = $userinfo->user_img??"";
+                            $self['company_id'] = $userinfo->company_id??"";
+                            $self['count'] = $p_val['count']??0;
+                        }
+                        $posts[$p_key]['nick_name'] = (isset($userinfo->user_id))?$userinfo->nick_name:"";
+                        $posts[$p_key]['true_name'] = (isset($userinfo->user_id))?$userinfo->true_name:"";
+                        $posts[$p_key]['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
+                        $posts[$p_key]['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:"";
+                    }
+                    $pageElementList[$key]['detail']['self'] = $self??[];
+                    $pageElementList[$key]['detail']['all'] = $posts;
                 }
             }
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));
