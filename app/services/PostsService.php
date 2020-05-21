@@ -184,6 +184,7 @@ class PostsService extends BaseService
     //pageSize：单页数量
     public function getPostsList($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =2)
     {
+        
         if(is_array($list_id))
         {
             $params =             [
