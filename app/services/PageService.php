@@ -125,7 +125,6 @@ class PageService extends BaseService
                         $list_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
                     }
                     $pageElementList[$key]['detail']['available'] = 1;
-
                     //获取列表信息
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
                     //数据解包
