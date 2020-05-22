@@ -50,6 +50,9 @@ class UserController extends BaseController
      * 参数
      * mobile（必填）：账号
      * code（必填）：验证码
+	 * company_id（必填）企业id
+	 * worker_id（必填）工号
+	 * name（必填）姓名
      * */
 	public function mobileCodeLoginAction()
 	{
@@ -57,9 +60,12 @@ class UserController extends BaseController
 		$data = $this->request->get();
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
+		$company_id = isset($data['company_id'])?preg_replace('# #','',$data['company_id']):0;
+		$worker_id = isset($data['worker_id'])?preg_replace('# #','',$data['worker_id']):"";
+		$name = isset($data['name'])?preg_replace('# #','',$data['name']):"";
 
 		//调用手机号验证码登录方法
-		$return  = (new UserService)->mobileCodeLogin($mobile,$code);
+		$return  = (new UserService)->mobileCodeLogin($mobile,$code,$company_id,$worker_id,$name);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -220,15 +226,15 @@ class UserController extends BaseController
 	/*
      * 查询公司列表
      * 参数
-     * company（必填）：公司名称
+     * company_id（必填）：公司id
      * */
 	public function getCompanyAction()
 	{
 		//接收参数并格式化
 		$data = $this->request->get();
-		$company = isset($data['company'])?preg_replace('# #','',$data['company']):"";
+		$company_id = isset($data['company_id'])?preg_replace('# #','',$data['company_id']):"";
 		//调用公司查询方法
-		$return  = (new UserService)->getCompany($company);
+		$return  = (new UserService)->getCompany($company_id);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
@@ -385,10 +391,36 @@ class UserController extends BaseController
 		return $this->success($return['data']);
 	}
 
+	/*
+     * 验证用户数据
+     * 参数
+     * company_id（必填）：企业id
+     * worker_id（必填）：工号
+     * name（必填）：姓名
+     * */
+	public function checkoutCompanyAction()
+	{
+		//接收参数并格式化
+		$data = $this->request->get();
+		$company_id = isset($data['company_id'])?preg_replace('# #','',$data['company_id']):0;
+		$worker_id = isset($data['worker_id'])?preg_replace('# #','',$data['worker_id']):"";
+		$name = isset($data['name'])?preg_replace('# #','',$data['name']):"";
+
+		//调用手机号验证码登录方法
+		$return  = (new UserService)->checkoutCompany($company_id,$worker_id,$name);
+		//日志记录
+		$this->logger->info(json_encode($return));
+		//返回值判断
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		return $this->success($return['data']);
+	}
 
 
 
-	
+
+
 
 
 }
