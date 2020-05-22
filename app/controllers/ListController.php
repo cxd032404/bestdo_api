@@ -29,14 +29,19 @@ class ListController extends BaseController
         $visible = intval($this->request->getPost('visible')??0);
         $list_id = intval($this->request->getPost('list_id')??0);
         $post_id = intval($this->request->getPost('post_id')??0);
+        $detail = $this->request->getPost('detail')??[];
+        if(array_key_exists("comment",$this->request->getPost()))
+        {
+            $detail['comment'] = $this->request->getPost("comment");
+        }
         if($post_id > 0)
         {
-            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$tokenInfo['data']['user_info']->user_id,$this->request->getPost('detail'),$visible);
+            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$tokenInfo['data']['user_info']->user_id,$detail,$visible);
         }
         else
         {
             $listInfo  = (new ListService())->getListInfo(intval($this->request->getPost('list_id')));
-            $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')),$tokenInfo['data']['user_info']->user_id,$this->request->getPost('detail'),$visible);
+            $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')),$tokenInfo['data']['user_info']->user_id,$detail,$visible);
         }
         if($post['result'])
         {
