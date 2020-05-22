@@ -688,6 +688,59 @@ class UserService extends BaseService
         return $return;
     }
 
+    /*
+     * 获取我的活动记录
+     * 参数
+     * post_id（必填）：作品id数组
+     * */
+    public function getPostByActivityAction($post_id,$page=1,$pageSize=1)
+    {
+        if(is_array($post_id))
+        {
+            $params =             [
+                "post_id in (".implode(",",$post_id).")"." "." and visible=1",
+                "columns" => "post_id,list_id,user_id,company_id,content,source,create_time,views,kudos,visible",
+                "order" => "post_id desc",
+                "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
+            ];
+            $params_count = [
+                "post_id in (".implode(",",$post_id).")"." "." and visible=1",
+                "columns" => "count(1) as count",
+            ];
+        }
+        else
+        {
+            $params =             [
+                "post_id = ".$post_id." "." and visible=1",
+                "columns" => "post_id,list_id,user_id,company_id,content,source,create_time,views,kudos,visible",
+                "order" => "post_id desc",
+                "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
+            ];
+            $params_count = [
+                "post_id = ".$post_id." "." and visible=1",
+                "columns" => "count(1) as count",
+            ];
+        }
+        $post_list = (new \HJ\Posts())->find($params)->toArray();
+        foreach($post_list as $k=>$v){
+            $post_list[$k]['activity_name'] = "";
+            $list = \HJ\ListModel::findFirst([
+                "list_id='".$v['list_id']."'",
+            ])->toArray();
+            if(isset($list['list_id'])){
+                $activity = ConfigActivity::findFirst([
+                    "activity_id='".$list['activity_id']."'",
+                ])->toArray();
+                if(isset($activity['activity_id'])){
+                    $post_list[$k]['activity_name'] = $activity['activity_name'];
+                }
+            }
+        }
+        $count = (new \HJ\Posts())->findFirst($params_count)['count']??0;
+        $return  = ['data'=>$post_list,'count'=>$count,'total_page'=>ceil($count/$pageSize)];
+        return $return;
+    }
+
 
 
 	

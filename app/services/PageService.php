@@ -156,6 +156,33 @@ class PageService extends BaseService
                     }
 
                 }
+                elseif($elementDetail['element_type'] == "activityLog")
+                {
+                    $post_id = $this->getFromParams($params,"post_id","");
+                    if($post_id){
+                        $post_list = $post_id;
+                    }else{
+                        $post_list = [];
+                        $activity_log = UserActivityLog::find([
+                            "user_id='".$user_info['data']['user_id']."'",
+                            "columns"=>"activity_id",
+                            "group"=>"activity_id"
+                        ])->toArray();
+                        foreach($activity_log as $k1=>$v1){
+                            $list = \HJ\ListModel::find(["activity_id='".$v1['activity_id']."'",])->toArray();
+                            foreach($list as $k2=>$v2){
+                                $posts = \HJ\Posts::findFirst([
+                                    "list_id='".$v2['list_id']."' and user_id='".$user_info['data']['user_id']."' and visible=1 ",
+                                    "columns"=>"post_id", "group"=>"list_id", "order"=>"post_id desc"
+                                ]);
+                                if($posts){
+                                    $post_list[] = $posts['post_id'];
+                                }
+                            }
+                        }
+                    }
+                    $pageElementList[$key]['data'] = (new UserService())->getPostByActivityAction($post_list,$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",1));
+                }
                 elseif($elementDetail['element_type'] == "rankByKudos")
                 {
                     //指定数据
