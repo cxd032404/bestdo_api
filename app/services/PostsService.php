@@ -176,6 +176,33 @@ class PostsService extends BaseService
         }
         return $return;
     }
+    //更新文章的隐藏状态
+    //post_id：文章ID
+    //display：目标显示状态
+    public function updateDisplay($post_id,$display)
+    {
+        //获取列表信息
+        $postInfo = self::getPosts(intval($post_id),"post_id,visible,update_time")->toArray();
+        if(!isset($postInfo['post_id']))
+        {
+            $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
+        }
+        else
+        {
+            $postInfo['visible'] = $display;
+            $postInfo['update_time'] = date("Y-m-d H:i:s");
+            $update = self::updatePost($postInfo,$postInfo);
+            if($update)
+            {
+                $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
+            }
+            else
+            {
+                $return = ['result'=>false,'msg'=>"更改隐藏状态失败"];
+            }
+        }
+        return $return;
+    }
     //根据列表ID获取列表
     //$list_id：列表ID
     //cloumns：数据库的字段列表

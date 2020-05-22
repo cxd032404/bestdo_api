@@ -78,6 +78,36 @@ class ListController extends BaseController
             return $this->failure([],$remove['data']['msg']);
         }
     }
+    public function post_displayAction()
+    {
+        $referer = $this->request->getHTTPReferer();
+        if(strpos($referer,"admin."))
+        {
+            $this->redirect($referer);
+        }
+        $post_id = intval($this->request->get('post_id')??0);
+        $remove = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
+        if($post_id > 0)
+        {
+            $remove = (new PostsService())->updateDisplay(intval($post_id),trim($this->request->get('display')??0));
+        }
+        if($remove['result'])
+        {
+            if(strpos($referer,"admin."))
+            {
+                $this->redirect($referer);
+            }
+            return $this->success($remove['data']);
+        }
+        else
+        {
+            if(strpos($referer,"admin."))
+            {
+                $this->redirect($referer);
+            }
+            return $this->failure([],$remove['data']['msg']);
+        }
+    }
 
 
 }
