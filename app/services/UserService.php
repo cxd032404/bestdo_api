@@ -28,6 +28,9 @@ class UserService extends BaseService
         "department_empty"=>"所属部门无效，请填写所属部门！",
         "companyuser_empty"=>"账户验证失败，当前账户尚未获得登录/注册权限！",
         "posts_empty"=>"列表内容查询不到，请选择正确的列表内容！",
+        "company_id_empty"=>"企业编号无效",
+        "worker_id_empty"=>"工号无效",
+        "name_empty"=>"用户姓名无效",
 
         "password_error"=>"密码错误，请填写正确的密码！",
         "sendcode_error"=>"验证码错误，请填写正确的验证码！",
@@ -46,6 +49,7 @@ class UserService extends BaseService
         "manager_id_error"=>"后台用户id无效！",
         "manager_id_invalid"=>"后台用户id无效,无对应用户信息！",
         "activity_list_error"=>"您已提交过本次活动作品，不可重复提交！",
+        "company_user_error"=>"企业用户身份验证失败！",
 
         "sendcode_invalid"=>"验证码已失效，请重新发送！",
         "user_token_invalid"=>"用户token已失效，请登录！",
@@ -62,6 +66,7 @@ class UserService extends BaseService
         "posts_success"=>"点赞成功！",
         "posts_remove_success"=>"取消点赞成功！",
         "token_for_manager_success"=>"获取token成功！",
+        "company_user_success"=>"企业用户身份验证成功！",
 
         "mobile_prohibit"=>"手机号已被禁用！",
         "activity_signin"=>"您已报名本次活动，无法重复报名，请选择正确的活动！",
@@ -102,7 +107,7 @@ class UserService extends BaseService
     }
 
     //手机号验证码登录方法
-    public function mobileCodeLogin($mobile="",$code="")
+    public function mobileCodeLogin($mobile="",$code="",$company_id=0,$worker_id="",$name="")
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
@@ -149,17 +154,27 @@ class UserService extends BaseService
                     // Request a transaction
                     $transaction = $manager->get();
                     //查询企业导入名单
-                    $companyuserlist = CompanyUserList::findFirst(["mobile=:mobile:", 'bind'=>['mobile'=>$mobile], 'order'=>'id desc']);
+                    $companyuserlist = CompanyUserList::findFirst([
+                        "company_id=:company_id: and worker_id=:worker_id: and name=:name:",
+                        'bind'=>[
+                            'company_id'=>$company_id,
+                            'worker_id'=>$worker_id,
+                            'name'=>$name
+                        ],
+                        'order'=>'id desc'
+                    ]);
                     if(!isset($companyuserlist->id)){
                         $transaction->rollback($this->msgList['companyuser_empty']);
                     }
-                    $company_id = $companyuserlist->company_id??1;
                     //创建用户
                     $user = new UserInfo();
                     $user->setTransaction($transaction);
                     $user->username = $mobile;
-                    $user->company_id = $company_id;
                     $user->mobile = $mobile;
+                    $user->company_id = $company_id;
+                    $user->worker_id = $worker_id;
+                    $user->true_name = $name;
+                    $user->nick_name = $name;
                     if ($user->create() === false) {
                         $transaction->rollback($this->msgList['register_error']);
                     }
@@ -169,7 +184,7 @@ class UserService extends BaseService
                         $transaction->rollback($this->msgList['code_status_error']);
                     }
                     //修改企业用户名单状态
-                    $companyuser = $this->setCompanyUser($mobile,$user->user_id);
+                    $companyuser = $this->setCompanyUser($companyuserlist->id,$user->user_id);
                     if(!$companyuser){
                         $transaction->rollback($this->msgList['companyuser_status_error']);
                     }
@@ -292,7 +307,7 @@ class UserService extends BaseService
                             $transaction->rollback($this->msgList['code_status_error']);
                         }
                         //修改企业用户名单状态
-                        $companyuser = $this->setCompanyUser($mobile,$user->user_id);
+                        $companyuser = $this->setCompanyUser($companyuserlist->id,$user->user_id);
                         if(!$companyuser){
                             $transaction->rollback($this->msgList['companyuser_status_error']);
                         }
@@ -312,19 +327,19 @@ class UserService extends BaseService
     }
 
     //查询公司名称
-    public function getCompany($company="")
+    public function getCompany($company_id=0)
     {
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         //查询公司数据
-        if(empty($company)){
-            $usercompany = UserCompany::find(["is_del=1"]);
+        if($company_id<=0){
+            $return['msg'] = $this->msgList['company_id_empty'];
         }else{
-            $usercompany = UserCompany::find([
-                "company_name like :company_name: and is_del=1",
-                'bind'=>['company_name'=>'%'.$company.'%'],
+            $company = \HJ\Company::findFirst([
+                "company_id = '".$company_id."'",
                 "columns"=>['company_id','company_name']
             ]);
+            $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['company'=>$company]];
         }
-        $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['usercompany'=>$usercompany]];
         return $return;
     }
 
@@ -526,9 +541,9 @@ class UserService extends BaseService
     }
 
     //修改企业名单状态
-    public function setCompanyUser($mobile,$user_id){
+    public function setCompanyUser($companyuser_id,$user_id){
         //查询企业导入名单
-        $companyuserlist = CompanyUserList::findFirst(["mobile=:mobile:", 'bind'=>['mobile'=>$mobile], 'order'=>'id desc']);
+        $companyuserlist = CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$companyuser_id], 'order'=>'id desc']);
         if(isset($companyuserlist->id)){
             //修改企业用户名单状态
             if ($companyuserlist->update(['user_id'=>$user_id,'update_time'=>date('Y-m-d H:i:s',time())]) === false) {
@@ -646,6 +661,31 @@ class UserService extends BaseService
         ];
         $userList = CompanyUserList::find($searchParams);
         return $userList;
+    }
+
+    //验证用户身份
+    public function checkoutCompany($company_id=0,$worker_id="",$name="")
+    {
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
+        if(intval($company_id)<=0) {
+            $return['msg']  = $this->msgList['company_id_empty'];
+        }else if(empty($worker_id)){
+            $return['msg']  = $this->msgList['worker_id_empty'];
+        }else if(empty($name)){
+            $return['msg']  = $this->msgList['name__empty'];
+        }else{
+            $companyuser = CompanyUserList::findFirst([
+                "company_id='".$company_id."' and worker_id='".$worker_id."' and name='".$name."' ",
+                "columns" => "*",
+                "order" => "id desc"
+            ]);
+            if(!isset($companyuser->id)){
+                $return['msg'] = $this->msgList['company_user_error'];
+            }else{
+                $return  = ['result'=>1, 'msg'=>$this->msgList['company_user_success'], 'code'=>200, 'data'=>['companyuser'=>$companyuser]];
+            }
+        }
+        return $return;
     }
 
 
