@@ -22,7 +22,7 @@ class PostsService extends BaseService
         {
 
             //计算可用的文件数量
-            $count = $oUpload->getAvailableSoureCount([],$listInfo['detail']);
+            $count = $oUpload->getAvailableSourceCount([],$listInfo['detail']);
             $upload = $oUpload->getUploadedFile([],[],0,0,$count);
             if(isset($upload['name']))
             {
@@ -77,7 +77,7 @@ class PostsService extends BaseService
                 $listInfo['detail'] = json_decode($listInfo['detail'],true);
                 $postInfo['source'] = json_decode($postInfo['source'],true);
                 //计算可用的文件数量
-                $count = $oUpload->getAvailableSoureCount($postInfo['source'],$listInfo['detail']);
+                $count = $oUpload->getAvailableSourceCount($postInfo['source'],$listInfo['detail']);
                 $upload = $oUpload->getUploadedFile([],[],0,0,$count);
                 //如果返回类型名称
                 if(isset($upload['name']))
