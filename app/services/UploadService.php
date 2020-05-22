@@ -91,6 +91,10 @@ class UploadService extends BaseService
     }
     private function checkSize($size,$max_size = 0,$min_size = 0)
     {
+        if($size == 0)
+        {
+            return false;
+        }
         if($max_size>0 && $size>$max_size)
         {
             return false;
@@ -151,14 +155,14 @@ class UploadService extends BaseService
                 $ext = $t[count($t)-1];
                 if(in_array($ext,$type_info['list']))
                 {
-                    $fileArr = ['path'=>$path,'name'=>$name,'type'=>$type,'suffix'=>($type=="video")?"?x-oss-process=video/snapshot,t_1000,f_jpg,w_300,h_300,m_fast":""];
+                    $fileArr = ['path'=>$path,'name'=>$name,'type'=>$type,'suffix'=>($type=="video")?"?x-oss-process=video/snapshot,t_1000,f_jpg,w_540,m_fast":""];
                     $return[] = $fileArr;
                 }
             }
         }
         return $return;
     }
-    public function getAvailableSoureCount($current,$limit)
+    public function getAvailableSourceCount($current,$limit)
     {
         $return = [];
         foreach($current as $name => $file)
