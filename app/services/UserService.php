@@ -692,7 +692,7 @@ class UserService extends BaseService
      * 获取我的活动记录
      * 参数
      * post_id（必填）：作品id数组
-     * */
+     * */ 
     public function getPostByActivityAction($post_id,$page=1,$pageSize=1)
     {
         if(is_array($post_id))
