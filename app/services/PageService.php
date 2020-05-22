@@ -64,7 +64,7 @@ class PageService extends BaseService
                             "user_id='".$pageElementList[$key]['data']['data'][$k]['user_id']."' and is_del=1",
                             'columns'=>'nick_name,true_name,user_img',
                             'order'=>'user_id desc'
-                        ]);
+                        ]); 
                         $pageElementList[$key]['data']['data'][$k]['user_info'] = $userInfo;
                         //获取用户今日是否可以点赞
                         $postskudos_info = PostsKudos::findFirst([
