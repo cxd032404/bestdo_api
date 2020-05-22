@@ -685,7 +685,7 @@ class UserService extends BaseService
             }
         }
         return $return;
-    }
+    } 
 
     /*
      * 获取我的活动记录
