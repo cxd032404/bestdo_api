@@ -50,9 +50,7 @@ class UserController extends BaseController
      * 参数
      * mobile（必填）：账号
      * code（必填）：验证码
-	 * company_id（必填）企业id
-	 * worker_id（必填）工号
-	 * name（必填）姓名
+	 * companyuser_id （必填）企业导入名单id
      * */
 	public function mobileCodeLoginAction()
 	{
@@ -60,12 +58,9 @@ class UserController extends BaseController
 		$data = $this->request->get();
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
-		$company_id = isset($data['company_id'])?preg_replace('# #','',$data['company_id']):0;
-		$worker_id = isset($data['worker_id'])?preg_replace('# #','',$data['worker_id']):"";
-		$name = isset($data['name'])?preg_replace('# #','',$data['name']):"";
-
+		$companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
 		//调用手机号验证码登录方法
-		$return  = (new UserService)->mobileCodeLogin($mobile,$code,$company_id,$worker_id,$name);
+		$return  = (new UserService)->mobileCodeLogin($mobile,$code,$companyuser_id);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断

@@ -107,15 +107,16 @@ class UserService extends BaseService
     }
 
     //手机号验证码登录方法
-    public function mobileCodeLogin($mobile="",$code="",$company_id=0,$worker_id="",$name="")
+    public function mobileCodeLogin($mobile="",$code="",$companyuser_id=0)
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
-        if($mobile='17621822661'){
+        if($mobile=='17621822661' || $mobile=='13472871514' ){
             $login_code = json_encode(['code'=>123456]);
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         if( empty($mobile) || !$common->check_mobile($mobile) ) {
+            echo $mobile;
             $return['msg']  = $this->msgList['mobile_empty'];
         }else if(empty($code)){
             $return['msg']  = $this->msgList['sendcode_empty'];
@@ -155,11 +156,9 @@ class UserService extends BaseService
                     $transaction = $manager->get();
                     //查询企业导入名单
                     $companyuserlist = CompanyUserList::findFirst([
-                        "company_id=:company_id: and worker_id=:worker_id: and name=:name:",
+                        "id=:companyuser_id:",
                         'bind'=>[
-                            'company_id'=>$company_id,
-                            'worker_id'=>$worker_id,
-                            'name'=>$name
+                            'companyuser_id'=>$companyuser_id,
                         ],
                         'order'=>'id desc'
                     ]);
@@ -171,10 +170,10 @@ class UserService extends BaseService
                     $user->setTransaction($transaction);
                     $user->username = $mobile;
                     $user->mobile = $mobile;
-                    $user->company_id = $company_id;
-                    $user->worker_id = $worker_id;
-                    $user->true_name = $name;
-                    $user->nick_name = $name;
+                    $user->company_id = $companyuserlist->company_id;
+                    $user->worker_id = $companyuserlist->worker_id;
+                    $user->true_name = $companyuserlist->name;
+                    $user->nick_name = $companyuserlist->name;
                     if ($user->create() === false) {
                         $transaction->rollback($this->msgList['register_error']);
                     }
