@@ -37,7 +37,7 @@ class PostsService extends BaseService
                 }
                 $postInfo->list_id = $listInfo['list_id'];
                 $postInfo->company_id = $listInfo['company_id'];
-                $postInfo->content = trim(htmlspecialchars($detail['comment']));
+                $postInfo->content = trim($detail['comment']);
                 $postInfo->source = json_encode($upload);
                 $postInfo->create_time = $postInfo->update_time = date("Y-m-d H:i:s");
                 $postInfo->user_id = $user_id;
@@ -108,7 +108,7 @@ class PostsService extends BaseService
                         }
                     }
                     $postInfo['source'] = json_encode($postInfo['source']);
-                    $postInfo['content'] = trim(htmlspecialchars($detail['comment']));
+                    $postInfo['content'] = trim($detail['comment']);
                     $postInfo['update_time'] = date("Y-m-d H:i:s");
                     $data = json_decode(json_encode($postInfo),true);
                     $update = self::updatePost($postInfo,$data);
