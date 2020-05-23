@@ -412,8 +412,34 @@ class UserController extends BaseController
 		return $this->success($return['data']);
 	}
 
-
-
+	/*
+	* 隐藏活动记录
+	* 参数
+	* post_id（必填）：列表内容id
+	* UserToken（必填）：用户token
+	* */
+	public function setActivityPostsAction()
+	{
+		//接收参数并格式化
+		$data = $this->request->get();
+		/*验证token开始*/
+		$return  = (new UserService)->getDecrypt();
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		/*验证token结束*/
+		$user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+		$post_id = isset($data['post_id'])?preg_replace('# #','',$data['post_id']):0;
+		//调用完善用户方法
+		$return  = (new UserService)->setActivityPosts($post_id,$user_id);
+		//日志记录
+		$this->logger->info(json_encode($return));
+		//返回值判断
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		return $this->success($return['data'],$return['msg']);
+	}
 
 
 
