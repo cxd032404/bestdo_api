@@ -58,12 +58,13 @@ class PageService extends BaseService
                         $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
                         $pageElementList[$key]['data']['data'][$k]['source'] = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
                         $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
+                        $pageElementList[$key]['data']['data'][$k]['content'] = htmlspecialchars_decode($postDetail['content']);
                         //获取列表作者信息 
                         $userInfo = UserInfo::findFirst([
                             "user_id='".$pageElementList[$key]['data']['data'][$k]['user_id']."' and is_del=1",
                             'columns'=>'nick_name,true_name,user_img',
                             'order'=>'user_id desc'
-                        ]);
+                        ]); 
                         $pageElementList[$key]['data']['data'][$k]['user_info'] = $userInfo;
                         //获取用户今日是否可以点赞
                         $postskudos_info = PostsKudos::findFirst([
@@ -155,6 +156,33 @@ class PageService extends BaseService
                         $pageElementList[$key]['detail'] = $postsInfo;
                     }
 
+                }
+                elseif($elementDetail['element_type'] == "activityLog")
+                {
+                    $post_id = $this->getFromParams($params,"post_id","");
+                    if($post_id){
+                        $post_list = $post_id;
+                    }else{
+                        $post_list = [];
+                        $activity_log = UserActivityLog::find([
+                            "user_id='".$user_info['data']['user_id']."'",
+                            "columns"=>"activity_id",
+                            "group"=>"activity_id"
+                        ])->toArray();
+                        foreach($activity_log as $k1=>$v1){
+                            $list = \HJ\ListModel::find(["activity_id='".$v1['activity_id']."'",])->toArray();
+                            foreach($list as $k2=>$v2){
+                                $posts = \HJ\Posts::findFirst([
+                                    "list_id='".$v2['list_id']."' and user_id='".$user_info['data']['user_id']."' and visible=1 ",
+                                    "columns"=>"post_id", "group"=>"list_id", "order"=>"post_id desc"
+                                ]);
+                                if($posts){
+                                    $post_list[] = $posts['post_id'];
+                                }
+                            }
+                        }
+                    }
+                    $pageElementList[$key]['data'] = (new UserService())->getPostByActivityAction($post_list,$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",1));
                 }
                 elseif($elementDetail['element_type'] == "rankByKudos")
                 {
