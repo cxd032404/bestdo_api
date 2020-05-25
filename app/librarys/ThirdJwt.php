@@ -15,6 +15,7 @@ class ThirdJwt
         'expire' => 3600*24*30 //有效期
     ];
 
+
     //生成token
     public static function getToken($map){
         //签名对象

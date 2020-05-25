@@ -106,6 +106,7 @@ class UserController extends BaseController
      * password（必填）：密码
      * company_user_id（必填）：企业用户名单主键ID
      * */
+	
 	public function mobileRegisterAction()
 	{
 		//接收参数并格式化

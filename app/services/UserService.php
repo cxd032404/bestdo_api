@@ -621,6 +621,7 @@ class UserService extends BaseService
         return $data;
     }
 
+
     //用户token解密
     public function getDecrypt()
     {
