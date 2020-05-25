@@ -586,6 +586,7 @@ class UserService extends BaseService
     }
 
     //获取用户token
+
     public function getToken($user_id){
         $userinfo = UserInfo::findFirst([
             "user_id=:user_id:",

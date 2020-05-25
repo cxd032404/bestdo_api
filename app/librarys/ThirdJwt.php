@@ -17,6 +17,7 @@ class ThirdJwt
 
 
     //生成token
+    
     public static function getToken($map){
         //签名对象
         $signer = new Sha256();

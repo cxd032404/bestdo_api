@@ -19,6 +19,7 @@ use Phalcon\Mvc\Controller;
 
 class UserController extends BaseController
 {
+	
 	/*
      * 手机号密码登录
      * 参数
