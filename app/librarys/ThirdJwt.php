@@ -12,7 +12,7 @@ class ThirdJwt
         'id' => '3f2g57a92aa',//token的唯一标识，这里只是一个简单示例
         'sign' => 'pinyougou',//签名密钥
         'issuer' => 'http://adminapi.pyg.com',//签发人
-        'expire' => 3600*24 //有效期
+        'expire' => 3600*24*30 //有效期
     ];
 
     //生成token
