@@ -36,6 +36,7 @@ class PostsService extends BaseService
                     $postInfo->visible = 1;
                 }
                 $postInfo->list_id = $listInfo['list_id'];
+                $postInfo->title = trim($detail['title']);
                 $postInfo->company_id = $listInfo['company_id'];
                 $postInfo->content = trim($detail['comment']);
                 $postInfo->source = json_encode($upload);
@@ -107,6 +108,7 @@ class PostsService extends BaseService
                             }
                         }
                     }
+                    $postInfo['title'] = trim($detail['title']);
                     $postInfo['source'] = json_encode($postInfo['source']);
                     $postInfo['content'] = trim($detail['comment']);
                     $postInfo['update_time'] = date("Y-m-d H:i:s");

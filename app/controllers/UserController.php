@@ -19,6 +19,7 @@ use Phalcon\Mvc\Controller;
 
 class UserController extends BaseController
 {
+	
 	/*
      * 手机号密码登录
      * 参数
@@ -41,7 +42,7 @@ class UserController extends BaseController
 		}
 		//用户token存入redis缓存中
 		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],3600*24*7);//$this->config->redis->lifttime设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
     }
 
@@ -69,7 +70,7 @@ class UserController extends BaseController
 		}
 		//用户token存入redis缓存中
 		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],3600*24*7);//$this->config->redis->lifttime设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
 
@@ -106,6 +107,7 @@ class UserController extends BaseController
      * password（必填）：密码
      * company_user_id（必填）：企业用户名单主键ID
      * */
+
 	public function mobileRegisterAction()
 	{
 		//接收参数并格式化
@@ -124,7 +126,7 @@ class UserController extends BaseController
 		}
 		//用户token存入redis缓存中
 		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],3600*24*7);//$this->config->redis->lifttime设置过期时间,不设置过去时间时，默认为永久保持
+		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
 
@@ -412,8 +414,34 @@ class UserController extends BaseController
 		return $this->success($return['data']);
 	}
 
-
-
+	/*
+	* 隐藏活动记录
+	* 参数
+	* post_id（必填）：列表内容id
+	* UserToken（必填）：用户token
+	* */
+	public function setActivityPostsAction()
+	{
+		//接收参数并格式化
+		$data = $this->request->get();
+		/*验证token开始*/
+		$return  = (new UserService)->getDecrypt();
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		/*验证token结束*/
+		$user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+		$post_id = isset($data['post_id'])?preg_replace('# #','',$data['post_id']):0;
+		//调用完善用户方法
+		$return  = (new UserService)->setActivityPosts($post_id,$user_id);
+		//日志记录
+		$this->logger->info(json_encode($return));
+		//返回值判断
+		if($return['result']!=1){
+			return $this->failure([],$return['msg'],$return['code']);
+		}
+		return $this->success($return['data'],$return['msg']);
+	}
 
 
 

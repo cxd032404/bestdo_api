@@ -24,16 +24,14 @@ class ListController extends BaseController
         $tokenInfo  = (new UserService)->getDecrypt();
         //返回值判断
         if($tokenInfo['result']!=1){
-            return $this->failure(['jump_url'=>'/login'],$tokenInfo['msg'],$tokenInfo['code']);
+        //    return $this->failure(['jump_url'=>'/login'],$tokenInfo['msg'],$tokenInfo['code']);
         }
         $visible = intval($this->request->getPost('visible')??0);
         $list_id = intval($this->request->getPost('list_id')??0);
         $post_id = intval($this->request->getPost('post_id')??0);
         $detail = $this->request->getPost('detail')??[];
-        if(array_key_exists("comment",$this->request->getPost()))
-        {
-            $detail['comment'] = $this->request->getPost("comment");
-        }
+        $detail['comment'] = $this->request->getPost("comment")??"";
+        $detail['title'] = $this->request->getPost("title")??"";
         if($post_id > 0)
         {
             $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')),$tokenInfo['data']['user_info']->user_id,$detail,$visible);

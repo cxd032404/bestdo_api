@@ -45,6 +45,7 @@ class UserService extends BaseService
         "companyuser_status_error"=>"企业用户名单状态修改失败！",
         "posts_kudos_error"=>"点赞记录新增失败！",
         "posts_remove_error"=>"取消点赞失败！",
+        "posts_del_error"=>"活动记录删除失败！",
         "posts_kudos_update_error"=>"点赞记录修改失败！",
         "manager_id_error"=>"后台用户id无效！",
         "manager_id_invalid"=>"后台用户id无效,无对应用户信息！",
@@ -64,6 +65,7 @@ class UserService extends BaseService
         "activity_success"=>"报名成功！",
         "filluserinfo_success"=>"信息完善成功！",
         "posts_success"=>"点赞成功！",
+        "posts_del_success"=>"活动记录删除成功！",
         "posts_remove_success"=>"取消点赞成功！",
         "token_for_manager_success"=>"获取token成功！",
         "company_user_success"=>"企业用户身份验证成功！",
@@ -518,6 +520,37 @@ class UserService extends BaseService
         return $return;
     }
 
+    //隐藏活动记录
+    public function setActivityPosts($post_id=0,$user_id=0)
+    {
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
+        try {
+            //启用事务
+            $manager = new TxManager();
+            //指定你需要的数据库
+            $manager->setDbService("hj_user");
+            // Request a transaction
+            $transaction = $manager->get();
+            //查询列表内容
+            $posts = \HJ\Posts::findFirst(["post_id='".$post_id."' and user_id='".$user_id."' "]);
+            if(!isset($posts->post_id)){
+                $transaction->rollback($this->msgList['posts_empty']);
+            }
+            //修改状态
+            $posts->setTransaction($transaction);
+            $posts->visible = 2;
+            if ($posts->update() === false) {
+                $transaction->rollback($this->msgList['posts_del_error']);
+            }
+            $return  = ['result'=>1, 'msg'=>$this->msgList['posts_del_success'], 'code'=>200, 'data'=>[]];
+            $transaction->commit($return);
+        } catch (TxFailed $e) {
+            // 捕获失败回滚的错误
+            $return['msg']  = $e->getMessage();
+        }
+        return $return;
+    }
+
 
 
 
@@ -553,6 +586,7 @@ class UserService extends BaseService
     }
 
     //获取用户token
+
     public function getToken($user_id){
         $userinfo = UserInfo::findFirst([
             "user_id=:user_id:",
@@ -580,13 +614,14 @@ class UserService extends BaseService
             'worker_id'=>$userinfo->worker_id??"",
             'last_login_time'=>$userinfo->last_login_time??"",
             'manager_id'=>$userinfo->manager_id??0,
-            'expire_time'=>time()+3600*24*7,//$this->config->redis->lifttime
+            'expire_time'=>time()+$this->config->user_token->exceed_time
         ];
         $oJwt = new ThirdJwt();
         $data['map'] = $map;
         $data['token'] = $oJwt::getToken($map);
         return $data;
     }
+
 
     //用户token解密
     public function getDecrypt()
