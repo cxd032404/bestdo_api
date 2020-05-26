@@ -54,8 +54,8 @@ class SendCodeService extends BaseService
             $authCodeMT = mt_rand(100000,999999);//6位随机验证码
             $data['jsonTemplateParam'] = json_encode(['code'=>$authCodeMT]);//模板变量json字符串
             //调用阿里云发送短信
-            $return =  $this->sendAliDaYuAuthCode($data);
-            if($return['Code'] == "OK"){
+            $return_sms =  $this->sendAliDaYuAuthCode($data);
+            if($return_sms['Code'] == "OK"){
                 //短信发送记录存入数据库中
                 $sendcode = new SendCode();
                 $sendcode->to = $mobile;
@@ -64,10 +64,10 @@ class SendCodeService extends BaseService
                 if ($sendcode->create() === false) {
                     $return['msg']  = $this->msgList['sms_insert_error'];
                 }else{
-                    $return  = ['result'=>1,'msg'=>$return['Message'],"data"=>$data["jsonTemplateParam"],'code'=>200];
+                    $return  = ['result'=>1,'msg'=>$return_sms['Message'],"data"=>$data["jsonTemplateParam"],'code'=>200];
                 }
             }else{
-                $return['msg']  = $return['Message'];
+                $return['msg']  = $return_sms['Message'];
             }
         }
         return $return;
@@ -93,8 +93,8 @@ class SendCodeService extends BaseService
             $authCodeMT = mt_rand(100000,999999);//6位随机验证码
             $data['jsonTemplateParam'] = json_encode(['code'=>$authCodeMT]);//模板变量json字符串
             //调用阿里云发送短信
-            $return =  $this->sendAliDaYuAuthCode($data);
-            if($return['Code'] == "OK"){
+            $return_sms =  $this->sendAliDaYuAuthCode($data);
+            if($return_sms['Code'] == "OK"){
                 //短信发送记录存入数据库中
                 $sendcode = new SendCode();
                 $sendcode->to = $mobile;
@@ -103,10 +103,10 @@ class SendCodeService extends BaseService
                 if ($sendcode->create() === false) {
                     $return['msg']  = $this->msgList['sms_insert_error'];
                 }else{
-                    $return  = ['result'=>1,'msg'=>$return['Message'],'data'=>$data['jsonTemplateParam'],'code'=>200];
+                    $return  = ['result'=>1,'msg'=>$return_sms['Message'],'data'=>$data['jsonTemplateParam'],'code'=>200];
                 }
             }else{
-                $return['msg']  = $return['Message'];
+                $return['msg']  = $return_sms['Message'];
             }
         }
         return $return;
@@ -132,8 +132,8 @@ class SendCodeService extends BaseService
             $authCodeMT = mt_rand(100000,999999);//6位随机验证码
             $data['jsonTemplateParam'] = json_encode(['code'=>$authCodeMT]);//模板变量json字符串
             //调用阿里云发送短信
-            $return =  $this->sendAliDaYuAuthCode($data);
-            if($return['Code'] == "OK"){
+            $return_sms =  $this->sendAliDaYuAuthCode($data);
+            if($return_sms['Code'] == "OK"){
                 //短信发送记录存入数据库中
                 $sendcode = new SendCode();
                 $sendcode->to = $mobile;
@@ -142,10 +142,10 @@ class SendCodeService extends BaseService
                 if ($sendcode->create() === false) {
                     $return['msg']  = $this->msgList['sms_insert_error'];
                 }else{
-                    $return  = ['result'=>1,'msg'=>$return['Message'],'data'=>$data['jsonTemplateParam'],'code'=>200];
+                    $return  = ['result'=>1,'msg'=>$return_sms['Message'],'data'=>$data['jsonTemplateParam'],'code'=>200];
                 }
             }else{
-                $return['msg']  = $return['Message'];
+                $return['msg']  = $return_sms['Message'];
             }
         }
         return $return;
