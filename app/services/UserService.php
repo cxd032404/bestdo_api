@@ -623,6 +623,7 @@ class UserService extends BaseService
     }
 
 
+
     //用户token解密
     public function getDecrypt()
     {
@@ -673,7 +674,8 @@ class UserService extends BaseService
         }else{
             $userinfo = UserInfo::findFirst([
                 "manager_id=:manager_id:",
-                'bind'=>['manager_id'=>$manager_id], 'order'=>'user_id desc'
+                'bind'=>['manager_id'=>$manager_id],
+                'order'=>'user_id desc'
             ]);
             if(!isset($userinfo->user_id)){
                 $return['msg']  = $this->msgList['manager_id_invalid'];
