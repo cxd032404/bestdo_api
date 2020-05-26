@@ -44,7 +44,7 @@ $config = [
         'adapter'       => 'Redis',
         'host'          => 'r-uf6nx1m4r5ed4djrcg.redis.rds.aliyuncs.com:6379',
         //'port'   		=> 6379,
-        'auth_password' => 'unionfit@2020',
+        'auth_password' => 'unionfit@2020!',
         "persistent"    => false,
         'lifttime'      => 86400
     ],
