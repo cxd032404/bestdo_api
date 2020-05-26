@@ -57,9 +57,10 @@ class PageService extends BaseService
                     {
                         $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
                         $pageElementList[$key]['data']['data'][$k]['source'] = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
+                        $pageElementList[$key]['data']['data'][$k]['source'][0]['post_id'] = $postDetail['post_id'];
                         $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
                         $pageElementList[$key]['data']['data'][$k]['content'] = htmlspecialchars_decode($postDetail['content']);
-                        //获取列表作者信息 
+                        //获取列表作者信息
                         $userInfo = UserInfo::findFirst([
                             "user_id='".$pageElementList[$key]['data']['data'][$k]['user_id']."' and is_del=1",
                             'columns'=>'nick_name,true_name,user_img',
@@ -103,7 +104,6 @@ class PageService extends BaseService
                         }
                         $pageElementList[$key]['detail']['jump_urls'] = $navList;
                     }
-
                 }
                 elseif($elementDetail['element_type'] == "companyInfo")
                 {

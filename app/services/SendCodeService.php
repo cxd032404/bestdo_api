@@ -21,9 +21,9 @@ class SendCodeService extends BaseService
 {
     //模板CODE
     private $tempList = [
-        "register_"=>"SMS_168340963",
-        "login_"=>"SMS_168340963",
-        "forget_"=>"SMS_168340963"
+        "register_"=>"SMS_190729866",
+        "login_"=>"SMS_190729866",
+        "forget_"=>"SMS_190729866"
     ];
 
     private $msgList = [
@@ -156,7 +156,7 @@ class SendCodeService extends BaseService
             "to=:to: and type='mobile' and create_time>:starttime:",
             'bind'=>['to'=>$mobile,'starttime'=>date('Y-m-d H:i:s',time()-3600)]
         ]);
-        if($sendcode_hour>=4){
+        if($sendcode_hour>=5){
             return false;
         }
         return true;
