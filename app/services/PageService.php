@@ -143,17 +143,30 @@ class PageService extends BaseService
                 elseif($elementDetail['element_type'] == "postsDetail")
                 {
                     $post_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
-                    $postsInfo = (new PostsService())->getPosts($post_id,"post_id,user_id,content,source,views,kudos,create_time,update_time");
+                    $postsInfo = (new PostsService())->getPosts($post_id,"post_id,user_id,title,content,source,views,kudos,create_time,update_time");
                     if($postsInfo)
                     {
                         $postsInfo = $postsInfo->toArray();
                         $postsInfo['source'] = json_decode($postsInfo['source'],true);
                         $postsInfo['source'] = (new UploadService())->parthSource($postsInfo['source']);
+                        $postsInfo['content'] = htmlspecialchars_decode($postsInfo['content']);
                         //是否可以修改
                         $postsInfo['editable'] = 0;
 //                        if($postsInfo['user_id']==$user_info['data']['user_id'] && strtotime($postsInfo['create_time'])>time()-1800){
 //                            $postsInfo['editable'] = 1;
 //                        }
+
+                        $userinfo = UserInfo::findFirst([
+                            "user_id = '".$postsInfo['user_id']."'",
+                            "columns"=>"user_id,nick_name,true_name,user_img,company_id"
+                        ]);
+                        $posts['nick_name'] = (isset($userinfo->user_id))?$userinfo->nick_name:"";
+                        $posts['true_name'] = (isset($userinfo->user_id))?$userinfo->true_name:"";
+                        $posts['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
+                        $posts['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:"";
+                        $postsInfo['user_info'] = $posts;
+
+
                         $pageElementList[$key]['detail'] = $postsInfo;
                     }
 
