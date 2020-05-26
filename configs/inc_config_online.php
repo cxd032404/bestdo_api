@@ -40,6 +40,20 @@ $config = [
         'password' => '&P5m!GWdZ6K@P2lN',
         'dbname'   => 'hj_user'
     ],
+    'database' => [ // 测试库1
+        'adapter'  => 'Mysql',
+        'host'     => 'rm-uf68e0u64uqojk4p1.mysql.rds.aliyuncs.com',
+        'username' => 'hj_cxd',
+        'password' => '&P5m!GWdZ6K@P2lN',
+        'dbname'   => 'swoole_test'
+    ],
+    'database_1' => [ // 测试库2
+        'adapter'  => 'Mysql',
+        'host'     => 'rm-uf68e0u64uqojk4p1.mysql.rds.aliyuncs.com',
+        'username' => 'hj_cxd',
+        'password' => '&P5m!GWdZ6K@P2lN',
+        'dbname'   => 'swoole_test2'
+    ],
     'redis' => [
         'adapter'       => 'Redis',
         'host'          => 'r-uf6nx1m4r5ed4djrcg.redis.rds.aliyuncs.com:6379',

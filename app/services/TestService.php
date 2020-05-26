@@ -27,8 +27,6 @@ class TestService extends BaseService
         $robot = $oRobot->findByData(888);
         //$robot->data = 888;
         $robot->update(['test'=>999]);
-        print_R($robot);
-        die();
         $return = $this->database->fetchAll("show tables;");
         $return1 = $this->database_1->fetchAll("select * from test_table;");
         //print_R($return);print_R($return1);//die();
