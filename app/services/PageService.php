@@ -5,6 +5,7 @@ class PageService extends BaseService
 {
 	private $msg = 'success';
 
+    
     //根据页面标示获取页面信息
     //$page_sign：页面标示
     public function getPageInfo($company_id,$page_sign,$params = "",$user_info)
