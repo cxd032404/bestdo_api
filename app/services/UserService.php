@@ -336,8 +336,8 @@ class UserService extends BaseService
             $return['msg'] = $this->msgList['company_id_empty'];
         }else{
             $company = \HJ\Company::findFirst([
-                "company_id = '".$company_id."'",
-                "columns"=>['company_id','company_name']
+                "company_id = '".$company_id."' and display=1",
+                "columns"=>['company_id','company_name','icon']
             ]);
             $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['company'=>$company]];
         }
@@ -586,7 +586,6 @@ class UserService extends BaseService
     }
 
     //获取用户token
-
     public function getToken($user_id){
         $userinfo = UserInfo::findFirst([
             "user_id=:user_id:",
@@ -621,8 +620,6 @@ class UserService extends BaseService
         $data['token'] = $oJwt::getToken($map);
         return $data;
     }
-
-
 
     //用户token解密
     public function getDecrypt()
@@ -722,7 +719,7 @@ class UserService extends BaseService
             }
         }
         return $return;
-    } 
+    }
 
     /*
      * 获取我的活动记录
