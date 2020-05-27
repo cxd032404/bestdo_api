@@ -184,7 +184,7 @@ class PostsService extends BaseService
     public function updateDisplay($post_id,$display)
     {
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,list_id,visible,update_time")->toArray();
+        $postInfo = self::getPosts(intval($post_id),"post_id,list_id,visible,views,update_time")->toArray();
         if(!isset($postInfo['post_id']))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
@@ -193,7 +193,7 @@ class PostsService extends BaseService
         {
             $postInfo['visible'] = $display;
             $postInfo['update_time'] = date("Y-m-d H:i:s");
-            $update = self::updatePost($postInfo,$postInfo);
+            $update = self::updatePost($postInfo['post_id'],$postInfo);
             if($update)
             {
                 $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
@@ -262,10 +262,18 @@ class PostsService extends BaseService
     }
     public function updatePost($post_id,$updateData)
     {
-        $posts = (new \HJ\Posts())->findFirst(['post_id'=>$post_id]);
+        $posts = (new \HJ\Posts())->findFirst(['post_id = '.$post_id]);
         foreach($updateData as $key => $value)
         {
             $posts->$key = $value;
+        }
+        return $posts->save();
+    }
+    public function updatePostView($post_id)
+    {
+        $posts = (new \HJ\Posts())->findFirst(['post_id = '.$post_id]);
+        {
+            $posts->views = $posts->views + 100;
         }
         return $posts->save();
     }
