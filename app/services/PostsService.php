@@ -184,7 +184,7 @@ class PostsService extends BaseService
     public function updateDisplay($post_id,$display)
     {
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,visible,update_time")->toArray();
+        $postInfo = self::getPosts(intval($post_id),"post_id,list_id,visible,update_time")->toArray();
         if(!isset($postInfo['post_id']))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
