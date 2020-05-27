@@ -228,17 +228,38 @@ class UserController extends BaseController
 	public function getCompanyAction()
 	{
 		//接收参数并格式化
-		$data = $this->request->get();
-		$company_id = isset($data['company_id'])?preg_replace('# #','',$data['company_id']):"";
+		$companyService = new CompanyService();
+        $data = $this->request->get();
+		$company_id = isset($data['company_id'])?preg_replace('# #','',$data['company_id']):0;
+        $privacy = isset($data['privacy'])?preg_replace('# #','',$data['privacy']):0;
+        $user = isset($data['user'])?preg_replace('# #','',$data['user']):0;
 		//调用公司查询方法
-		$return  = (new UserService)->getCompany($company_id);
-		//日志记录
-		$this->logger->info(json_encode($return));
-		//返回值判断
-		if($return['result']!=1){
-			return $this->failure([],$return['msg'],$return['code']);
-		}
-		return $this->success($return['data']);
+        $company_info  = $companyService->getCompanyInfo($company_id);
+        if($company_info)
+        {
+            $company_info = $company_info->toArray();
+            if($privacy)
+            {
+                $protocal = $companyService->getCompanyProtocal($company_id,"privacy");
+                if($protocal)
+                {
+                    $company_info['protocal']['privacy'] = $protocal?$protocal->toArray():[];
+                }
+            }
+            if($user)
+            {
+                $protocal = $companyService->getCompanyProtocal($company_id,"user");
+                if($protocal)
+                {
+                    $company_info['protocal']['user'] = $protocal?$protocal->toArray():[];
+                }
+            }
+            return $this->success($company_info);
+        }
+        else
+        {
+            return $this->failure([],"",404);
+        }
 	}
 
 	/*
