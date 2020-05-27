@@ -113,7 +113,7 @@ class PostsService extends BaseService
                     $postInfo['content'] = trim($detail['comment']);
                     $postInfo['update_time'] = date("Y-m-d H:i:s");
                     $data = json_decode(json_encode($postInfo),true);
-                    $update = self::updatePost($postInfo,$data);
+                    $update = self::updatePost($postInfo['post_id'],$data);
                     if($update)
                     {
                         $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id'],'new_key'=>$new_add]];
@@ -147,6 +147,7 @@ class PostsService extends BaseService
             }
             else
             {
+                print_r($postInfo);
                 unset($postInfo['source'][$sid]);
                 $source = (new UploadService())->sortUpload($postInfo['source']);
                 $sid = explode(".",$sid);
@@ -165,7 +166,7 @@ class PostsService extends BaseService
                 }
                 $postInfo['source'] = json_encode($postInfo['source']);
                 $postInfo['update_time'] = date("Y-m-d H:i:s");
-                $update = self::updatePost($postInfo,$postInfo);
+                $update = self::updatePost($postInfo['post_id'],$postInfo);
                 if($update)
                 {
                     $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
