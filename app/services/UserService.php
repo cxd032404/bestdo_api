@@ -327,6 +327,7 @@ class UserService extends BaseService
         return $return;
     }
 
+
     //活动报名方法
     public function activitySign($map,$user_id="")
     {
@@ -569,7 +570,6 @@ class UserService extends BaseService
     }
 
     //获取用户token
-
     public function getToken($user_id){
         $userinfo = UserInfo::findFirst([
             "user_id=:user_id:",
@@ -604,8 +604,6 @@ class UserService extends BaseService
         $data['token'] = $oJwt::getToken($map);
         return $data;
     }
-
-
 
     //用户token解密
     public function getDecrypt()
@@ -705,7 +703,7 @@ class UserService extends BaseService
             }
         }
         return $return;
-    } 
+    }
 
     /*
      * 获取我的活动记录
