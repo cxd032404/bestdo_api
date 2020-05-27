@@ -58,7 +58,7 @@ class PostsService extends BaseService
     //提交更新文章
     //list_id：文章ID
     //uploadedFiles：已经上传的资源
-    public function updatePosts($post_id,$user_id,$detail,$visible)
+    public function updatePosts($post_id,$user_id,$manager_id,$detail,$visible)
     {
         $oUpload = new UploadService();
         //获取列表信息
@@ -69,7 +69,7 @@ class PostsService extends BaseService
         }
         else
         {
-            if($postInfo['user_id']!=$user_id)
+            if($postInfo['user_id']!=$user_id && $manager_id == 0)
             {
                 $return = ['result'=>false,'data'=>['msg'=>"文章作者不匹配"]];
             }else{
