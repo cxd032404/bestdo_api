@@ -113,7 +113,7 @@ class UserService extends BaseService
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
-        if($mobile=='17621822661' || $mobile=='13472871514' ){
+        if($mobile=='17621822661' || $mobile=='18816551156' ){
             $login_code = json_encode(['code'=>123456]);
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
