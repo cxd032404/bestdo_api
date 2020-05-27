@@ -327,10 +327,7 @@ class UserService extends BaseService
         return $return;
     }
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 1e0a936d52ef4479b74865db1a914056df52e221
     //活动报名方法
     public function activitySign($map,$user_id="")
     {
