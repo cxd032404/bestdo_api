@@ -231,7 +231,7 @@ class UserController extends BaseController
 		$companyService = new CompanyService();
         $data = $this->request->get();
 		$company_id = isset($data['company_id'])?preg_replace('# #','',$data['company_id']):0;
-        $privacy = isset($data['privacy'])?preg_replace('# #','',$data['privacy']):1;
+        $privacy = isset($data['privacy'])?preg_replace('# #','',$data['privacy']):0;
         $user = isset($data['user'])?preg_replace('# #','',$data['user']):0;
 		//调用公司查询方法
         $company_info  = $companyService->getCompanyInfo($company_id);
