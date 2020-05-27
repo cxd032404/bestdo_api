@@ -327,23 +327,6 @@ class UserService extends BaseService
         return $return;
     }
 
-    //查询公司名称
-    public function getCompany($company_id=0)
-    {
-        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
-        //查询公司数据
-        if($company_id<=0){
-            $return['msg'] = $this->msgList['company_id_empty'];
-        }else{
-            $company = \HJ\Company::findFirst([
-                "company_id = '".$company_id."'",
-                "columns"=>['company_id','company_name']
-            ]);
-            $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['company'=>$company]];
-        }
-        return $return;
-    }
-
     //活动报名方法
     public function activitySign($map,$user_id="")
     {
