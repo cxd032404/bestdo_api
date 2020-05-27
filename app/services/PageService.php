@@ -47,7 +47,7 @@ class PageService extends BaseService
                     $userList = [];
                     if($search_content){
                         $userList = UserInfo::find([
-                            "nick_name like '%".$search_content."%' and is_del=1 and company_id='".$company_id."'",
+                            "nick_name like '%".$search_content."%' and is_del=0 and company_id='".$company_id."'",
                             'columns'=>'user_id',
                             'order'=>'user_id desc'
                         ])->toArray();
@@ -59,18 +59,19 @@ class PageService extends BaseService
                         $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
                         $pageElementList[$key]['data']['data'][$k]['source'] = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
                         $pageElementList[$key]['data']['data'][$k]['source'][0]['post_id'] = $postDetail['post_id'];
+                        $pageElementList[$key]['data']['data'][$k]['source'][0]['title'] = $postDetail['title'];
                         $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
                         $pageElementList[$key]['data']['data'][$k]['content'] = htmlspecialchars_decode($postDetail['content']);
                         //获取列表作者信息
                         $userInfo = UserInfo::findFirst([
-                            "user_id='".$pageElementList[$key]['data']['data'][$k]['user_id']."' and is_del=1",
+                            "user_id='".$pageElementList[$key]['data']['data'][$k]['user_id']."' and is_del=0",
                             'columns'=>'nick_name,true_name,user_img',
                             'order'=>'user_id desc'
                         ]); 
                         $pageElementList[$key]['data']['data'][$k]['user_info'] = $userInfo;
                         //获取用户今日是否可以点赞
                         $postskudos_info = PostsKudos::findFirst([
-                            "sender_id=:sender_id: and post_id=:post_id: and is_del=1 and create_time between :starttime: AND :endtime: ",
+                            "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
                             'bind'=>[
                                 'sender_id'=>$user_info['data']['user_id'],
                                 'post_id'=>$pageElementList[$key]['data']['data'][$k]['post_id'],
@@ -149,6 +150,8 @@ class PageService extends BaseService
                         $postsInfo = $postsInfo->toArray();
                         $postsInfo['source'] = json_decode($postsInfo['source'],true);
                         $postsInfo['source'] = (new UploadService())->parthSource($postsInfo['source']);
+                        $postsInfo['source']['0']['title'] = $postsInfo['title'];
+                        $postsInfo['source']['0']['post_id'] = $postsInfo['post_id'];
                         $postsInfo['content'] = htmlspecialchars_decode($postsInfo['content']);
                         //是否可以修改
                         $postsInfo['editable'] = 0;
