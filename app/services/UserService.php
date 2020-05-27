@@ -95,7 +95,7 @@ class UserService extends BaseService
             $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','password','username','user_img','company_id']]);
             if(!isset($userinfo->user_id)){
                 $return['msg']  = $this->msgList['mobile_noregister'];
-            }else if($userinfo->is_del==0){
+            }else if($userinfo->is_del==1){
                 $return['msg']  = $this->msgList['mobile_prohibit'];
             }else if($userinfo->password!=md5($password)){
                 $return['msg']  = $this->msgList['password_error'];
@@ -131,7 +131,7 @@ class UserService extends BaseService
             //查询用户数据
             $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id','last_login_time']]);
             if(isset($userinfo->user_id)){//用户存在只修改验证码状态及生产token
-                if($userinfo->is_del==0){
+                if($userinfo->is_del==1){
                     $return['msg']  = $this->msgList['mobile_prohibit'];
                 }else{
                     //修改验证码记录状态
@@ -224,7 +224,7 @@ class UserService extends BaseService
             $userinfo = UserInfo::findFirst(["username = '".$mobile."'"]);
             if(!isset($userinfo->user_id)){
                 $return['msg']  = $this->msgList['mobile_noregister'];
-            }else if($userinfo->is_del==0){
+            }else if($userinfo->is_del==1){
                 $return['msg']  = $this->msgList['mobile_prohibit'];
             }else{
                 try {
@@ -282,7 +282,7 @@ class UserService extends BaseService
                 $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img']]);
                 if(isset($userinfo->user_id)){
                     $return['msg']  = $this->msgList['mobile_register'];
-                    if($userinfo->is_del==0){
+                    if($userinfo->is_del==1){
                         $return['msg']  = $this->msgList['mobile_prohibit'];
                     }
                 }else{
@@ -417,7 +417,7 @@ class UserService extends BaseService
             }
             //查询点赞记录
             $postskudos_info = PostsKudos::findFirst([
-                "sender_id=:sender_id: and post_id=:post_id: and is_del=1 and create_time between :starttime: AND :endtime: ",
+                "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
                 'bind'=>[
                     'sender_id'=>$sender_id,
                     'post_id'=>$post_id,
@@ -471,7 +471,7 @@ class UserService extends BaseService
             }
             //查询点赞记录
             $postskudos = PostsKudos::findFirst([
-                "sender_id=:sender_id: and post_id=:post_id: and is_del=1 and create_time between :starttime: AND :endtime: ",
+                "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
                 'bind'=>[
                     'sender_id'=>$sender_id,
                     'post_id'=>$post_id,
