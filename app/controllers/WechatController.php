@@ -47,7 +47,7 @@ class WechatController extends BaseController
                 //测试：根据网页授权access_token和openid获取用户信息
                 $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
                 echo "----------------------打印网页授权access_token获取的用户信息--------------------------";
-                print_r($oauth_userinfo);
+                var_dump($oauth_userinfo);
                 //日志记录
                 $this->logger->info(json_encode($oauth_userinfo));
                 if (array_key_exists('errcode', $oauth_userinfo) && $oauth_userinfo['errcode'] != '0') {
@@ -58,10 +58,13 @@ class WechatController extends BaseController
             //已获得openid，判断是否关注
             $openid = $_REQUEST["openid"]??"";
         }
+        echo "----------------------打印全局access_token获取的用户信息的参数--------------------------";
+        var_dump($openid);
+        var_dump($access_token);
         //第四步：根据全局access_token和openid获取用户信息
         $userinfo = $this->getUserInfo($access_token,$openid);
         echo "----------------------打印全局access_token获取的用户信息--------------------------";
-        print_r($userinfo);
+        var_dump($userinfo);
         //日志记录
         $this->logger->info(json_encode($userinfo));
         if (array_key_exists('errcode', $userinfo) && $userinfo['errcode'] != '0') {
