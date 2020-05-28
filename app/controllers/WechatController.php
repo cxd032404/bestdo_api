@@ -108,7 +108,7 @@ class WechatController extends BaseController
     {
         $access_token_redis = $this->getRedis("access_token");
         if( $access_token_redis && $access_token_redis["expires_time"] && $access_token_redis["expires_time"]>time() ){
-            $access_token['access_token'] = $access_token_redis["access_token"];
+            $access_token = $access_token_redis;
         }
         else{
             $url_get = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.$appid.'&secret='.$appsecret;
