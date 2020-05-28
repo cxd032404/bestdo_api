@@ -23,8 +23,6 @@ class WechatController extends BaseController
         $access_token = $this->getAccessToken($appid,$appsecret);
         echo "----------------------打印全局access_token--------------------------";
         var_dump($access_token);
-        //日志记录
-        $this->logger->info(json_encode($access_token));
 
         if (empty($_REQUEST["openid"])){
             //未获得用户openid，判断是否关注
@@ -42,14 +40,10 @@ class WechatController extends BaseController
                 echo "----------------------打印网页授权access_token和openid--------------------------";
                 var_dump($oauth2);
                 $openid = $oauth2['openid'];
-                //日志记录
-                $this->logger->info(json_encode($oauth2));
                 //测试：根据网页授权access_token和openid获取用户信息
                 $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
                 echo "----------------------打印网页授权access_token获取的用户信息--------------------------";
                 var_dump($oauth_userinfo);
-                //日志记录
-                $this->logger->info(json_encode($oauth_userinfo));
                 if (array_key_exists('errcode', $oauth_userinfo) && $oauth_userinfo['errcode'] != '0') {
                     return json_encode($oauth_userinfo);
                 }
@@ -65,8 +59,6 @@ class WechatController extends BaseController
         $userinfo = $this->getUserInfo($access_token,$openid);
         echo "----------------------打印全局access_token获取的用户信息--------------------------";
         var_dump($userinfo);
-        //日志记录
-        $this->logger->info(json_encode($userinfo));
         if (array_key_exists('errcode', $userinfo) && $userinfo['errcode'] != '0') {
             return json_encode($userinfo);
         }
@@ -88,7 +80,7 @@ class WechatController extends BaseController
     public function getOauthAccessToken($appid,$appsecret,$code)
     {
         $oauth_access_token_redis = $this->getRedis("oauth_access_token");
-        if( $oauth_access_token_redis && $oauth_access_token_redis["expires_time"] && $oauth_access_token_redis["expires_time"]>time() ){
+        if( $oauth_access_token_redis && $oauth_access_token_redis["oauth_expires_time"] && $oauth_access_token_redis["oauth_expires_time"]>time() ){
             $oauth_access_token = $oauth_access_token_redis;
         }
         else{
@@ -97,7 +89,7 @@ class WechatController extends BaseController
             $oauth_access_token = $this->getJson($url_get);
             if(!array_key_exists('errcode', $oauth_access_token)){
                 //用户token存入redis缓存中
-                $oauth_access_token['expires_time'] = time()+intval($oauth_access_token['expires_in']);
+                $oauth_access_token['oauth_expires_time'] = time()+intval($oauth_access_token['expires_in']);
                 $this->setRedis('oauth_access_token',$oauth_access_token);
             }
         }
