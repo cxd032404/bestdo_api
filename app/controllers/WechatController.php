@@ -30,7 +30,7 @@ class WechatController extends BaseController
             return;
         }else{
 
-            echo "----------------------打印获取的code--------------------------";
+            echo "----------------------打印获取的code---------------------------";
             var_dump($_REQUEST['code']);
 
 
