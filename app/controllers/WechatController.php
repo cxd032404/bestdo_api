@@ -14,6 +14,7 @@ class WechatController extends BaseController
     /*获取用户信息并判断是否关注*/
     public function indexAction()
     {
+        echo 11111;
         $appid = $this->key_config->aliyun->wechat->appid;
         $appsecret = $this->key_config->aliyun->wechat->appsecret;
         echo "----------------------打印公众号appid和appsecret--------------------------";
