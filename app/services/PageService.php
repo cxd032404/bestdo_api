@@ -130,9 +130,9 @@ class PageService extends BaseService
                     $pageElementList[$key]['detail']['available'] = 1;
                     //获取列表信息
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
-                    if($listInfo->activity_id>0)
+                    if($listInfo['activity_id']>0)
                     {
-                        $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo->activity_id);
+                        $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo['activity_id']);
                         if(!$activitylog_info)
                         {
                             $pageElementList[$key]['detail']['available'] = 0;
@@ -142,7 +142,6 @@ class PageService extends BaseService
                     {
                         //数据解包
                         $listInfo['detail'] = json_decode($listInfo['detail'],true);
-
                         $user_id = isset($user_info['data']['user_id'])?[$user_info['data']['user_id']]:[];
                         $postExists = (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1);
                         //已经提交过
@@ -266,6 +265,20 @@ class PageService extends BaseService
                     }
                     $pageElementList[$key]['detail']['self'] = $self??[];
                     $pageElementList[$key]['detail']['all'] = $posts;
+                }
+
+                elseif($elementDetail['element_type'] == "activityApply")
+                {
+                    if(isset($pageElementList[$key]['detail']['auto']) && $pageElementList[$key]['detail']['auto']==1)
+                    {
+                        $map = [];
+                        $map['mobile'] = $user_info['data']['mobile']??"";
+                        $map['user_name'] = $user_info['data']['true_name']??"";
+                        $map['department'] = "";
+                        $map['activity_id'] = $pageElementList[$key]['detail']['activity_id']??0;
+                        $apply = (new UserService())->activitySign($map,$user_info['data']['user_id']);
+                        unset($pageElementList[$key]);
+                    }
                 }
             }
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));
