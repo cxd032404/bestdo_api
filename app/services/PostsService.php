@@ -212,7 +212,7 @@ class PostsService extends BaseService
     //order：排序
     //page:页码
     //pageSize：单页数量
-    public function getPostsList($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =2)
+    public function getPostsList($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =4)
     {
         if(is_array($list_id))
         {
@@ -273,9 +273,14 @@ class PostsService extends BaseService
     public function updatePostView($post_id)
     {
         $posts = (new \HJ\Posts())->findFirst(['post_id = '.$post_id]);
+        if($posts)
         {
-            $posts->views = $posts->views + 100;
+            $posts->views = $posts->views + 1;
+            return $posts->save();
         }
-        return $posts->save();
+        else
+        {
+            return true;
+        }
     }
 }
