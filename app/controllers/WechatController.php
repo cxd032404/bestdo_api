@@ -101,7 +101,7 @@ class WechatController extends BaseController
         $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
 
 
-        echo "----------------------打印全局access_token的url请求信息--------------------------";
+        echo "----------------------打印全局access_token的url请求信息---------------------------";
         var_dump($url_get);
 
 
