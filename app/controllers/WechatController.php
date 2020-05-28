@@ -45,7 +45,7 @@ class WechatController extends BaseController
         $access_token = $this->getAccessToken($appid,$appsecret);
         echo "----------------------打印全局access_token--------------------------";echo"<br />";
         var_dump($access_token);
-        echo 222222;
+        echo 222222222;
         echo "----------------------打印全局access_token获取的用户信息的参数--------------------------";echo"<br />";
         var_dump($openid);
         var_dump($access_token);
