@@ -92,7 +92,8 @@ class WechatController extends BaseController
             $oauth_access_token = $oauth_access_token_redis;
         }
         else{
-            $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=$code&grant_type=authorization_code";
+            $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
+            var_dump($url_get);
             $oauth_access_token = $this->getJson($url_get);
             if(!array_key_exists('errcode', $oauth_access_token)){
                 //用户token存入redis缓存中
@@ -111,7 +112,8 @@ class WechatController extends BaseController
             $access_token = $access_token_redis;
         }
         else{
-            $url_get = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.$appid.'&secret='.$appsecret;
+            $url_get = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=".$appid."&secret=".$appsecret."";
+            var_dump($url_get);
             $access_token = $this->getJson($url_get);
             if(!array_key_exists('errcode', $access_token)){
                 //用户token存入redis缓存中
@@ -126,6 +128,7 @@ class WechatController extends BaseController
     public function getUserInfo($access_token,$openid)
     {
         $url_get = "https://api.weixin.qq.com/cgi-bin/user/info?access_token=".$access_token."&openid=".$openid."";
+        var_dump($url_get);
         $userinfo = $this->getJson($url_get);
         return $userinfo;
     }
@@ -134,6 +137,7 @@ class WechatController extends BaseController
     public function getOauthUserInfo($oauth_access_token,$openid)
     {
         $url_get = "https://api.weixin.qq.com/sns/userinfo?access_token=".$oauth_access_token."&openid=".$openid."&lang=zh_CN";
+        var_dump($url_get);
         $userinfo = $this->getJson($url_get);
         return $userinfo;
     }
