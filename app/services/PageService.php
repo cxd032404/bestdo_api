@@ -132,7 +132,9 @@ class PageService extends BaseService
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
                     //数据解包
                     $listInfo['detail'] = json_decode($listInfo['detail'],true);
-                    $postExists = (new PostsService())->getPostsList($list_id,$user_info['data']['user_id']??0,"post_id","post_id DESC",0,1,1);
+
+                    $user_id = isset($user_info['data']['user_id'])?[$user_info['data']['user_id']]:[];
+                    $postExists = (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1);
                     //已经提交过
                     if($postExists['count']>0)
                     {
@@ -174,7 +176,7 @@ class PageService extends BaseService
                         $listInfo['detail'] = json_decode($listInfo['detail'],true);
                         if(isset($listInfo['detail']['connect']) && $listInfo['detail']['connect']>0)
                         {
-                            $connectedList = (new PostsService())->getPostsList($listInfo['detail']['connect'],0,'post_id,title,source');
+                            $connectedList = (new PostsService())->getPostsList($listInfo['detail']['connect'],[],'post_id,title,source');
                             foreach($connectedList['data'] as $pid => $pdetail)
                             {
                                 $connectedList['data'][$pid]['source'] = json_decode($pdetail['source'],true);

@@ -118,7 +118,6 @@ class UserService extends BaseService
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         if( empty($mobile) || !$common->check_mobile($mobile) ) {
-            echo $mobile;
             $return['msg']  = $this->msgList['mobile_empty'];
         }else if(empty($code)){
             $return['msg']  = $this->msgList['sendcode_empty'];
