@@ -176,6 +176,7 @@ class PageService extends BaseService
                         $listInfo['detail'] = json_decode($listInfo['detail'],true);
                         if(isset($listInfo['detail']['connect']) && $listInfo['detail']['connect']>0)
                         {
+                            
                             $connectedList = (new PostsService())->getPostsList($listInfo['detail']['connect'],[],'post_id,title,source');
                             foreach($connectedList['data'] as $pid => $pdetail)
                             {

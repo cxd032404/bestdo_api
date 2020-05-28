@@ -11,6 +11,7 @@ class WechatController extends BaseController
 {
 
 
+
     /*获取用户信息并判断是否关注*/
     public function indexAction()
     {
