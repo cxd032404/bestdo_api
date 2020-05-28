@@ -143,8 +143,10 @@ class PageService extends BaseService
                 }
                 elseif($elementDetail['element_type'] == "postsDetail")
                 {
+                    $postsService = new PostsService();
                     $post_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
-                    $postsInfo = (new PostsService())->getPosts($post_id,"post_id,user_id,title,content,source,views,kudos,create_time,update_time");
+                    $postsService->updatePostView($post_id);
+                    $postsInfo = $postsService->getPosts($post_id,"post_id,user_id,title,content,source,views,kudos,create_time,update_time");
                     if($postsInfo)
                     {
                         $postsInfo = $postsInfo->toArray();
