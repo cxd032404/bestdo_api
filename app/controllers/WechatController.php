@@ -11,81 +11,48 @@ class WechatController extends BaseController
 {
 
 
+
     /*获取用户信息并判断是否关注*/
     public function indexAction()
     {
         $appid = $this->key_config->aliyun->wechat->appid;
         $appsecret = $this->key_config->aliyun->wechat->appsecret;
-
-
-        echo "----------------------打印公众号appid和appsecret--------------------------";
-        var_dump($appid);
-        var_dump($appsecret);
-
-
-        if (empty($_REQUEST["code"])) {//第二步：获取code
+        if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
             $company_id = $_REQUEST['company_id']??"1";
             $redirect_url = 'http://api.staffhome.cn/Wechat/index';
             $this->getCode($appid,$redirect_url,$company_id);
             return;
         }else{
-
-            echo "----------------------打印获取的code---------------------------";
-            var_dump($_REQUEST['code']);
-
-
-            //第三步：获取网页授权access_token和openid
+            //第二步：获取网页授权access_token和openid
             $code = $_REQUEST['code']??"";
             $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
-
-
-            echo "----------------------打印网页授权access_token和openid--------------------------";
-            var_dump($oauth2);
-
-
+            if (array_key_exists('errcode', $oauth2) && $oauth2['errcode'] != '0') {
+                return $this->failure($oauth2);
+            }
             $openid = $oauth2['openid'];
-            //测试一：根据网页授权access_token和openid获取用户信息
+            //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
             $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
-
-
-            echo "----------------------打印网页授权access_token获取的用户信息--------------------------";
-            var_dump($oauth_userinfo);
-
-
             if (array_key_exists('errcode', $oauth_userinfo) && $oauth_userinfo['errcode'] != '0') {
-                //return json_encode($oauth_userinfo);
+                return $this->failure($oauth_userinfo);
             }
         }
-        //第一步：根据appid和appsecret获取全局access_token
+        //第四步：根据appid和appsecret获取全局access_token
         $access_token = $this->getAccessToken($appid,$appsecret);
-
-
-        echo "----------------------打印全局access_token--------------------------";
-        var_dump($access_token);
-        echo 222222222333;
-        echo "----------------------打印全局access_token获取的用户信息的参数--------------------------";
+        echo "----------------------打印全局access_token和用户openid--------------------------";
         var_dump($openid);
         var_dump($access_token);
-
-
-        //第四步：根据全局access_token和openid获取用户信息
+        //第五步：根据全局access_token和openid获取用户信息
         $userinfo = $this->getUserInfo($access_token,$openid);
-
-
-        echo "----------------------打印全局access_token获取的用户信息--------------------------";
-        var_dump($userinfo);
-        var_dump($userinfo['subscribe']);
-
-
         if (array_key_exists('errcode', $userinfo) && $userinfo['errcode'] != '0') {
-            //return json_encode($userinfo);
+            return $this->failure($userinfo);
         }
         if($userinfo['subscribe']==1){
             echo '已关注';
         }else{
             echo '未关注';
         }
-        exit();
+        $return  = ['result'=>1, 'msg'=>"", 'code'=>200, 'data'=>['access_token_user_info'=>$userinfo, 'oauth_access_token_user_info'=>$oauth_userinfo]];
+        return $this->success($return);
     }
 
     //获取网页授权code
@@ -99,12 +66,6 @@ class WechatController extends BaseController
     public function getOauthAccessToken($appid,$appsecret,$code)
     {
         $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
-
-
-        echo "----------------------打印全局access_token的url请求信息---------------------------";
-        var_dump($url_get);
-
-
         $oauth_access_token = $this->getJson($url_get);
         return $oauth_access_token;
     }
@@ -113,29 +74,12 @@ class WechatController extends BaseController
     public function getAccessToken($appid,$appsecret)
     {
         $access_token_redis = $this->getRedis("access_token");
-
-
-        echo "----------------------打印全局access_token的redis存储信息--------------------------";
-        var_dump($access_token_redis);
-
-
         if( $access_token_redis && $access_token_redis["expires_time"] && $access_token_redis["expires_time"]>time() ){
             $access_token = $access_token_redis;
         }
         else{
             $url_get = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=".$appid."&secret=".$appsecret."";
-
-
-            echo "----------------------打印全局access_token的url请求信息--------------------------";
-            var_dump($url_get);
-
-
             $access_token = $this->getJson($url_get);
-
-
-            var_dump($access_token);
-
-
             if(!array_key_exists('errcode', $access_token)){
                 //用户token存入redis缓存中
                 $access_token['expires_time'] = time()+intval($access_token['expires_in']);
@@ -149,12 +93,6 @@ class WechatController extends BaseController
     public function getUserInfo($access_token,$openid)
     {
         $url_get = "https://api.weixin.qq.com/cgi-bin/user/info?access_token=".$access_token."&openid=".$openid."";
-
-
-        echo "----------------------打印全局access_token获取用户信息的url请求信息--------------------------";
-        var_dump($url_get);
-
-
         $userinfo = $this->getJson($url_get);
         return $userinfo;
     }
@@ -163,12 +101,6 @@ class WechatController extends BaseController
     public function getOauthUserInfo($oauth_access_token,$openid)
     {
         $url_get = "https://api.weixin.qq.com/sns/userinfo?access_token=".$oauth_access_token."&openid=".$openid."&lang=zh_CN";
-
-
-        echo "----------------------打印网页授权access_token获取用户信息的url请求信息--------------------------";
-        var_dump($url_get);
-
-
         $userinfo = $this->getJson($url_get);
         return $userinfo;
     }
