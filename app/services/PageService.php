@@ -187,14 +187,20 @@ class PageService extends BaseService
                         if(isset($listInfo['detail']['connect']) && $listInfo['detail']['connect']>0)
                         {
                             
-                            $connectedList = (new PostsService())->getPostsList($listInfo['detail']['connect'],[],'post_id,title,source');
+                            $connectedList = (new PostsService())->getPostsList($listInfo['detail']['connect'],[],'post_id,title,source,views');
                             foreach($connectedList['data'] as $pid => $pdetail)
                             {
                                 $connectedList['data'][$pid]['source'] = json_decode($pdetail['source'],true);
-                                $connectedList['data'][$pid]['source']['source']['0']['title'] = $pdetail['title'];
-                                $connectedList['data'][$pid]['source']['source']['0']['post_id'] = $pdetail['post_id'];
+                                $new = [];
+                                foreach($connectedList['data'][$pid]['source'] as $k2 => $v2)
+                                {
+                                    $new[str_replace(".","_",$k2)] = $v2;
+                                }
+                                $connectedList['data'][$pid]['source'] = $new;
+                                //$connectedList['data'][$pid]['source']['0']['title'] = $pdetail['title'];
+                                //$connectedList['data'][$pid]['source']['0']['post_id'] = $pdetail['post_id'];
                             }
-                            $postsInfo['connect_list'] = $connectedList['data'];
+                            $postsInfo['connect_list'] = array_values($connectedList['data']);
                         }
                         $pageElementList[$key]['detail'] = $postsInfo;
                     }

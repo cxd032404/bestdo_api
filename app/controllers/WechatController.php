@@ -10,6 +10,57 @@ use Phalcon\Mvc\Controller;
 class WechatController extends BaseController
 {
 
+    public function ceshiAction()
+    {
+        $user_id = 11879;
+        $getWechatUserAction = (new WechatController())->getWechatUserAction($user_id);
+        print_r($getWechatUserAction);die;
+    }
+
+    /*更新用户微信信息*/
+    public function getWechatUserAction($user_id=0)
+    {
+        $appid = $this->key_config->aliyun->wechat->appid;
+        $appsecret = $this->key_config->aliyun->wechat->appsecret;
+        if($this->is_weixin()){
+            if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
+                $redirect_url = 'http://api.staffhome.cn/Wechat/getWechatUserAction';
+                $this->getCode($appid,$redirect_url,$user_id);
+                return;
+            }else{
+                //第二步：获取网页授权access_token和openid
+                $code = $_REQUEST['code']??"";
+                $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+                if (array_key_exists('errcode', $oauth2) && $oauth2['errcode'] != '0') {
+                    return $this->failure($oauth2,"网页授权access_token获取失败！");
+                }
+                $openid = $oauth2['openid'];
+                //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
+                $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
+                if (array_key_exists('errcode', $oauth_userinfo) && $oauth_userinfo['errcode'] != '0') {
+                    return $this->failure($oauth_userinfo,"利用网页授权access_token获取用户信息失败！");
+                }
+                //修改用户信息
+                $userinfo = UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
+                if($userinfo){
+                    $userinfo->wechatid = $oauth_userinfo['openid'];
+                    $userinfo->nick_name = $oauth_userinfo['nickname'];
+                    $userinfo->sex = $oauth_userinfo['sex'];
+                    $userinfo->user_img = $oauth_userinfo['headimgurl'];
+                    $userinfo->wechatinfo = json_encode($oauth_userinfo);
+                    if ($userinfo->update() === false) {
+                        return $this->failure([],"用户微信信息完善失败！");
+                    }else {
+                        return $this->success([],"用户微信信息完善成功！");
+                    }
+                }else{
+                    return $this->failure([],"用户信息未查询到！");
+                }
+            }
+        }else{
+            return $this->failure([],"当前页面不在微信浏览器，不可更新用户微信信息！");
+        }
+    }
 
 
     /*获取用户信息并判断是否关注*/
@@ -38,9 +89,6 @@ class WechatController extends BaseController
         }
         //第四步：根据appid和appsecret获取全局access_token
         $access_token = $this->getAccessToken($appid,$appsecret);
-        echo "----------------------打印全局access_token和用户openid--------------------------";
-        var_dump($openid);
-        var_dump($access_token);
         //第五步：根据全局access_token和openid获取用户信息
         $userinfo = $this->getUserInfo($access_token,$openid);
         if (array_key_exists('errcode', $userinfo) && $userinfo['errcode'] != '0') {
@@ -55,10 +103,20 @@ class WechatController extends BaseController
         return $this->success($return);
     }
 
+
+
+    //查询是否在微信浏览器打开
+    public function is_weixin(){
+        if ( strpos($_SERVER['HTTP_USER_AGENT'], 'MicroMessenger') !== false ) {
+            return true;
+        }
+        return false;
+    }
+
     //获取网页授权code
-    public function getCode($appid,$redirect_url="",$company_id=0)
+    public function getCode($appid,$redirect_url="",$user_id=0)
     {
-        $url_get ="https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".urlencode($redirect_url)."&response_type=code&scope=snsapi_userinfo&state=".intval($company_id)."#wechat_redirect";
+        $url_get ="https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".urlencode($redirect_url)."&response_type=code&scope=snsapi_userinfo&state=".intval($user_id)."#wechat_redirect";
         header("Location:" . $url_get);
     }
 
@@ -106,7 +164,7 @@ class WechatController extends BaseController
     }
 
     //CURL
-    function getJson($url){
+    public function getJson($url){
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
