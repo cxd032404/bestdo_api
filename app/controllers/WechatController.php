@@ -27,7 +27,6 @@ class WechatController extends BaseController
             return;
         }else{
             echo "----------------------打印获取的code--------------------------";echo"<br />";
-            var_dump($_REQUEST['code']);
             //第三步：获取网页授权access_token和openid
             $code = $_REQUEST['code']??"";
             $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
@@ -39,13 +38,6 @@ class WechatController extends BaseController
             echo "----------------------打印网页授权access_token获取的用户信息--------------------------";echo"<br />";
             var_dump($oauth_userinfo);
             if (array_key_exists('errcode', $oauth_userinfo) && $oauth_userinfo['errcode'] != '0') {
-                //return json_encode($oauth_userinfo);
-            }
-            //测试二：根据网页授权access_token和openid调用全局accesstoken获取用户信息的方法
-            $oauth_userinfos = $this->getUserInfo($oauth2['access_token'],$openid);
-            echo "----------------------打印网页授权access_token获取的用户信息--------------------------";echo"<br />";
-            var_dump($oauth_userinfos);
-            if (array_key_exists('errcode', $oauth_userinfos) && $oauth_userinfos['errcode'] != '0') {
                 //return json_encode($oauth_userinfo);
             }
         }
@@ -81,6 +73,7 @@ class WechatController extends BaseController
     //获取网页授权access_token
     public function getOauthAccessToken($appid,$appsecret,$code)
     {
+        print_r($this->getRedis("oauth_access_token"));
         $oauth_access_token_redis = $this->getRedis("oauth_access_token");
         echo "----------------------打印网页授权access_token的redis存储信息--------------------------";echo"<br />";
         var_dump($oauth_access_token_redis);
@@ -115,6 +108,7 @@ class WechatController extends BaseController
             echo "----------------------打印全局access_token的url请求信息--------------------------";echo"<br />";
             var_dump($url_get);
             $access_token = $this->getJson($url_get);
+            var_dump($access_token);
             if(!array_key_exists('errcode', $access_token)){
                 //用户token存入redis缓存中
                 $access_token['expires_time'] = time()+intval($access_token['expires_in']);
