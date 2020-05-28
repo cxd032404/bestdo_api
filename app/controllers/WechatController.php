@@ -98,31 +98,14 @@ class WechatController extends BaseController
     //获取网页授权access_token
     public function getOauthAccessToken($appid,$appsecret,$code)
     {
-        $oauth_access_token_redis = $this->getRedis("oauth_access_token");
+        $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
 
 
-        echo "----------------------打印网页授权access_token的redis存储信息--------------------------";
-        var_dump($oauth_access_token_redis);
+        echo "----------------------打印全局access_token的url请求信息--------------------------";
+        var_dump($url_get);
 
 
-        if( $oauth_access_token_redis && $oauth_access_token_redis["oauth_expires_time"] && $oauth_access_token_redis["oauth_expires_time"]>time() ){
-            $oauth_access_token = $oauth_access_token_redis;
-        }
-        else{
-            $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
-
-
-            echo "----------------------打印全局access_token的url请求信息--------------------------";
-            var_dump($url_get);
-
-
-            $oauth_access_token = $this->getJson($url_get);
-            if(!array_key_exists('errcode', $oauth_access_token)){
-                //用户token存入redis缓存中
-                $oauth_access_token['oauth_expires_time'] = time()+intval($oauth_access_token['expires_in']);
-                $this->setRedis('oauth_access_token',$oauth_access_token);
-            }
-        }
+        $oauth_access_token = $this->getJson($url_get);
         return $oauth_access_token;
     }
 
