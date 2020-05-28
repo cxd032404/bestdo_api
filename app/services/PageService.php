@@ -130,15 +130,26 @@ class PageService extends BaseService
                     $pageElementList[$key]['detail']['available'] = 1;
                     //获取列表信息
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
-                    //数据解包
-                    $listInfo['detail'] = json_decode($listInfo['detail'],true);
-
-                    $user_id = isset($user_info['data']['user_id'])?[$user_info['data']['user_id']]:[];
-                    $postExists = (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1);
-                    //已经提交过
-                    if($postExists['count']>0)
+                    if($listInfo->activity_id>0)
                     {
-                        $pageElementList[$key]['detail']['available'] = 0;
+                        $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo->activity_id);
+                        if(!$activitylog_info)
+                        {
+                            $pageElementList[$key]['detail']['available'] = 0;
+                        }
+                    }
+                    if($pageElementList[$key]['detail']['available'] == 1)
+                    {
+                        //数据解包
+                        $listInfo['detail'] = json_decode($listInfo['detail'],true);
+
+                        $user_id = isset($user_info['data']['user_id'])?[$user_info['data']['user_id']]:[];
+                        $postExists = (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1);
+                        //已经提交过
+                        if($postExists['count']>0)
+                        {
+                            $pageElementList[$key]['detail']['available'] = 0;
+                        }
                     }
                     $afterActions = (new ListService())->processAfterPostAction($listInfo['list_id'],$user_info['data']['user_id']??0,$listInfo['detail']);
                     $pageElementList[$key]['detail']['after_action'] = $afterActions;
