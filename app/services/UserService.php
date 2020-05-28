@@ -329,7 +329,7 @@ class UserService extends BaseService
 
 
     //活动报名方法
-    public function activitySign($map,$user_id="")
+    public function activitySign($map,$user_id=0)
     {
         $common = new Common();
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
@@ -337,9 +337,11 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['mobile_empty'];
         }else if(empty($map['user_name'])){
             $return['msg']  = $this->msgList['user_name_empty'];
-        }else if(empty($map['department'])){
+        }
+        /*else if(empty($map['department'])){
             $return['msg']  = $this->msgList['department_empty'];
-        }else if(empty($map['activity_id'])){
+        }*/
+        else if(empty($map['activity_id'])){
             $return['msg']  = $this->msgList['activity_empty'];
         }else{
             //查询活动数据
@@ -627,7 +629,7 @@ class UserService extends BaseService
     //用户token解密
     public function verifyToken($company="",$page_sign="")
     {
-        //$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImp0aSI6IjNmMmc1N2E5MmFhIn0.eyJpc3MiOiJodHRwOlwvXC9hZG1pbmFwaS5weWcuY29tIiwiYXVkIjoiaHR0cDpcL1wvd3d3LnB5Zy5jb20iLCJqdGkiOiIzZjJnNTdhOTJhYSIsImlhdCI6MTU4OTcwMzcyOCwibmJmIjoxNTg5NzAzNzI3LCJleHAiOjE1ODk3OTAxMjgsImRhdGEiOiJ7XCJ1c2VyX2lkXCI6XCIxMTg3OVwiLFwidXNlcm5hbWVcIjpcIjE3MDgyMTcwNzg3XCIsXCJuaWNrX25hbWVcIjpcImFzZHNhZHNhZFwiLFwidHJ1ZV9uYW1lXCI6XCJ0cnllXCIsXCJ1c2VyX2ltZ1wiOlwiXCIsXCJtb2JpbGVcIjpcIlwiLFwiY29tcGFueV9pZFwiOlwiM1wiLFwiY29tcGFueV9uYW1lXCI6XCJcIixcIndvcmtlcl9pZFwiOlwiXCIsXCJsYXN0X2xvZ2luX3RpbWVcIjpcIjIwMjAtMDQtMjYgMTM6NTI6NTlcIixcIm1hbmFnZXJfaWRcIjpcIjJcIixcImV4cGlyZV90aW1lXCI6MTU5MDMwODUyOH0ifQ.UeTj-2VTftdshJQjYq08C5tFH3cLqQMJGXmW79Bp_6A";
+        //$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImp0aSI6IjNmMmc1N2E5MmFhIn0.eyJpc3MiOiJodHRwOlwvXC9hZG1pbmFwaS5weWcuY29tIiwiYXVkIjoiaHR0cDpcL1wvd3d3LnB5Zy5jb20iLCJqdGkiOiIzZjJnNTdhOTJhYSIsImlhdCI6MTU5MDY2NjYyOCwibmJmIjoxNTkwNjY2NjI3LCJleHAiOjE1OTMyNTg2MjgsImRhdGEiOiJ7XCJ1c2VyX2lkXCI6XCIxMTg3OVwiLFwidXNlcm5hbWVcIjpcIjE3MDgyMTcwNzg3XCIsXCJuaWNrX25hbWVcIjpcIlxcdTZkNGJcXHU4YmQ1MVwiLFwidHJ1ZV9uYW1lXCI6XCJcXHU2ZDRiXFx1OGJkNVxcdTc1MjhcXHU2MjM3MVwiLFwidXNlcl9pbWdcIjpcIlwiLFwibW9iaWxlXCI6XCJcIixcImNvbXBhbnlfaWRcIjpcIjFcIixcImNvbXBhbnlfbmFtZVwiOlwiXCIsXCJ3b3JrZXJfaWRcIjpcIlwiLFwibGFzdF9sb2dpbl90aW1lXCI6XCIyMDIwLTA0LTI2IDEzOjUyOjU5XCIsXCJtYW5hZ2VyX2lkXCI6XCIyXCIsXCJleHBpcmVfdGltZVwiOjE1OTMyNTg2Mjh9In0.j5xto9UrqMoXHLWfozhSyBnffGTP3ZqReGtZ7e2hBVw";
         $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>[]];
         $user_token = $data = $this->request->get("UserToken")??$this->request->getHeader('UserToken');
         //$user_token = $token;
