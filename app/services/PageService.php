@@ -132,8 +132,8 @@ class PageService extends BaseService
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
                     if($listInfo['activity_id']>0)
                     {
-                        $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo['activity_id']);
-                        if(!$activitylog_info)
+                        $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo['activity_id'])->toArray();
+                        if(count($activitylog_info)==0)
                         {
                             $pageElementList[$key]['detail']['available'] = 0;
                         }
@@ -285,6 +285,14 @@ class PageService extends BaseService
                         $map['activity_id'] = $pageElementList[$key]['detail']['activity_id']??0;
                         $apply = (new UserService())->activitySign($map,$user_info['data']['user_id']);
                         unset($pageElementList[$key]);
+                    }
+                    else
+                    {
+                        $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$pageElementList[$key]['detail']['activity_id'])->toArray();
+                        if(count($activitylog_info)>0)
+                        {
+                            unset($pageElementList[$key]);
+                        }
                     }
                 }
             }
