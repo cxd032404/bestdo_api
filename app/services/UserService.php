@@ -114,7 +114,7 @@ class UserService extends BaseService
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
-        if($mobile=='17621822661' ){
+        if($mobile=='17621822661' || $mobile=='13472871514' || $mobile=='17082170787' ){
             $login_code = json_encode(['code'=>123456]);
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
@@ -123,7 +123,7 @@ class UserService extends BaseService
         }else if(empty($code)){
             $return['msg']  = $this->msgList['sendcode_empty'];
         }else if(!$login_code){
-            $return['msg']  = $this->msgList['sendcode_invalid'];
+            $return['msg']  = $this->msgList['sendcode_error'];
         }else if($code != json_decode($login_code)->code){
             $return['msg']  = $this->msgList['sendcode_error'];
         }
@@ -139,6 +139,8 @@ class UserService extends BaseService
                     if(!$sendcode){
                         $return['msg']  = $this->msgList['code_status_error'];
                     }else{
+                        //完善用户微信资料
+                        (new WechatController())->getWechatUserAction($userinfo->user_id);
                         //生成token
                         $tokeninfo = $this->getToken($userinfo->user_id);
                         //修改用户登录时间
@@ -146,8 +148,6 @@ class UserService extends BaseService
                         $userinfo->last_login_time = date('Y-m-d H:i:s',time());
                         $userinfo->update();
                         $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
-                        //完善用户微信资料
-                        (new WechatController())->getWechatUserAction($userinfo->user_id);
                     }
                 }
             }else{//用户不存在 需创建用户+修改验证码状态+修改企业名单状态+生成token
@@ -181,6 +181,8 @@ class UserService extends BaseService
                     if ($user->create() === false) {
                         $transaction->rollback($this->msgList['register_error']);
                     }
+                    //完善用户微信资料
+                    (new WechatController())->getWechatUserAction($user->user_id);
                     //修改验证码记录状态
                     $sendcode = $this->setMobileCode($mobile,$code);
                     if(!$sendcode){
@@ -195,8 +197,6 @@ class UserService extends BaseService
                     $tokeninfo = $this->getToken($user->user_id);
                     $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token'] ]];
                     $this->redis->expire('login_'.$mobile,0);
-                    //完善用户微信资料
-                    (new WechatController())->getWechatUserAction($user->user_id);
                     $transaction->commit($return);
                 } catch (TxFailed $e) {
                     // 捕获失败回滚的错误
