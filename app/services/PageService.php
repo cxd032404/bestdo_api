@@ -200,6 +200,7 @@ class PageService extends BaseService
                                 //$connectedList['data'][$pid]['source']['0']['title'] = $pdetail['title'];
                                 //$connectedList['data'][$pid]['source']['0']['post_id'] = $pdetail['post_id'];
                             }
+                            $postsInfo['list_name'] = $listInfo['list_name'];
                             $postsInfo['connect_list'] = array_values($connectedList['data']);
                         }
                         $pageElementList[$key]['detail'] = $postsInfo;
