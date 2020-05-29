@@ -110,7 +110,7 @@ class UserService extends BaseService
     }
 
     //手机号验证码登录方法
-    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0)
+    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="")
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
@@ -140,7 +140,7 @@ class UserService extends BaseService
                         $return['msg']  = $this->msgList['code_status_error'];
                     }else{
                         //完善用户微信资料
-                        (new WechatController())->getWechatUserAction($userinfo->user_id);
+                        (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$userinfo->user_id,$code);
                         //生成token
                         $tokeninfo = $this->getToken($userinfo->user_id);
                         //修改用户登录时间
@@ -182,7 +182,7 @@ class UserService extends BaseService
                         $transaction->rollback($this->msgList['register_error']);
                     }
                     //完善用户微信资料
-                    (new WechatController())->getWechatUserAction($user->user_id);
+                    (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$user->user_id,$code);
                     //修改验证码记录状态
                     $sendcode = $this->setMobileCode($mobile,$logincode);
                     if(!$sendcode){

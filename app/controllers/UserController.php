@@ -60,8 +60,19 @@ class UserController extends BaseController
 		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$logincode = isset($data['logincode'])?preg_replace('# #','',$data['logincode']):"";
 		$companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
+		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
+
+		//判断是否在微信浏览器打开，不在微信浏览器打开无法获取code
+		if((new WechatService)->is_weixin()){
+			if (empty($code)) {//第一步：获取微信授权code
+				$redirect_url = "http://api.staffhome.cn/User/mobileCodeLogin?mobile=".$mobile."&logincode=".$logincode."companyuser_id=".$companyuser_id."";
+				(new WechatService)->getCode($this->key_config->aliyun->wechat->appid,$redirect_url,json_encode($data));
+				return;
+			}
+		}
+
 		//调用手机号验证码登录方法
-		$return  = (new UserService)->mobileCodeLogin($mobile,$logincode,$companyuser_id);
+		$return  = (new UserService)->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code);
 		//日志记录
 		$this->logger->info(json_encode($return));
 		//返回值判断
