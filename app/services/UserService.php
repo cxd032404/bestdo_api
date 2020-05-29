@@ -146,6 +146,8 @@ class UserService extends BaseService
                         $userinfo->last_login_time = date('Y-m-d H:i:s',time());
                         $userinfo->update();
                         $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
+                        //完善用户微信资料
+                        (new WechatController())->getWechatUserAction($userinfo->user_id);
                     }
                 }
             }else{//用户不存在 需创建用户+修改验证码状态+修改企业名单状态+生成token
@@ -193,6 +195,8 @@ class UserService extends BaseService
                     $tokeninfo = $this->getToken($user->user_id);
                     $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token'] ]];
                     $this->redis->expire('login_'.$mobile,0);
+                    //完善用户微信资料
+                    (new WechatController())->getWechatUserAction($user->user_id);
                     $transaction->commit($return);
                 } catch (TxFailed $e) {
                     // 捕获失败回滚的错误
