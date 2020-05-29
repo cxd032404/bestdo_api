@@ -24,12 +24,13 @@ class WechatController extends BaseController
         $appsecret = $this->key_config->aliyun->wechat->appsecret;
         if($this->is_weixin()){
             if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
-                $redirect_url = 'http://api.staffhome.cn/Wechat/getWechatUserAction';
+                $redirect_url = 'http://api.staffhome.cn/Wechat/getWechatUser';
                 $this->getCode($appid,$redirect_url,$user_id);
                 return;
             }else{
                 //第二步：获取网页授权access_token和openid
                 $code = $_REQUEST['code']??"";
+                $user_id = $_REQUEST['state']??0;
                 $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
                 if (array_key_exists('errcode', $oauth2) && $oauth2['errcode'] != '0') {
                     return $this->failure($oauth2,"网页授权access_token获取失败！");
