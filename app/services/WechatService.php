@@ -1,52 +1,49 @@
 <?php
+// +----------------------------------------------------------------------
+// | AccountService
+// +----------------------------------------------------------------------
+// | Copyright (c) 2017--20xx年 捞月狗. All rights reserved.
+// +----------------------------------------------------------------------
+// | File:     AccountService.php
+// |
+// | Author:   huzhichao@laoyuegou.com
+// | Created:  2017-xx-xx
+// +----------------------------------------------------------------------
+use Robots as robotModel;
+use Phalcon\Mvc\Model\Query;
+use Phalcon\Mvc\User\Component;
+use Elasticsearch\ClientBuilder;
+use Phalcon\Mvc\Model\Transaction\Failed as TxFailed;
+use Phalcon\Mvc\Model\Transaction\Manager as TxManager;
 
-use Phalcon\Translate\Adapter\NativeArray;
-//use PHPExcel;
-use Monolog\Logger;
-use Monolog\Handler\ElasticsearchHandler;
-use Monolog\Formatter\ElasticsearchFormatter;
-use Phalcon\Mvc\Controller;
-
-class WechatController extends BaseController
+class WechatService extends BaseService
 {
 
     /*更新用户微信信息*/
-    public function getWechatUserAction($wechat,$user_id=0)
+    public function getWechatUserAction($wechat,$user_id=0,$code="")
     {
-        print_r(1111);die;
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
-        //判断是否在微信浏览器打开，不在微信浏览器打开无法获取code
-        if($this->is_weixin()){
-            if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
-                $redirect_url = 'http://api.staffhome.cn/Wechat/getWechatUser';
-                $this->getCode($appid,$redirect_url,$user_id);
-                return;
-            }else{
-                var_dump($_REQUEST);
-                //第二步：获取网页授权access_token和openid
-                $code = $_REQUEST['code']??"";
-                $user_id = $_REQUEST['state']??0;
-                $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
-                var_dump($oauth2);
-                if (!array_key_exists('errcode', $oauth2)) {
-                    $openid = $oauth2['openid'];
-                    //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
-                    $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
-                    var_dump($oauth_userinfo);
-                    if (!array_key_exists('errcode', $oauth_userinfo)) {
-                        //修改用户信息
-                        $userinfo = UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
-                        var_dump($userinfo);
-                        if($userinfo){
-                            $userinfo->wechatid = $oauth_userinfo['openid'];
-                            $userinfo->nick_name = $oauth_userinfo['nickname'];
-                            $userinfo->sex = $oauth_userinfo['sex'];
-                            $userinfo->user_img = $oauth_userinfo['headimgurl'];
-                            $userinfo->wechatinfo = json_encode($oauth_userinfo);
-                            $userinfo->update();
-                        }
-                    }
+        var_dump($_REQUEST);
+        //第二步：获取网页授权access_token和openid
+        $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+        var_dump($oauth2);
+        if (!array_key_exists('errcode', $oauth2)) {
+            $openid = $oauth2['openid'];
+            //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
+            $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
+            var_dump($oauth_userinfo);
+            if (!array_key_exists('errcode', $oauth_userinfo)) {
+                //修改用户信息
+                $userinfo = UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
+                var_dump($userinfo);
+                if($userinfo){
+                    $userinfo->wechatid = $oauth_userinfo['openid'];
+                    $userinfo->nick_name = $oauth_userinfo['nickname'];
+                    $userinfo->sex = $oauth_userinfo['sex'];
+                    $userinfo->user_img = $oauth_userinfo['headimgurl'];
+                    $userinfo->wechatinfo = json_encode($oauth_userinfo);
+                    $userinfo->update();
                 }
             }
         }
@@ -57,6 +54,7 @@ class WechatController extends BaseController
     /*测试----获取用户信息并判断是否关注*/
     public function indexAction()
     {
+        echo '测试信息';die;
         $appid = $this->key_config->aliyun->wechat->appid;
         $appsecret = $this->key_config->aliyun->wechat->appsecret;
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
@@ -93,6 +91,13 @@ class WechatController extends BaseController
         $return  = ['result'=>1, 'msg'=>"", 'code'=>200, 'data'=>['access_token_user_info'=>$userinfo, 'oauth_access_token_user_info'=>$oauth_userinfo]];
         return $this->success($return);
     }
+
+
+
+
+
+
+    
 
     //查询是否在微信浏览器打开
     public function is_weixin(){
@@ -187,6 +192,5 @@ class WechatController extends BaseController
         $value = $this->redis->del($key);
         return $value;
     }
-
-
+	
 }

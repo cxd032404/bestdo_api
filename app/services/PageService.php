@@ -182,7 +182,7 @@ class PageService extends BaseService
                         $posts['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
                         $posts['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:"";
                         $postsInfo['user_info'] = $posts;
-                        $listInfo = (new ListService())->getListInfo($postsInfo['list_id'],"list_id,detail")->toArray();
+                        $listInfo = (new ListService())->getListInfo($postsInfo['list_id'],"*")->toArray();
                         $listInfo['detail'] = json_decode($listInfo['detail'],true);
                         if(isset($listInfo['detail']['connect']) && $listInfo['detail']['connect']>0)
                         {
