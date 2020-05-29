@@ -24,7 +24,6 @@ class WechatService extends BaseService
     {
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
-        var_dump($_REQUEST);
         //第二步：获取网页授权access_token和openid
         $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
         var_dump($oauth2);
@@ -97,7 +96,7 @@ class WechatService extends BaseService
 
 
 
-    
+
 
     //查询是否在微信浏览器打开
     public function is_weixin(){
