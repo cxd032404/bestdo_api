@@ -17,6 +17,15 @@ class CompanyService extends BaseService
                 "columns" => $columns
             ]);
     }
+    //获取企业列表
+    //cloumns：数据库的字段列表
+    public function getCompanyList($columns = "company_name,company_id,icon")
+    {
+        return (new Company())->find(
+            [
+                "columns" => $columns
+            ]);
+    }
     //根据获取对应企业的协议信息
     //$company_id：企业id
     //$type：协议类型  user用户协议｜privacy用户政策
