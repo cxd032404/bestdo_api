@@ -103,7 +103,7 @@ class WechatController extends BaseController
     //获取网页授权code
     public function getCode($appid,$redirect_url="",$user_id=0)
     {
-        $url_get ="https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".urlencode($redirect_url)."&response_type=code&scope=snsapi_userinfo&state=".intval($user_id)."#wechat_redirect";
+        $url_get ="https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".urlencode($redirect_url)."&response_type=code&scope=snsapi_base&state=".intval($user_id)."#wechat_redirect";
         header("Location:" . $url_get);
     }
 
