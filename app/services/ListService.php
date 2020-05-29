@@ -31,8 +31,8 @@ class ListService extends BaseService
     {
         $return = ['after_url'=>'','params'=>[]];
         $detail['after_action'] = $detail['after_action']??0;
-        $detail['after_url'] = str_replace("#list_id#",$list_id,$detail['after_url']);
-        $detail['after_url'] = str_replace("#user_id#",$user_id,$detail['after_url']);
+        $detail['after_url'] = str_replace("#list_id#",$list_id,$detail['after_url']??"");
+        $detail['after_url'] = str_replace("#user_id#",$user_id,$detail['after_url']??"");
         $t = explode("|",$detail['after_url']??"");
 
         foreach($t as $key => $value)
