@@ -263,6 +263,17 @@ class UserController extends BaseController
             return $this->failure([],"",404);
         }
 	}
+    /*
+ * 查询公司列表
+ * 参数
+ * */
+    public function getCompanyListAction()
+    {
+        //接收参数并格式化
+        $companyService = new CompanyService();
+        $companyList = $companyService->getCompanyList();
+        return $this->success($companyList);
+    }
 
 	/*
      * 报名活动
