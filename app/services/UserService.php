@@ -773,7 +773,7 @@ class UserService extends BaseService
     {
         return  UserActivityLog::findFirst([
             "activity_id=:activity_id: and user_id=:user_id:",
-            'bind'=>['activity_id'=>$user_id, 'user_id'=>$activity_id],
+            'bind'=>['activity_id'=>$activity_id, 'user_id'=> $user_id] ,
             'order'=>'id desc'
         ]);
     }
