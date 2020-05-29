@@ -110,7 +110,7 @@ class UserService extends BaseService
     }
 
     //手机号验证码登录方法
-    public function mobileCodeLogin($mobile="",$code="",$companyuser_id=0)
+    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0)
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
@@ -120,11 +120,11 @@ class UserService extends BaseService
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         if( empty($mobile) || !$common->check_mobile($mobile) ) {
             $return['msg']  = $this->msgList['mobile_empty'];
-        }else if(empty($code)){
+        }else if(empty($logincode)){
             $return['msg']  = $this->msgList['sendcode_empty'];
         }else if(!$login_code){
             $return['msg']  = $this->msgList['sendcode_error'];
-        }else if($code != json_decode($login_code)->code){
+        }else if($logincode != json_decode($login_code)->code){
             $return['msg']  = $this->msgList['sendcode_error'];
         }
         else{
@@ -135,7 +135,7 @@ class UserService extends BaseService
                     $return['msg']  = $this->msgList['mobile_prohibit'];
                 }else{
                     //修改验证码记录状态
-                    $sendcode = $this->setMobileCode($mobile,$code);
+                    $sendcode = $this->setMobileCode($mobile,$logincode);
                     if(!$sendcode){
                         $return['msg']  = $this->msgList['code_status_error'];
                     }else{
@@ -184,7 +184,7 @@ class UserService extends BaseService
                     //完善用户微信资料
                     (new WechatController())->getWechatUserAction($user->user_id);
                     //修改验证码记录状态
-                    $sendcode = $this->setMobileCode($mobile,$code);
+                    $sendcode = $this->setMobileCode($mobile,$logincode);
                     if(!$sendcode){
                         $transaction->rollback($this->msgList['code_status_error']);
                     }
