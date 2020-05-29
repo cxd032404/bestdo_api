@@ -139,8 +139,10 @@ class UserService extends BaseService
                     if(!$sendcode){
                         $return['msg']  = $this->msgList['code_status_error'];
                     }else{
-                        //完善用户微信资料
-                        (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$userinfo->user_id,$code);
+                        if(!empty($code)){
+                            //完善用户微信资料
+                            (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$userinfo->user_id,$code);
+                        }
                         //生成token
                         $tokeninfo = $this->getToken($userinfo->user_id);
                         //修改用户登录时间
@@ -181,8 +183,10 @@ class UserService extends BaseService
                     if ($user->create() === false) {
                         $transaction->rollback($this->msgList['register_error']);
                     }
-                    //完善用户微信资料
-                    (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$user->user_id,$code);
+                    if(!empty($code)){
+                        //完善用户微信资料
+                        (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$user->user_id,$code);
+                    }
                     //修改验证码记录状态
                     $sendcode = $this->setMobileCode($mobile,$logincode);
                     if(!$sendcode){
