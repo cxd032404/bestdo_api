@@ -22,7 +22,7 @@ class WechatController extends BaseController
                 $this->getCode($appid,$redirect_url,$user_id);
                 return;
             }else{
-                var_dump($_REQUEST['code']);
+                var_dump($_REQUEST);
                 //第二步：获取网页授权access_token和openid
                 $code = $_REQUEST['code']??"";
                 $user_id = $_REQUEST['state']??0;
@@ -49,6 +49,7 @@ class WechatController extends BaseController
                 }
             }
         }
+        return true;
     }
 
 
