@@ -513,7 +513,7 @@ class UserService extends BaseService
             }
             //删除点赞记录
             $postskudos->setTransaction($transaction);
-            $postskudos->is_del = 0;
+            $postskudos->is_del = 1;
             if($postskudos->update() === false){
                 $transaction->rollback($this->msgList['posts_kudos_update_error']);
             }
