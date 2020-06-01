@@ -19,7 +19,9 @@ use Phalcon\Mvc\Model\Transaction\Manager as TxManager;
 class UserService extends BaseService
 {
 
+    private $kudosTypeList = ['kudo'=>"点赞",'vote'=>"投票"];
     private $msgList = [
+        "congratulation"=>"恭喜您，",
         "mobile_empty"=>"手机号无效，请填写正确的手机号码！",
         "password_empty"=>"密码无效，请填写正确的密码！",
         "sendcode_empty"=>"验证码无效，请填写验证码！",
@@ -66,7 +68,7 @@ class UserService extends BaseService
         "decrypt_success"=>"用户token解析成功！",
         "activity_success"=>"报名成功！",
         "filluserinfo_success"=>"信息完善成功！",
-        "posts_success"=>"点赞成功！",
+        "posts_success"=>"成功！",
         "posts_del_success"=>"活动记录删除成功！",
         "posts_remove_success"=>"取消点赞成功！",
         "token_for_manager_success"=>"获取token成功！",
@@ -75,7 +77,8 @@ class UserService extends BaseService
         "mobile_prohibit"=>"手机号已被禁用！",
         "activity_signin"=>"您已报名本次活动，无法重复报名，请选择正确的活动！",
         "activity_expire"=>"当前时间不在报名时间内！",
-        "posts_kudos_exist"=>"您今天已点赞过此内容，不可重复点赞！",
+        "posts_kudo_exist"=>"您今天已点赞过此内容，不可重复点赞！",
+        "posts_vote_exist"=>"您已经投过票了,明天再来吧!（投票后不可取消~）",
         "posts_kudos_noexist"=>"您今天尚未点赞过此内容，不可取消点赞！",
 
         "activity_not_no"=>"活动尚未开启，请耐心等待！",
@@ -434,6 +437,9 @@ class UserService extends BaseService
             $transaction = $manager->get();
             //查询列表内容
             $posts = \HJ\Posts::findFirst(["post_id='".$post_id."'"]);
+            $list_id = $posts->list_id;
+            $listInfo = (new ListService())->getListInfo($list_id,"list_id,detail")->toArray();
+            $listInfo['detail'] = json_decode($listInfo['detail'],true);
             if(!isset($posts->post_id)){
                 $transaction->rollback($this->msgList['posts_empty']);
             }
@@ -448,7 +454,7 @@ class UserService extends BaseService
                 ]
             ]);
             if(isset($postskudos_info->id)){
-                $transaction->rollback($this->msgList['posts_kudos_exist']);
+                $transaction->rollback($this->msgList['posts_'.($listInfo['detail']['type']??"kudo").'_exist']);
             }
             //修改点赞次数
             $posts->setTransaction($transaction);
@@ -467,7 +473,9 @@ class UserService extends BaseService
             if($postskudos->save() === false){
                 $transaction->rollback($this->msgList['posts_kudos_error']);
             }
-            $return  = ['result'=>1, 'msg'=>$this->msgList['posts_success'], 'code'=>200, 'data'=>['kudos'=>intval($posts->kudos)]];
+
+            $msg = $this->msgList['congratulation'].$this->kudosTypeList[$listInfo['detail']['type']??"vote"].$this->msgList['posts_success'];
+            $return  = ['result'=>1, 'msg'=>$msg, 'code'=>200, 'data'=>['kudos'=>intval($posts->kudos)]];
             $transaction->commit($return);
         } catch (TxFailed $e) {
             // 捕获失败回滚的错误
