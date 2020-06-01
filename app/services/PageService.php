@@ -156,6 +156,7 @@ class PageService extends BaseService
                 elseif($elementDetail['element_type'] == "postsDetail")
                 {
                     $postsService = new PostsService();
+                    $listService = new ListService();
                     $post_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
                     $postsService->updatePostView($post_id);
                     $postsInfo = $postsService->getPosts($post_id,"post_id,list_id,user_id,title,content,source,views,kudos,create_time,update_time");
@@ -182,12 +183,11 @@ class PageService extends BaseService
                         $posts['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
                         $posts['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:"";
                         $postsInfo['user_info'] = $posts;
-                        $listInfo = (new ListService())->getListInfo($postsInfo['list_id'],"list_id,detail,list_name")->toArray();
+                        $listInfo = $listService->getListInfo($postsInfo['list_id'],"list_id,detail,list_name")->toArray();
                         $listInfo['detail'] = json_decode($listInfo['detail'],true);
                         if(isset($listInfo['detail']['connect']) && $listInfo['detail']['connect']>0)
                         {
-                            
-                            $connectedList = (new PostsService())->getPostsList($listInfo['detail']['connect'],[],'post_id,title,source,views');
+                            $connectedList = $postsService->getPostsList($listInfo['detail']['connect'],[],'post_id,title,source,views');
                             foreach($connectedList['data'] as $pid => $pdetail)
                             {
                                 $connectedList['data'][$pid]['source'] = json_decode($pdetail['source'],true);
@@ -202,6 +202,8 @@ class PageService extends BaseService
                                 //$connectedList['data'][$pid]['source']['0']['post_id'] = $pdetail['post_id'];
                             }
                             $postsInfo['connect_list'] = array_values($connectedList['data']);
+                            $connectedListInfo  =  $listService->getListInfo($listInfo['detail']['connect'],"list_id,list_name")->toArray();
+                            $postsInfo['connect_list_name'] = (($listInfo['detail']['connect_name']??"")=="")?$connectedListInfo['list_name']:$listInfo['detail']['connect_name'];
                         }
                         $postsInfo['list_name'] = $listInfo['list_name'];
                         $pageElementList[$key]['detail'] = $postsInfo;
