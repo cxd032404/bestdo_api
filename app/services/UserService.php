@@ -452,6 +452,7 @@ class UserService extends BaseService
             $postskudos->receiver_id = $posts->user_id;
             $postskudos->list_id = $posts->list_id;
             $postskudos->post_id = $post_id;
+            $postskudos->date = date("Y-m-d");
             if($postskudos->save() === false){
                 $transaction->rollback($this->msgList['posts_kudos_error']);
             }
