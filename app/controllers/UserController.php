@@ -369,7 +369,7 @@ class UserController extends BaseController
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
 		}
-		return $this->success($return['data']);
+		return $this->success($return['data'],$return['msg']);
 	}
 
 	/*
