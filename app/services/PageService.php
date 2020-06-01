@@ -132,8 +132,8 @@ class PageService extends BaseService
                     $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
                     if($listInfo['activity_id']>0)
                     {
-                        $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo['activity_id'])->toArray();
-                        if(count($activitylog_info)==0)
+                        $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo['activity_id']);
+                        if(!$activitylog_info)
                         {
                             $pageElementList[$key]['detail']['available'] = 0;
                         }
