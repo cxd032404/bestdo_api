@@ -31,6 +31,8 @@ class UserService extends BaseService
         "company_id_empty"=>"企业编号无效",
         "worker_id_empty"=>"工号无效",
         "name_empty"=>"用户姓名无效",
+        "company_user_existed"=>"此手机号码已绑定其他用户，请更换其他手机号码！",
+
 
         "password_error"=>"密码错误，请填写正确的密码！",
         "sendcode_error"=>"验证码错误，请填写正确的验证码！",
@@ -130,27 +132,36 @@ class UserService extends BaseService
         else{
             //查询用户数据
             $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id','last_login_time']]);
-            if(isset($userinfo->user_id)){//用户存在只修改验证码状态及生产token
-                if($userinfo->is_del==1){
-                    $return['msg']  = $this->msgList['mobile_prohibit'];
-                }else{
-                    //修改验证码记录状态
-                    $sendcode = $this->setMobileCode($mobile,$logincode);
-                    if(!$sendcode){
-                        $return['msg']  = $this->msgList['code_status_error'];
+            if(isset($userinfo->user_id))
+            {
+                if($companyuser_id==0)
+                {
+                    //用户存在只修改验证码状态及生产token
+                    if($userinfo->is_del==1){
+                        $return['msg']  = $this->msgList['mobile_prohibit'];
                     }else{
-                        if(!empty($code)){
-                            //完善用户微信资料
-                            (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$userinfo->user_id,$code);
+                        //修改验证码记录状态
+                        $sendcode = $this->setMobileCode($mobile,$logincode);
+                        if(!$sendcode){
+                            $return['msg']  = $this->msgList['code_status_error'];
+                        }else{
+                            if(!empty($code)){
+                                //完善用户微信资料
+                                (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$userinfo->user_id,$code);
+                            }
+                            //生成token
+                            $tokeninfo = $this->getToken($userinfo->user_id);
+                            //修改用户登录时间
+                            $userinfo = UserInfo::findFirst(["user_id = '".$userinfo->user_id."'"]);
+                            $userinfo->last_login_time = date('Y-m-d H:i:s',time());
+                            $userinfo->update();
+                            $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                         }
-                        //生成token
-                        $tokeninfo = $this->getToken($userinfo->user_id);
-                        //修改用户登录时间
-                        $userinfo = UserInfo::findFirst(["user_id = '".$userinfo->user_id."'"]);
-                        $userinfo->last_login_time = date('Y-m-d H:i:s',time());
-                        $userinfo->update();
-                        $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                     }
+                }
+                else
+                {
+                    $return['msg']  = $this->msgList['company_user_existed'];
                 }
             }else{//用户不存在 需创建用户+修改验证码状态+修改企业名单状态+生成token
                 try {
