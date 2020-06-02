@@ -81,16 +81,16 @@ class SendCodeService extends BaseService
         $common = new Common();
         if(!isset($mobile) || !$common->check_mobile($mobile)){
             $return['msg']  = $this->msgList['mobile_error'];
-        }else if($login_code){//判断redis缓存内是否存在记录，如存在则返回成功，不存在调用发送代码发送验证码
+        }/*else if($login_code){//判断redis缓存内是否存在记录，如存在则返回成功，不存在调用发送代码发送验证码
             $return['msg']  = $this->msgList['sendcode_many'];
-        }else if(!$this->checkoutSendHour($mobile)){//判断验证码每小时内限制
+        }*/else if(!$this->checkoutSendHour($mobile)){//判断验证码每小时内限制
             $return['msg']  = $this->msgList['sendcode_many'];
         }else if(!$this->checkoutSendDay($mobile)){//判断验证码每天内限制
             $return['msg']  = $this->msgList['sendcode_many'];
         }else{
             $data['phoneNumber'] = $mobile;//获取目标手机号
             $data['templateCode'] = $this->tempList[$code_name];//获取短信模板CODE
-            $authCodeMT = mt_rand(100000,999999);//6位随机验证码
+            $authCodeMT = $login_code??mt_rand(100000,999999);//6位随机验证码
             $data['jsonTemplateParam'] = json_encode(['code'=>$authCodeMT]);//模板变量json字符串
             //调用阿里云发送短信
             $return_sms =  $this->sendAliDaYuAuthCode($data);
@@ -103,6 +103,9 @@ class SendCodeService extends BaseService
                 if ($sendcode->create() === false) {
                     $return['msg']  = $this->msgList['sms_insert_error'];
                 }else{
+                    //短信验证码存入redis缓存中
+                    $this->redis->set($code_name.$mobile,$data['jsonTemplateParam']);
+                    $this->redis->expire($code_name.$mobile,60*5);
                     $return  = ['result'=>1,'msg'=>$return_sms['Message'],'data'=>$data['jsonTemplateParam'],'code'=>200];
                 }
             }else{
