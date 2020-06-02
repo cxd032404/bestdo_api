@@ -20,12 +20,7 @@ class PageController extends BaseController
 
 	public function getPageAction( $company ="",$page_sign = "")
 	{
-
-
-	   // $arr = ['list_id'=>18,'page'=>2,'page_size'=>4,'user'=>['name'=>"a","first_name"=>"b","family"=>['father'=>"dad",'mother'=>"mum"]]];
-       // $txt = json_encode($arr);
-
-        /*用户token验证开始*/
+	    /*用户token验证开始*/
         //调用user_token解密方法
         $user_info  = (new UserService)->verifyToken($company,$page_sign);
         //返回值判断
@@ -33,12 +28,6 @@ class PageController extends BaseController
             return $this->failure(['jump_url'=>'/login'],$user_info['msg'],$user_info['code']);
         }
         /*用户token验证结束*/
-	    /*
-	    $arr = ['page'=>2,'page_size'=>4,'user'=>['name'=>"a","first_name"=>"b","family"=>['father'=>"dad",'mother'=>"mum"]]];
-        $txt = json_encode($arr);
-        */
-
-        //echo json_encode($arr);
         $pageService = new PageService();
         $params = $this->request->get();
         $params = $params['params']??"";
@@ -49,7 +38,6 @@ class PageController extends BaseController
             return $this->failure($paramsCheck['detail']??[],$paramsCheck['code']);
         }
         $return  = $pageService->getPageInfo($company,$page_sign,$params,$user_info);
-        //$this->logger->info(json_encode($return));
         if($return['result'])
         {
             return $this->success($return['data']);

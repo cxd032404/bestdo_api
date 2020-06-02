@@ -119,7 +119,7 @@ class UserService extends BaseService
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
-        if($mobile=='17621822661' || $mobile=='13472871514' || $mobile=='17082170787' ){
+        if(in_array($mobile,['17621822661','13472871514','17082170787','18621758237']) ){
             $login_code = json_encode(['code'=>123456]);
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
@@ -156,10 +156,11 @@ class UserService extends BaseService
                             $tokeninfo = $this->getToken($userinfo->user_id);
                             //修改用户登录时间
                             $userinfo = UserInfo::findFirst(["user_id = '".$userinfo->user_id."'"]);
+                            //$userinfo = $this->getUserInfo($userinfo->user_id);
                             $userinfo->last_login_time = date('Y-m-d H:i:s',time());
                             $userinfo->update();
                             $this->redis->expire('login_'.$mobile,0);
-                            $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
+                            $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                         }
                     }
                 }
@@ -190,7 +191,7 @@ class UserService extends BaseService
                                 $userinfo->last_login_time = date('Y-m-d H:i:s',time());
                                 $userinfo->update();
                                 $this->redis->expire('login_'.$mobile,0);
-                                $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
+                                $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                             }
                         }
                     }
@@ -634,10 +635,7 @@ class UserService extends BaseService
 
     //获取用户token
     public function getToken($user_id){
-        $userinfo = UserInfo::findFirst([
-            "user_id=:user_id:",
-            'bind'=>['user_id'=>$user_id], 'order'=>'user_id desc'
-        ]);
+        $userinfo = $this->getUserInfo($user_id,"*");
         $company_name = "";
         if(isset($userinfo->company_id)){
             $configcompany = ConfigCompany::findFirst([
@@ -655,7 +653,7 @@ class UserService extends BaseService
             'true_name'=>$userinfo->true_name??"",
             'user_img'=>$userinfo->user_img??"",
             'mobile'=>$userinfo->mobile??"",
-            'company_id'=>$userinfo->company_id??"",
+            'company_id'=>$userinfo->company_id??0,
             'company_name'=>$company_name,
             'worker_id'=>$userinfo->worker_id??"",
             'last_login_time'=>$userinfo->last_login_time??"",
@@ -833,6 +831,47 @@ class UserService extends BaseService
             'bind'=>['activity_id'=>$activity_id, 'user_id'=> $user_id] ,
             'order'=>'id desc'
         ]);
+    }
+    //获取用户信息
+    public function getUserInfo($user_id,$columns = 'user_id,nick_name,true_name,user_img',$cache = 1)
+    {
+        $cacheName = "user_info_".$user_id;
+        $cache = $this->redis->get($cacheName);
+        $cache = json_decode($cache);
+        if(isset($cache->user_id))
+        {
+            $userInfo = $cache;
+        }
+        else
+        {
+            //获取列表作者信息
+            $userInfo = UserInfo::findFirst([
+                "user_id='".$user_id."' and is_del=0",
+                'columns'=>'*',
+            ]);
+            if(isset($userInfo->user_id))
+            {
+                //$userInfo = $userInfo->toArray();
+                $this->redis->set($cacheName,json_encode($userInfo));
+                $this->redis->expire($cacheName,3600);
+            }
+            else
+            {
+                return [];
+            }
+        }
+        if($columns != "*")
+        {
+            $t = explode(",",$columns);
+            foreach($userInfo as $key => $value)
+            {
+                if(!in_array($key,$t))
+                {
+                    unset($userInfo->$key);
+                }
+            }
+        }
+        return $userInfo;
     }
 
 

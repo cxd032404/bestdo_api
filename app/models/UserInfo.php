@@ -5,6 +5,7 @@ use Phalcon\Mvc\Model\Query;
 
 class UserInfo extends Model
 {
+    public $user_id;
     public function initialize()
     {
         $this->setSource("user_info");
