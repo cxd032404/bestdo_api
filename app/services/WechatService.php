@@ -26,16 +26,16 @@ class WechatService extends BaseService
         $appsecret = $wechat['appsecret'];
         //第二步：获取网页授权access_token和openid
         $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
-        var_dump($oauth2);
+        //var_dump($oauth2);
         if (!array_key_exists('errcode', $oauth2)) {
             $openid = $oauth2['openid'];
             //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
             $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
-            var_dump($oauth_userinfo);
+            //var_dump($oauth_userinfo);
             if (!array_key_exists('errcode', $oauth_userinfo)) {
                 //修改用户信息
                 $userinfo = UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
-                var_dump($userinfo);
+                //var_dump($userinfo);
                 if($userinfo){
                     $userinfo->wechatid = $oauth_userinfo['openid'];
                     $userinfo->nick_name = $oauth_userinfo['nickname'];
@@ -178,6 +178,7 @@ class WechatService extends BaseService
             "rawString" => $string,
         );
         return $signPackage;
+
     }
 
     //获取授权页ticket
