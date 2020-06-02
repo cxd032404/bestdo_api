@@ -167,7 +167,7 @@ class UserService extends BaseService
                     //查找企业名单
                     $companyUserInfo = CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$companyuser_id]]);
                     //如果已经绑定且和当前用户一致
-                    if(isset($companyUserInfo->user_id) && $companyUserInfo->user_id != $userinfo->user_id)
+                    if(isset($companyUserInfo->user_id) && $companyUserInfo->user_id == $userinfo->user_id)
                     {
                         //用户存在只修改验证码状态及生产token
                         if($userinfo->is_del==1){
