@@ -13,7 +13,7 @@ class WechatController extends BaseController
     /*更新用户微信信息*/
     public function getWechatUserAction($wechat,$user_id=0)
     {
-        print_r(1111);die;
+        //print_r(1111);die;
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
         //判断是否在微信浏览器打开，不在微信浏览器打开无法获取code
@@ -23,21 +23,21 @@ class WechatController extends BaseController
                 $this->getCode($appid,$redirect_url,$user_id);
                 return;
             }else{
-                var_dump($_REQUEST);
+                //var_dump($_REQUEST);
                 //第二步：获取网页授权access_token和openid
                 $code = $_REQUEST['code']??"";
                 $user_id = $_REQUEST['state']??0;
                 $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
-                var_dump($oauth2);
+                //var_dump($oauth2);
                 if (!array_key_exists('errcode', $oauth2)) {
                     $openid = $oauth2['openid'];
                     //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
                     $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
-                    var_dump($oauth_userinfo);
+                    //var_dump($oauth_userinfo);
                     if (!array_key_exists('errcode', $oauth_userinfo)) {
                         //修改用户信息
                         $userinfo = UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
-                        var_dump($userinfo);
+                        //var_dump($userinfo);
                         if($userinfo){
                             $userinfo->wechatid = $oauth_userinfo['openid'];
                             $userinfo->nick_name = $oauth_userinfo['nickname'];
