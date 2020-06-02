@@ -174,9 +174,7 @@ class UserController extends BaseController
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
 		}
-		//短信验证码存入redis缓存中
-		$this->redis->set($code_name.$mobile,$return['data']);
-		$this->redis->expire($code_name.$mobile,60*5);
+
 		return $this->success();
 	}
 
