@@ -155,10 +155,7 @@ class UserService extends BaseService
                             //生成token
                             $tokeninfo = $this->getToken($userinfo->user_id);
                             //修改用户登录时间
-                            $userinfo = UserInfo::findFirst(["user_id = '".$userinfo->user_id."'"]);
-                            //$userinfo = $this->getUserInfo($userinfo->user_id);
-                            $userinfo->last_login_time = date('Y-m-d H:i:s',time());
-                            $userinfo->update();
+                            $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',time())],$userinfo->user_id);
                             $this->redis->expire('login_'.$mobile,0);
                             $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                         }
@@ -187,9 +184,7 @@ class UserService extends BaseService
                                 //生成token
                                 $tokeninfo = $this->getToken($userinfo->user_id);
                                 //修改用户登录时间
-                                $userinfo = UserInfo::findFirst(["user_id = '".$userinfo->user_id."'"]);
-                                $userinfo->last_login_time = date('Y-m-d H:i:s',time());
-                                $userinfo->update();
+                                $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',time())],$userinfo->user_id);
                                 $this->redis->expire('login_'.$mobile,0);
                                 $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                             }
@@ -443,13 +438,13 @@ class UserService extends BaseService
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         //修改用户信息
         $userinfo = UserInfo::findFirst(["user_id = '".$user_id."'"]);
-        if(!empty($map['true_name'])){
-            $userinfo->true_name = $map['true_name'];
+        foreach($map as $key => $value)
+        {
+            if(!empty($value))
+            {
+                $userinfo->$key = $value;
+            }
         }
-        if(!empty($map['nick_name'])){
-            $userinfo->nick_name = $map['nick_name'];
-        }
-        $userinfo->sex = $map['sex'];
         if ($userinfo->update() === false) {
             $return['msg']  = $this->msgList['filluserinfo_error'];
         }else {
@@ -836,6 +831,51 @@ class UserService extends BaseService
     public function getUserInfo($user_id,$columns = 'user_id,nick_name,true_name,user_img',$cache = 1)
     {
         $cacheName = "user_info_".$user_id;
+        if($cache == 0)
+        {
+            //获取列表作者信息
+            $userInfo = UserInfo::findFirst([
+                "user_id='".$user_id."' and is_del=0",
+                'columns'=>'*',
+            ]);
+            if(isset($userInfo->user_id))
+            {
+                //$userInfo = $userInfo->toArray();
+                $this->redis->set($cacheName,json_encode($userInfo));
+                $this->redis->expire($cacheName,3600);
+            }
+            else
+            {
+                return [];
+            }
+        }
+        else
+        {
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if(isset($cache->user_id))
+            {
+                $userInfo = $cache;
+            }
+            else
+            {
+                //获取列表作者信息
+                $userInfo = UserInfo::findFirst([
+                    "user_id='".$user_id."' and is_del=0",
+                    'columns'=>'*',
+                ]);
+                if(isset($userInfo->user_id))
+                {
+                    //$userInfo = $userInfo->toArray();
+                    $this->redis->set($cacheName,json_encode($userInfo));
+                    $this->redis->expire($cacheName,3600);
+                }
+                else
+                {
+                    return [];
+                }
+            }
+        }
         $cache = $this->redis->get($cacheName);
         $cache = json_decode($cache);
         if(isset($cache->user_id))
@@ -873,8 +913,4 @@ class UserService extends BaseService
         }
         return $userInfo;
     }
-
-
-
-	
 }
