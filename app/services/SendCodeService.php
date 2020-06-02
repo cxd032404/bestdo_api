@@ -78,6 +78,7 @@ class SendCodeService extends BaseService
     {
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         $login_code = $this->redis->get($code_name.$mobile);
+        $login_code = json_decode($login_code,true);
         $common = new Common();
         if(!isset($mobile) || !$common->check_mobile($mobile)){
             $return['msg']  = $this->msgList['mobile_error'];
@@ -90,7 +91,7 @@ class SendCodeService extends BaseService
         }else{
             $data['phoneNumber'] = $mobile;//获取目标手机号
             $data['templateCode'] = $this->tempList[$code_name];//获取短信模板CODE
-            $authCodeMT = $login_code??mt_rand(100000,999999);//6位随机验证码
+            $authCodeMT = $login_code['code']??mt_rand(100000,999999);//6位随机验证码
             $data['jsonTemplateParam'] = json_encode(['code'=>$authCodeMT]);//模板变量json字符串
             //调用阿里云发送短信
             $return_sms =  $this->sendAliDaYuAuthCode($data);
