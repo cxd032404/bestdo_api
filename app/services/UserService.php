@@ -158,7 +158,7 @@ class UserService extends BaseService
                             $userinfo = UserInfo::findFirst(["user_id = '".$userinfo->user_id."'"]);
                             $userinfo->last_login_time = date('Y-m-d H:i:s',time());
                             $userinfo->update();
-                            $this->redis->expire('forget_'.$mobile,0);
+                            $this->redis->expire('login_'.$mobile,0);
                             $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                         }
                     }
@@ -189,7 +189,7 @@ class UserService extends BaseService
                                 $userinfo = UserInfo::findFirst(["user_id = '".$userinfo->user_id."'"]);
                                 $userinfo->last_login_time = date('Y-m-d H:i:s',time());
                                 $userinfo->update();
-                                $this->redis->expire('forget_'.$mobile,0);
+                                $this->redis->expire('login_'.$mobile,0);
                                 $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                             }
                         }
