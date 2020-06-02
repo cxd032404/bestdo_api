@@ -178,6 +178,7 @@ class WechatService extends BaseService
             "rawString" => $string,
         );
         return $signPackage;
+
     }
 
     //获取授权页ticket

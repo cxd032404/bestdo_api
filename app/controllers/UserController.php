@@ -61,8 +61,7 @@ class UserController extends BaseController
         $mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$logincode = isset($data['logincode'])?preg_replace('# #','',$data['logincode']):"";
 		$companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
-		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
-
+		$code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
 		//调用手机号验证码登录方法
 		$return  = (new UserService)->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code);
 		//日志记录
