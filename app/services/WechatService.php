@@ -20,7 +20,7 @@ class WechatService extends BaseService
 {
 
     /*更新用户微信信息*/
-    public function getWechatUserAction($wechat,$user_id=0,$code="")
+    public function getWechatUserAction($wechat=[],$user_id=0,$code="")
     {
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
@@ -107,14 +107,14 @@ class WechatService extends BaseService
     }
 
     //获取网页授权code
-    public function getCode($appid,$redirect_url="",$user_id=0)
+    public function getCode($appid="",$redirect_url="",$user_id=0)
     {
         $url_get ="https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".urlencode($redirect_url)."&response_type=code&scope=snsapi_base&state=".intval($user_id)."#wechat_redirect";
         header("Location:" . $url_get);
     }
 
     //获取网页授权access_token
-    public function getOauthAccessToken($appid,$appsecret,$code)
+    public function getOauthAccessToken($appid="",$appsecret="",$code="")
     {
         $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
         $oauth_access_token = $this->getJson($url_get);
@@ -122,7 +122,7 @@ class WechatService extends BaseService
     }
 
     //获取全局access_token
-    public function getAccessToken($appid,$appsecret)
+    public function getAccessToken($appid="",$appsecret="")
     {
         $access_token_redis = $this->getRedis("access_token");
         if( $access_token_redis && $access_token_redis["expires_time"] && $access_token_redis["expires_time"]>time() ){
@@ -141,7 +141,7 @@ class WechatService extends BaseService
     }
 
     //利用全局access_token和openid获取用户信息
-    public function getUserInfo($access_token,$openid)
+    public function getUserInfo($access_token="",$openid="")
     {
         $url_get = "https://api.weixin.qq.com/cgi-bin/user/info?access_token=".$access_token."&openid=".$openid."";
         $userinfo = $this->getJson($url_get);
@@ -149,15 +149,59 @@ class WechatService extends BaseService
     }
 
     //利用网页授权access_token获取用户信息
-    public function getOauthUserInfo($oauth_access_token,$openid)
+    public function getOauthUserInfo($oauth_access_token="",$openid="")
     {
         $url_get = "https://api.weixin.qq.com/sns/userinfo?access_token=".$oauth_access_token."&openid=".$openid."&lang=zh_CN";
         $userinfo = $this->getJson($url_get);
         return $userinfo;
     }
 
+    //获取分享所需参数
+    public function getSignPackage($appid="",$appsecret="")
+    {
+        $AccessToken = $this->getAccessToken($appid,$appsecret);
+        $jsapiTicket = $this->_newGetApiTicket($AccessToken);
+        // 注意 URL 一定要动态获取，不能 hardcode.
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $url = "$protocol$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $timestamp = time();
+        $nonceStr = $this->createNonceStr();
+        // 这里参数的顺序要按照 key 值 ASCII 码升序排序
+        $string = "jsapi_ticket=$jsapiTicket&noncestr=$nonceStr&timestamp=$timestamp&url=$url";
+        $signature = sha1($string);
+        $signPackage = array(
+            "appId" => $appid,
+            "nonceStr" => $nonceStr,
+            "timestamp" => $timestamp,
+            "url" => $url,
+            "signature" => $signature,
+            "rawString" => $string,
+        );
+        return $signPackage;
+    }
+
+    //获取授权页ticket
+    public function _newGetApiTicket($access_token="")
+    {
+        $url = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?type=jsapi&access_token=$access_token";
+        $res = $this->httpGet($url);
+        $ticket = $res['ticket'];
+        return $ticket;
+    }
+
+    //获取随机16位字符串
+    public function createNonceStr($length = 16)
+    {
+        $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        $str = "";
+        for ($i = 0; $i < $length; $i++) {
+            $str .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
+        }
+        return $str;
+    }
+
     //CURL
-    public function getJson($url){
+    public function getJson($url=""){
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
@@ -166,6 +210,22 @@ class WechatService extends BaseService
         $output = curl_exec($ch);
         curl_close($ch);
         return json_decode($output, true);
+    }
+
+    private function httpGet($url="")
+    {
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 500);
+        // 为保证第三方服务器与微信服务器之间数据传输的安全性，所有微信接口采用https方式调用，必须使用下面2行代码打开ssl安全校验。
+        // 如果在部署过程中代码在此处验证失败，请到 http://curl.haxx.se/ca/cacert.pem 下载新的证书判别文件。
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
+        //curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, true);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($curl, CURLOPT_URL, $url);
+        $res = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($res, true);
     }
 
     //获取redis数据
