@@ -49,7 +49,7 @@ class PageController extends BaseController
             return $this->failure($paramsCheck['detail']??[],$paramsCheck['code']);
         }
         $return  = $pageService->getPageInfo($company,$page_sign,$params,$user_info);
-        $this->logger->info(json_encode($return));
+        //$this->logger->info(json_encode($return));
         if($return['result'])
         {
             return $this->success($return['data']);

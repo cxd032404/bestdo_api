@@ -57,7 +57,8 @@ class UserController extends BaseController
 	{
 		//接收参数并格式化
 		$data = $this->request->get();
-		$mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
+        $this->logger->info(json_encode($data));
+        $mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
 		$logincode = isset($data['logincode'])?preg_replace('# #','',$data['logincode']):"";
 		$companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
 		$code = isset($data['code'])?preg_replace('# #','',$data['code']):"";
