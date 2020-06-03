@@ -448,6 +448,7 @@ class UserService extends BaseService
         if ($userinfo->update() === false) {
             $return['msg']  = $this->msgList['filluserinfo_error'];
         }else {
+            $this->getUserInfo($user_id);
             $return = ['result' => 1, 'msg' => $this->msgList['filluserinfo_success'], 'code' => 200, 'data' => []];
         }
         return $return;
@@ -874,30 +875,6 @@ class UserService extends BaseService
                 {
                     return [];
                 }
-            }
-        }
-        $cache = $this->redis->get($cacheName);
-        $cache = json_decode($cache);
-        if(isset($cache->user_id))
-        {
-            $userInfo = $cache;
-        }
-        else
-        {
-            //获取列表作者信息
-            $userInfo = UserInfo::findFirst([
-                "user_id='".$user_id."' and is_del=0",
-                'columns'=>'*',
-            ]);
-            if(isset($userInfo->user_id))
-            {
-                //$userInfo = $userInfo->toArray();
-                $this->redis->set($cacheName,json_encode($userInfo));
-                $this->redis->expire($cacheName,3600);
-            }
-            else
-            {
-                return [];
             }
         }
         if($columns != "*")
