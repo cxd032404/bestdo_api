@@ -56,28 +56,28 @@ class PageService extends BaseService
                     $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],$userList,"*","post_id DESC",$this->getFromParams($params,"start",0),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                     foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
                     {
-                        $pageElementList[$key]['data']['data'][$k]['source'] = json_decode($postDetail['source'],true);
-                        $pageElementList[$key]['data']['data'][$k]['source'] = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
-                        $pageElementList[$key]['data']['data'][$k]['source'][0]['post_id'] = $postDetail['post_id'];
-                        $pageElementList[$key]['data']['data'][$k]['source'][0]['title'] = $postDetail['title'];
-                        $pageElementList[$key]['data']['data'][$k]['list_type'] = $listInfo['list_type'];
-                        $pageElementList[$key]['data']['data'][$k]['content'] = htmlspecialchars_decode($postDetail['content']);
+                        $pageElementList[$key]['data']['data'][$k]->source = json_decode($postDetail['source'],true);
+                        $pageElementList[$key]['data']['data'][$k]->source = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
+                        $pageElementList[$key]['data']['data'][$k]->source[0]['post_id'] = $postDetail['post_id'];
+                        $pageElementList[$key]['data']['data'][$k]->source[0]['title'] = $postDetail['title'];
+                        $pageElementList[$key]['data']['data'][$k]->list_type = $listInfo['list_type'];
+                        $pageElementList[$key]['data']['data'][$k]->content = htmlspecialchars_decode($postDetail['content']);
                         //获取作者身份信息
                         $userinfo = (new UserService())->getUserInfo($postDetail['user_id'],"user_id,nick_name,true_name,user_img");
-                        $pageElementList[$key]['data']['data'][$k]['user_info'] = $userinfo;
+                        $pageElementList[$key]['data']['data'][$k]->user_info = $userinfo;
                         //获取用户今日是否可以点赞
                         $postskudos_info = PostsKudos::findFirst([
                             "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
                             'bind'=>[
                                 'sender_id'=>$user_info['data']['user_id']??0,
-                                'post_id'=>$pageElementList[$key]['data']['data'][$k]['post_id'],
+                                'post_id'=>$pageElementList[$key]['data']['data'][$k]->post_id,
                                 'starttime'=>date('Y-m-d').' 00:00:00',
                                 'endtime'=>date('Y-m-d').' 23:59:59',
                             ]
                         ]);
-                        $pageElementList[$key]['data']['data'][$k]['is_kudos'] = 0;
+                        $pageElementList[$key]['data']['data'][$k]->is_kudos = 0;
                         if(isset($postskudos_info->id)){
-                            $pageElementList[$key]['data']['data'][$k]['is_kudos'] = 1;
+                            $pageElementList[$key]['data']['data'][$k]->is_kudos = 1;
                         }
                     }
                 }
@@ -185,14 +185,14 @@ class PageService extends BaseService
                             $connectedList = $postsService->getPostsList($listInfo['detail']['connect'],[],'post_id,title,source,views');
                             foreach($connectedList['data'] as $pid => $pdetail)
                             {
-                                $connectedList['data'][$pid]['source'] = json_decode($pdetail['source'],true);
-                                $connectedList['data'][$pid]['source'] = (new UploadService())->parthSource($connectedList['data'][$pid]['source']);
+                                $connectedList['data'][$pid]->source = json_decode($pdetail['source'],true);
+                                $connectedList['data'][$pid]->source = (new UploadService())->parthSource($connectedList['data'][$pid]['source']);
                                 $new = [];
-                                foreach($connectedList['data'][$pid]['source'] as $k2 => $v2)
+                                foreach($connectedList['data'][$pid]->source as $k2 => $v2)
                                 {
                                     $new[str_replace(".","_",$k2)] = $v2;
                                 }
-                                $connectedList['data'][$pid]['source'] = $new;
+                                $connectedList['data'][$pid]->source = $new;
                                 //$connectedList['data'][$pid]['source']['0']['title'] = $pdetail['title'];
                                 //$connectedList['data'][$pid]['source']['0']['post_id'] = $pdetail['post_id'];
                             }

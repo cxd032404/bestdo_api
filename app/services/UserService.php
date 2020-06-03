@@ -448,7 +448,7 @@ class UserService extends BaseService
         if ($userinfo->update() === false) {
             $return['msg']  = $this->msgList['filluserinfo_error'];
         }else {
-            $this->getUserInfo($user_id);
+            $this->getUserInfo($user_id.'*',0);
             $return = ['result' => 1, 'msg' => $this->msgList['filluserinfo_success'], 'code' => 200, 'data' => []];
         }
         return $return;

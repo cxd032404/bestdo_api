@@ -212,13 +212,14 @@ class PostsService extends BaseService
     //order：排序
     //page:页码
     //pageSize：单页数量
-    public function getPostsList($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =4)
+    public function getPostsListOld($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =4)
     {
+
         if(is_array($list_id))
         {
             $params =             [
                 ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id in (".implode(",",$list_id).")"." ".($start>0?(" and post_id <".$start):"")." and visible=1",
-                "columns" => $columns,
+                "columns" => 'post_id',
                 "order" => $order,
                 "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
             ];
@@ -231,7 +232,7 @@ class PostsService extends BaseService
         {
             $params =             [
                 ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id = '".$list_id."'"." ".($start>0?(" and post_id <".$start):"")." and visible=1" ,
-                "columns" => $columns,
+                "columns" => 'post_id',
                 "order" => $order,
                 "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
             ];
@@ -246,21 +247,124 @@ class PostsService extends BaseService
         'count'=>$count,'total_page'=>ceil($count/$pageSize)];
         return $return;
     }
-    //根据列表ID获取列表
-    //$list_id：列表ID
-    //cloumns：数据库的字段列表
-    //order：排序
-    //page:页码
-    //pageSize：单页数量
-    public function getPosts($post_id,$columns = "post_id")
+
+    /*
+     * 分页缓存方法 new
+     */
+
+    public function getPostsList($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =4)
     {
+        $user_ids =':';
+        sort($user_id);
+
+        foreach ($user_id as $value)
+        {
+                $user_ids .='-'.$value;
+        }
+
+        $cacheName = 'user_post:list_id:'.$list_id.':user_id'.$user_ids.':order:'.$order.':start:'.$start.':page:'.$page.':pageSize:'.$pageSize;
+        $posts_id = $this->redis->get($cacheName);
+        //判断是否有缓存
+        if($posts_id)
+        {
+            //缓存
+          $list = json_decode($posts_id);
+        }
+        else
+        {
+            //读库
+            if(is_array($list_id))
+            {
+                $params = [
+                    ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id in (".implode(",",$list_id).")"." ".($start>0?(" and post_id <".$start):"")." and visible=1",
+                    "columns" => 'post_id',
+                    "order" => $order,
+                    "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
+                ];
+            }
+            else
+            {
+                $params = [
+                    ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id = '".$list_id."'"." ".($start>0?(" and post_id <".$start):"")." and visible=1" ,
+                    "columns" => 'post_id',
+                    "order" => $order,
+                    "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
+                ];
+            }
+            $list = (new \HJ\Posts())->find($params);
+            $this->redis->set($cacheName,json_encode($list));
+            $this->redis->expire($cacheName,60);
+        }
+        $return = [];
+        foreach($list as $key  => $value)
+        {
+            $postData = $this->getPosts($value->post_id,$columns);
+            $return['data'][$key] = $postData;
+        }
+        return $return;
+    }
+
+
+
+    public function getPosts($post_id,$columns = "post_id",$cache = 1)
+    {
+        $cacheName = 'user_posts_'.$post_id;
         $params =             [
             "post_id = ".$post_id,
-            "columns" => $columns,
+            "columns" => '*',
         ];
-        $posts = (new \HJ\Posts())->findFirst($params);
-        return $posts;
+        if($cache == 1)
+        {
+            $postsCache = $this->redis->get($cacheName);
+            $postsCache = json_decode($postsCache);
+            if(isset($postsCache->post_id))
+            {
+                $posts = $postsCache;
+            }
+            else
+            {
+                $posts = (new \HJ\Posts())->findFirst($params);
+                if(isset($posts->post_id)) {
+                    $this->redis->set($cacheName, json_encode($posts));
+                    $this->redis->expire($cacheName, 3600);
+                } else
+                {
+                    $posts = [];
+                }
+            }
+        }
+        else
+        {
+            $posts = (new \HJ\Posts())->findFirst($params);
+            if(isset($posts->post_id))
+            {
+                $this->redis->set($cacheName,json_encode($posts));
+                $this->redis->expire($cacheName,3600);
+            }else
+                {
+                    $posts = [];
+            }
+        }
+
+        if($columns != "*")
+        {
+            $t = explode(",",$columns);
+            foreach($posts as $key => $value)
+            {
+                if(!in_array($key,$t))
+                {
+                    unset($posts->$key);
+                }
+            }
+        }
+        if(isset($posts->user_id))
+        {
+            $posts->userInfo = (new UserService())->getUserInfo($posts->user_id);
+        }
+
+     return $posts;
     }
+
     public function updatePost($post_id,$updateData)
     {
         $posts = (new \HJ\Posts())->findFirst(['post_id = '.$post_id]);
@@ -268,7 +372,12 @@ class PostsService extends BaseService
         {
             $posts->$key = $value;
         }
-        return $posts->save();
+        $return = $posts->save();
+        if($return)
+        {
+            $this->getPosts($post_id,'*',0);
+        }
+        return $return;
     }
     public function updatePostView($post_id)
     {
