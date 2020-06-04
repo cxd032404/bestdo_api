@@ -10,11 +10,11 @@ class ListService extends BaseService
     public function getListInfo($list_id,$columns = "list_id,company_id,detail",$cache = 1)
     {
         $cacheName = 'list:'.$list_id;
-        if($cache = 1)
+        if($cache == 1)
         {
             $cacheData = $this->redis->get($cacheName);
-            $cacheData = json_decode($cacheData,true);
-            if($cacheData['list_id'])
+            $cacheData = json_decode($cacheData);
+            if(isset($cacheData->list_id))
             {
                 $return = $cacheData;
             }else
@@ -22,7 +22,7 @@ class ListService extends BaseService
                 $listData = (new ListModel())->findFirst(
                     [
                         "list_id = $list_id",
-                        "columns" => $columns
+                        "columns" => '*'
                     ]);
                 $this->redis->set($cacheName,json_encode($listData));
                 $this->redis->expire($cacheName,3600);
@@ -30,11 +30,10 @@ class ListService extends BaseService
             }
         }else
         {
-            echo '读库';
             $listData = (new ListModel())->findFirst(
                 [
                     "list_id = $list_id",
-                    "columns" => $columns
+                    "columns" => '*'
                 ]);
             $this->redis->set($cacheName,json_encode($listData));
             $this->redis->expire($cacheName,3600);
@@ -47,7 +46,7 @@ class ListService extends BaseService
             {
                 if(!in_array($key,$t))
                 {
-                    unset($return['$key']);
+                    unset($return->$key);
                 }
             }
         }

@@ -469,7 +469,7 @@ class UserService extends BaseService
             $posts = \HJ\Posts::findFirst(["post_id='".$post_id."'"]);
             $list_id = $posts->list_id;
             $listInfo = (new ListService())->getListInfo($list_id,"list_id,detail");
-            $listInfo['detail'] = json_decode($listInfo['detail'],true);
+            $listInfo->detail = json_decode($listInfo->detail,true);
             if(!isset($posts->post_id)){
                 $transaction->rollback($this->msgList['posts_empty']);
             }
@@ -484,7 +484,7 @@ class UserService extends BaseService
                 ]
             ]);
             if(isset($postskudos_info->id)){
-                $transaction->rollback($this->msgList['posts_'.($listInfo['detail']['type']??"kudo").'_exist']);
+                $transaction->rollback($this->msgList['posts_'.($listInfo->detail['type']??"kudo").'_exist']);
             }
             //修改点赞次数
             $posts->setTransaction($transaction);
@@ -504,7 +504,7 @@ class UserService extends BaseService
                 $transaction->rollback($this->msgList['posts_kudos_error']);
             }
 
-            $msg = $this->msgList['congratulation'].$this->kudosTypeList[$listInfo['detail']['type']??"vote"].$this->msgList['posts_success'];
+            $msg = $this->msgList['congratulation'].$this->kudosTypeList[$listInfo->detail['type']??"vote"].$this->msgList['posts_success'];
             $return  = ['result'=>1, 'msg'=>$msg, 'code'=>200, 'data'=>['kudos'=>intval($posts->kudos)]];
             $transaction->commit($return);
         } catch (TxFailed $e) {

@@ -13,8 +13,8 @@ class PostsService extends BaseService
         $oUpload = new UploadService();
         //获取列表信息
         $listInfo = (new ListService())->getListInfo($list_id,"list_id,company_id,detail");
-        $listInfo['detail'] = json_decode($listInfo['detail'],true);
-        if(!isset($listInfo['list_id']))
+        $listInfo->detail = json_decode($listInfo->detail,true);
+        if(!isset($listInfo->list_id))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章列表不存在"]];
         }
@@ -22,7 +22,7 @@ class PostsService extends BaseService
         {
 
             //计算可用的文件数量
-            $count = $oUpload->getAvailableSourceCount([],$listInfo['detail']);
+            $count = $oUpload->getAvailableSourceCount([],$listInfo->detail);
             $upload = $oUpload->getUploadedFile([],[],0,0,$count);
             if(isset($upload['name']))
             {
@@ -35,9 +35,9 @@ class PostsService extends BaseService
                 if($visible>0){
                     $postInfo->visible = 1;
                 }
-                $postInfo->list_id = $listInfo['list_id'];
+                $postInfo->list_id = $listInfo->list_id;
                 $postInfo->title = trim($detail['title']);
-                $postInfo->company_id = $listInfo['company_id'];
+                $postInfo->company_id = $listInfo->company_id;
                 $postInfo->content = trim($detail['comment']);
                 $postInfo->source = json_encode($upload);
                 $postInfo->create_time = $postInfo->update_time = date("Y-m-d H:i:s");
@@ -76,10 +76,10 @@ class PostsService extends BaseService
             }else{
                 //获取列表信息
                 $listInfo = (new ListService())->getListInfo($postInfo->list_id,"list_id,detail");
-                $listInfo['detail'] = json_decode($listInfo['detail'],true);
+                $listInfo->detail = json_decode($listInfo->detail,true);
                 $postInfo->source = json_decode($postInfo->source,true);
                 //计算可用的文件数量
-                $count = $oUpload->getAvailableSourceCount($postInfo->source,$listInfo['detail']);
+                $count = $oUpload->getAvailableSourceCount($postInfo->source,$listInfo->detail);
                 $upload = $oUpload->getUploadedFile([],[],0,0,$count);
                 //如果返回类型名称
                 if(isset($upload['name']))
