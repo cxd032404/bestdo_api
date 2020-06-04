@@ -745,7 +745,7 @@ class UserService extends BaseService
         }else if(empty($worker_id)){
             $return['msg']  = $this->msgList['worker_id_empty'];
         }else if(empty($name)){
-            $return['msg']  = $this->msgList['name__empty'];
+            $return['msg']  = $this->msgList['name_empty'];
         }else{
             $companyuser = CompanyUserList::findFirst([
                 "company_id='".$company_id."' and worker_id='".$worker_id."' and name='".$name."' ",
@@ -813,6 +813,7 @@ class UserService extends BaseService
                 }
                 $post_list[$k]['source'] = json_decode($post_list[$k]['source'],true);
                 $post_list[$k]['source'] = (new UploadService())->parthSource($post_list[$k]['source']);
+                $post_list[$k]['user_info'] = $this->getUserInfo($v['user_id']);
             }
             $count = (new \HJ\Posts())->findFirst($params_count)['count']??0;
         }

@@ -277,11 +277,12 @@ class PageService extends BaseService
                         $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$pageElementList[$key]['detail']['activity_id']);
                         if(!$activitylog_info)
                         {
-
+                            $pageElementList[$key]['detail']['applied'] = 0;
                         }
                         else
                         {
-                            unset($pageElementList[$key]);
+                            $pageElementList[$key]['detail']['applied'] = 1;
+                            //unset($pageElementList[$key]);
                         }
                     }
                 }
