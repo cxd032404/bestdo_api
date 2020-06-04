@@ -87,11 +87,11 @@ class UserController extends BaseController
         $data = $this->request->get();
         $this->logger->info(json_encode($data));
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
-        echo "code:".$code;
+        //echo "code:".$code;
         //调用手机号验证码登录方法
         $openId = (new WechatService)->getOpenIdByCode($this->key_config->aliyun->wechat,$code);
         //调用手机号验证码登录方法
-        $openId = 'oPCk01aWREJXeJK0IjOjDQfUWsmA';
+        //$openId = 'oPCk01aWREJXeJK0IjOjDQfUWsmA';
         $return  = (new UserService)->wechatLogin($openId);
         //日志记录
         $this->logger->info(json_encode($openId));

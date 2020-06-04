@@ -913,7 +913,7 @@ class UserService extends BaseService
     {
         $userinfo = $this->getUserInfoByWechat($openId);
         //修改用户登录时间
-        //$this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',time())],$userinfo->user_id);
+        $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',time())],$userinfo->user_id);
         //生成token
         $tokeninfo = $this->getToken($userinfo->user_id);
         $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
