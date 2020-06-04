@@ -448,7 +448,7 @@ class UserService extends BaseService
         if ($userinfo->update() === false) {
             $return['msg']  = $this->msgList['filluserinfo_error'];
         }else {
-            $this->getUserInfo($user_id);
+            $this->getUserInfo($user_id.'*',0);
             $return = ['result' => 1, 'msg' => $this->msgList['filluserinfo_success'], 'code' => 200, 'data' => []];
         }
         return $return;
@@ -687,7 +687,6 @@ class UserService extends BaseService
         //$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImp0aSI6IjNmMmc1N2E5MmFhIn0.eyJpc3MiOiJodHRwOlwvXC9hZG1pbmFwaS5weWcuY29tIiwiYXVkIjoiaHR0cDpcL1wvd3d3LnB5Zy5jb20iLCJqdGkiOiIzZjJnNTdhOTJhYSIsImlhdCI6MTU5MDY2NjYyOCwibmJmIjoxNTkwNjY2NjI3LCJleHAiOjE1OTMyNTg2MjgsImRhdGEiOiJ7XCJ1c2VyX2lkXCI6XCIxMTg3OVwiLFwidXNlcm5hbWVcIjpcIjE3MDgyMTcwNzg3XCIsXCJuaWNrX25hbWVcIjpcIlxcdTZkNGJcXHU4YmQ1MVwiLFwidHJ1ZV9uYW1lXCI6XCJcXHU2ZDRiXFx1OGJkNVxcdTc1MjhcXHU2MjM3MVwiLFwidXNlcl9pbWdcIjpcIlwiLFwibW9iaWxlXCI6XCJcIixcImNvbXBhbnlfaWRcIjpcIjFcIixcImNvbXBhbnlfbmFtZVwiOlwiXCIsXCJ3b3JrZXJfaWRcIjpcIlwiLFwibGFzdF9sb2dpbl90aW1lXCI6XCIyMDIwLTA0LTI2IDEzOjUyOjU5XCIsXCJtYW5hZ2VyX2lkXCI6XCIyXCIsXCJleHBpcmVfdGltZVwiOjE1OTMyNTg2Mjh9In0.j5xto9UrqMoXHLWfozhSyBnffGTP3ZqReGtZ7e2hBVw";
         $return  = ['result'=>1, 'msg'=>$this->msgList['decrypt_success'], 'code'=>200, 'data'=>[]];
         $user_token = $data = $this->request->get("UserToken")??$this->request->getHeader('UserToken');
-        //$user_token = $token;
         $user_token = $user_token?preg_replace('# #','',$user_token):"";
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
