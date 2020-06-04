@@ -805,6 +805,7 @@ class UserService extends BaseService
                     "list_id='".$v['list_id']."'",
                 ])->toArray();
                 if(isset($list['list_id'])){
+                    $list['detail'] = json_decode($list['detail'],true);
                     $activity = ConfigActivity::findFirst([
                         "activity_id='".$list['activity_id']."'",
                     ])->toArray();
@@ -812,6 +813,7 @@ class UserService extends BaseService
                         $post_list[$k]['activity_name'] = $activity['activity_name'];
                     }
                 }
+                $post_list[$k]['list_type'] = $list['detail']['type']??"vote";
                 $post_list[$k]['source'] = json_decode($post_list[$k]['source'],true);
                 $post_list[$k]['source'] = (new UploadService())->parthSource($post_list[$k]['source']);
                 $post_list[$k]['user_info'] = $this->getUserInfo($v['user_id']);
