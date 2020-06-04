@@ -12,7 +12,7 @@ class PostsService extends BaseService
     {
         $oUpload = new UploadService();
         //获取列表信息
-        $listInfo = (new ListService())->getListInfo($list_id,"list_id,company_id,detail")->toArray();
+        $listInfo = (new ListService())->getListInfo($list_id,"list_id,company_id,detail");
         $listInfo['detail'] = json_decode($listInfo['detail'],true);
         if(!isset($listInfo['list_id']))
         {
@@ -75,7 +75,7 @@ class PostsService extends BaseService
                 $return = ['result'=>false,'data'=>['msg'=>"文章作者不匹配"]];
             }else{
                 //获取列表信息
-                $listInfo = (new ListService())->getListInfo($postInfo->list_id,"list_id,detail")->toArray();
+                $listInfo = (new ListService())->getListInfo($postInfo->list_id,"list_id,detail");
                 $listInfo['detail'] = json_decode($listInfo['detail'],true);
                 $postInfo->source = json_decode($postInfo->source,true);
                 //计算可用的文件数量

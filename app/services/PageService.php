@@ -60,7 +60,7 @@ class PageService extends BaseService
                         $pageElementList[$key]['data']['data'][$k]->source = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]->source);
                         $pageElementList[$key]['data']['data'][$k]->source[0]['post_id'] = $postDetail->post_id;
                         $pageElementList[$key]['data']['data'][$k]->source[0]['title'] = $postDetail->title;
-                        $pageElementList[$key]['data']['data'][$k]->list_type = $listInfo->list_type;
+                        $pageElementList[$key]['data']['data'][$k]->list_type = $listInfo['list_type'];
                         $pageElementList[$key]['data']['data'][$k]->content = htmlspecialchars_decode($postDetail->content);
                         $postskudos_info = PostsKudos::findFirst([
                             "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
@@ -121,7 +121,7 @@ class PageService extends BaseService
                     }
                     $pageElementList[$key]['detail']['available'] = 1;
                     //获取列表信息
-                    $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail")->toArray();
+                    $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail");
                     if($listInfo['activity_id']>0)
                     {
                         $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo['activity_id']);
@@ -171,7 +171,7 @@ class PageService extends BaseService
                         $posts['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
                         $posts['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:"";
                         $postsInfo['user_info'] = $posts;
-                        $listInfo = $listService->getListInfo($postsInfo['list_id'],"list_id,detail,list_name")->toArray();
+                        $listInfo = $listService->getListInfo($postsInfo['list_id'],"list_id,detail,list_name");
                         $listInfo['detail'] = json_decode($listInfo['detail'],true);
                         if(isset($listInfo['detail']['connect']) && $listInfo['detail']['connect']>0)
                         {
@@ -188,7 +188,7 @@ class PageService extends BaseService
                                 $connectedList['data'][$pid]->source = $new;
                             }
                             $postsInfo['connect_list'] = array_values($connectedList['data']);
-                            $connectedListInfo  =  $listService->getListInfo($listInfo['detail']['connect'],"list_id,list_name")->toArray();
+                            $connectedListInfo  =  $listService->getListInfo($listInfo['detail']['connect'],"list_id,list_name");
                             $postsInfo['connect_list_name'] = (($listInfo['detail']['connect_name']??"")=="")?$connectedListInfo['list_name']:$listInfo['detail']['connect_name'];
                         }
                         $postsInfo['list_name'] = $listInfo['list_name'];
@@ -394,5 +394,5 @@ class PageService extends BaseService
             }
         }
         return $params;
-    }	
+    }
 }

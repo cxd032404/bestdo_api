@@ -20,9 +20,7 @@ class ApiController extends BaseController
 
 	public function testAction( $id = 0 ) 
 	{
-        $data = (new PostsService())->getPostsList(18,[1,2],'post_id,source,user_id');
-        print_r($data['data']);die();
-
+        $data = (new listService())->getListInfo(1,'list_type,list_id');
 	    $return  = (new TestService)->test();
         //$return = $oService->test();
         $this->logger->info(json_encode($return));

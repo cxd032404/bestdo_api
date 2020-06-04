@@ -468,7 +468,7 @@ class UserService extends BaseService
             //查询列表内容
             $posts = \HJ\Posts::findFirst(["post_id='".$post_id."'"]);
             $list_id = $posts->list_id;
-            $listInfo = (new ListService())->getListInfo($list_id,"list_id,detail")->toArray();
+            $listInfo = (new ListService())->getListInfo($list_id,"list_id,detail");
             $listInfo['detail'] = json_decode($listInfo['detail'],true);
             if(!isset($posts->post_id)){
                 $transaction->rollback($this->msgList['posts_empty']);

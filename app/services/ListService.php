@@ -7,14 +7,54 @@ class ListService extends BaseService
     //根据id获取列表信息
     //$list_id：列表id
     //cloumns：数据库的字段列表
-    public function getListInfo($list_id,$columns = "list_id,company_id,detail")
+    public function getListInfo($list_id,$columns = "list_id,company_id,detail",$cache = 1)
     {
-        return (new ListModel())->findFirst(
-            [
-                "list_id = $list_id",
-                "columns" => $columns
-            ]);
+        $cacheName = 'list:'.$list_id;
+        if($cache = 1)
+        {
+            $cacheData = $this->redis->get($cacheName);
+            $cacheData = json_decode($cacheData,true);
+            if($cacheData['list_id'])
+            {
+                $return = $cacheData;
+            }else
+            {
+                $listData = (new ListModel())->findFirst(
+                    [
+                        "list_id = $list_id",
+                        "columns" => $columns
+                    ]);
+                $this->redis->set($cacheName,json_encode($listData));
+                $this->redis->expire($cacheName,3600);
+                $return = $listData;
+            }
+        }else
+        {
+            echo '读库';
+            $listData = (new ListModel())->findFirst(
+                [
+                    "list_id = $list_id",
+                    "columns" => $columns
+                ]);
+            $this->redis->set($cacheName,json_encode($listData));
+            $this->redis->expire($cacheName,3600);
+            $return = $listData;
+        }
+        if($columns != "*")
+        {
+            $t = explode(",",$columns);
+            foreach($return as $key => $value)
+            {
+                if(!in_array($key,$t))
+                {
+                    unset($return['$key']);
+                }
+            }
+        }
+        return $return;
     }
+
+
     //根据id获取列表信息
     //$list_id：列表id
     //cloumns：数据库的字段列表
