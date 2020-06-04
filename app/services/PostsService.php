@@ -111,7 +111,6 @@ class PostsService extends BaseService
                     $postInfo['title'] = trim($detail['title']);
                     $postInfo['source'] = json_encode($postInfo['source']);
                     $postInfo['content'] = trim($detail['comment']);
-                    $postInfo['update_time'] = date("Y-m-d H:i:s");
                     $data = json_decode(json_encode($postInfo),true);
                     $update = self::updatePost($postInfo['post_id'],$data);
                     if($update)
@@ -165,7 +164,6 @@ class PostsService extends BaseService
                     $postInfo['source'][$k] = $file;
                 }
                 $postInfo['source'] = json_encode($postInfo['source']);
-                $postInfo['update_time'] = date("Y-m-d H:i:s");
                 $update = self::updatePost($postInfo['post_id'],$postInfo);
                 if($update)
                 {
@@ -193,7 +191,6 @@ class PostsService extends BaseService
         else
         {
             $postInfo['visible'] = $display;
-            $postInfo['update_time'] = date("Y-m-d H:i:s");
             $update = self::updatePost($postInfo['post_id'],$postInfo);
             if($update)
             {
@@ -212,46 +209,6 @@ class PostsService extends BaseService
     //order：排序
     //page:页码
     //pageSize：单页数量
-    public function getPostsListOld($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =4)
-    {
-
-        if(is_array($list_id))
-        {
-            $params =             [
-                ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id in (".implode(",",$list_id).")"." ".($start>0?(" and post_id <".$start):"")." and visible=1",
-                "columns" => 'post_id',
-                "order" => $order,
-                "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
-            ];
-            $params_count = [
-                ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id in (".implode(",",$list_id).")"." and visible=1",
-                "columns" => "count(1) as count",
-            ];
-        }
-        else
-        {
-            $params =             [
-                ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id = '".$list_id."'"." ".($start>0?(" and post_id <".$start):"")." and visible=1" ,
-                "columns" => 'post_id',
-                "order" => $order,
-                "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
-            ];
-            $params_count = [
-                ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id = '".$list_id."'"." and visible=1",
-                "columns" => "count(1) as count",
-            ];
-        }
-        $list = (new \HJ\Posts())->find($params)->toArray();
-        $count = (new \HJ\Posts())->findFirst($params_count)['count']??0;
-        $return  = ['data'=>$list,
-        'count'=>$count,'total_page'=>ceil($count/$pageSize)];
-        return $return;
-    }
-
-    /*
-     * 分页缓存方法 new
-     */
-
     public function getPostsList($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =4)
     {
         $user_ids =':';
@@ -295,7 +252,9 @@ class PostsService extends BaseService
             $this->redis->set($cacheName,json_encode($list));
             $this->redis->expire($cacheName,60);
         }
-        $return = [];
+        $return = [
+            'data'=>[]
+        ];
         foreach($list as $key  => $value)
         {
             $postData = $this->getPosts($value->post_id,$columns);
@@ -372,6 +331,7 @@ class PostsService extends BaseService
         {
             $posts->$key = $value;
         }
+        $posts['update_time'] = date("Y-m-d H:i:s");
         $return = $posts->save();
         if($return)
         {

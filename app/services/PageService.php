@@ -56,16 +56,12 @@ class PageService extends BaseService
                     $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo['list_id'],$userList,"*","post_id DESC",$this->getFromParams($params,"start",0),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
                     foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
                     {
-                        $pageElementList[$key]['data']['data'][$k]->source = json_decode($postDetail['source'],true);
-                        $pageElementList[$key]['data']['data'][$k]->source = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]['source']);
-                        $pageElementList[$key]['data']['data'][$k]->source[0]['post_id'] = $postDetail['post_id'];
-                        $pageElementList[$key]['data']['data'][$k]->source[0]['title'] = $postDetail['title'];
-                        $pageElementList[$key]['data']['data'][$k]->list_type = $listInfo['list_type'];
-                        $pageElementList[$key]['data']['data'][$k]->content = htmlspecialchars_decode($postDetail['content']);
-                        //获取作者身份信息
-                        $userinfo = (new UserService())->getUserInfo($postDetail['user_id'],"user_id,nick_name,true_name,user_img");
-                        $pageElementList[$key]['data']['data'][$k]->user_info = $userinfo;
-                        //获取用户今日是否可以点赞
+                        $pageElementList[$key]['data']['data'][$k]->source = json_decode($postDetail->source,true);
+                        $pageElementList[$key]['data']['data'][$k]->source = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]->source);
+                        $pageElementList[$key]['data']['data'][$k]->source[0]['post_id'] = $postDetail->post_id;
+                        $pageElementList[$key]['data']['data'][$k]->source[0]['title'] = $postDetail->title;
+                        $pageElementList[$key]['data']['data'][$k]->list_type = $listInfo->list_type;
+                        $pageElementList[$key]['data']['data'][$k]->content = htmlspecialchars_decode($postDetail->content);
                         $postskudos_info = PostsKudos::findFirst([
                             "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
                             'bind'=>[
@@ -166,9 +162,6 @@ class PageService extends BaseService
                         $postsInfo['content'] = htmlspecialchars_decode($postsInfo['content']);
                         //是否可以修改
                         $postsInfo['editable'] = 0;
-//                        if($postsInfo['user_id']==$user_info['data']['user_id'] && strtotime($postsInfo['create_time'])>time()-1800){
-//                            $postsInfo['editable'] = 1;
-//                        }
                         $userinfo = UserInfo::findFirst([
                             "user_id = '".$postsInfo['user_id']."'",
                             "columns"=>"user_id,nick_name,true_name,user_img,company_id"
@@ -193,8 +186,6 @@ class PageService extends BaseService
                                     $new[str_replace(".","_",$k2)] = $v2;
                                 }
                                 $connectedList['data'][$pid]->source = $new;
-                                //$connectedList['data'][$pid]['source']['0']['title'] = $pdetail['title'];
-                                //$connectedList['data'][$pid]['source']['0']['post_id'] = $pdetail['post_id'];
                             }
                             $postsInfo['connect_list'] = array_values($connectedList['data']);
                             $connectedListInfo  =  $listService->getListInfo($listInfo['detail']['connect'],"list_id,list_name")->toArray();
@@ -221,7 +212,7 @@ class PageService extends BaseService
                             foreach($list as $k2=>$v2){
                                 $posts = \HJ\Posts::findFirst([
                                     "list_id='".$v2['list_id']."' and user_id='".$user_info['data']['user_id']."' and visible=1 ",
-                                    "columns"=>"post_id", "group"=>"list_id", "order"=>"post_id desc"
+                                    "columns"=>"post_id", "group"=>"post_id", "order"=>"post_id desc"
                                 ]);
                                 if($posts){
                                     $post_list[] = $posts['post_id'];
