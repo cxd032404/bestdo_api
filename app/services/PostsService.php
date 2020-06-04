@@ -62,23 +62,24 @@ class PostsService extends BaseService
     {
         $oUpload = new UploadService();
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,user_id,list_id,content,source,update_time")->toArray();
-        if(!isset($postInfo['post_id']))
+        $postInfo = self::getPosts(intval($post_id),"post_id,user_id,list_id,content,source,update_time");
+
+        if(!isset($postInfo->post_id))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
         }
         else
         {
-            if($postInfo['user_id']!=$user_id && $manager_id == 0)
+            if($postInfo->user_id!=$user_id && $manager_id == 0)
             {
                 $return = ['result'=>false,'data'=>['msg'=>"文章作者不匹配"]];
             }else{
                 //获取列表信息
-                $listInfo = (new ListService())->getListInfo($postInfo['list_id'],"list_id,detail")->toArray();
+                $listInfo = (new ListService())->getListInfo($postInfo->list_id,"list_id,detail")->toArray();
                 $listInfo['detail'] = json_decode($listInfo['detail'],true);
-                $postInfo['source'] = json_decode($postInfo['source'],true);
+                $postInfo->source = json_decode($postInfo->source,true);
                 //计算可用的文件数量
-                $count = $oUpload->getAvailableSourceCount($postInfo['source'],$listInfo['detail']);
+                $count = $oUpload->getAvailableSourceCount($postInfo->source,$listInfo['detail']);
                 $upload = $oUpload->getUploadedFile([],[],0,0,$count);
                 //如果返回类型名称
                 if(isset($upload['name']))
@@ -89,17 +90,17 @@ class PostsService extends BaseService
                 {
                     foreach($upload as $name => $file)
                     {
-                        $postInfo['source'][$name.count($upload)] = $file;
+                        $postInfo->source[$name.count($upload)] = $file;
                     }
                     if($visible>0){
-                        $postInfo['visible'] = 1;
+                        $postInfo->visible = 1;
                     }
-                    $postInfo['source'] = $oUpload->sortUpload($postInfo['source']);
+                    $postInfo->source = $oUpload->sortUpload($postInfo->source);
                     //查询当前提交的文件key值
                     $new_add = [];
                     foreach($upload as $name => $file)
                     {
-                        foreach(array_reverse($postInfo['source']) as $key => $file_2)
+                        foreach(array_reverse($postInfo->source) as $key => $file_2)
                         {
                             if($file == $file_2)
                             {
@@ -108,14 +109,14 @@ class PostsService extends BaseService
                             }
                         }
                     }
-                    $postInfo['title'] = trim($detail['title']);
-                    $postInfo['source'] = json_encode($postInfo['source']);
-                    $postInfo['content'] = trim($detail['comment']);
+                    $postInfo->title = trim($detail['title']);
+                    $postInfo->source = json_encode($postInfo->source);
+                    $postInfo->content = trim($detail['comment']);
                     $data = json_decode(json_encode($postInfo),true);
-                    $update = self::updatePost($postInfo['post_id'],$data);
+                    $update = self::updatePost($postInfo->post_id,$data);
                     if($update)
                     {
-                        $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id'],'new_key'=>$new_add]];
+                        $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'new_key'=>$new_add]];
                     }
                     else
                     {
@@ -132,42 +133,41 @@ class PostsService extends BaseService
     public function removeSource($post_id,$sid)
     {
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,source,update_time")->toArray();
-        if(!isset($postInfo['post_id']))
+        $postInfo = self::getPosts(intval($post_id),"post_id,source,update_time");
+        if(!isset($postInfo->post_id))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
         }
         else
         {
-            $postInfo['source'] = json_decode($postInfo['source'],true);
-            if(!isset($postInfo['source'][$sid]))
+            $postInfo->source = json_decode($postInfo->source,true);
+            if(!isset($postInfo->source[$sid]))
             {
-                $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
+                $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
             }
             else
             {
-                print_r($postInfo);
-                unset($postInfo['source'][$sid]);
-                $source = (new UploadService())->sortUpload($postInfo['source']);
+                unset($postInfo->source[$sid]);
+                $source = (new UploadService())->sortUpload($postInfo->source);
                 $sid = explode(".",$sid);
                 $t = [];
-                foreach($postInfo['source'] as $k => $file)
+                foreach($postInfo->source as $k => $file)
                 {
                     if(substr($k,0,strlen($sid['0'])+1)==$sid['0'].".")
                     {
                         $t[$sid['0'].".".(count($t)+1)] = $file;
-                        unset($postInfo['source'][$k]);
+                        unset($postInfo->source[$k]);
                     }
                 }
                 foreach($t as $k => $file)
                 {
-                    $postInfo['source'][$k] = $file;
+                    $postInfo->source[$k] = $file;
                 }
-                $postInfo['source'] = json_encode($postInfo['source']);
-                $update = self::updatePost($postInfo['post_id'],$postInfo);
+                $postInfo->source = json_encode($postInfo->source);
+                $update = self::updatePost($postInfo->post_id,$postInfo);
                 if($update)
                 {
-                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
+                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
                 }
                 else
                 {
@@ -331,7 +331,7 @@ class PostsService extends BaseService
         {
             $posts->$key = $value;
         }
-        $posts['update_time'] = date("Y-m-d H:i:s");
+        $posts->update_time = date("Y-m-d H:i:s");
         $return = $posts->save();
         if($return)
         {
