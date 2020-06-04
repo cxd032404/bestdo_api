@@ -318,7 +318,7 @@ class PostsService extends BaseService
         }
         if(isset($posts->user_id))
         {
-            $posts->userInfo = (new UserService())->getUserInfo($posts->user_id);
+            $posts->user_info = (new UserService())->getUserInfo($posts->user_id);
         }
 
      return $posts;
