@@ -75,6 +75,24 @@ class UserController extends BaseController
 		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
+    /*
+     * 微信code登录
+     * 参数
+     * code
+     * （必填）：微信授权code
+     * */
+    public function wechatCodeLoginAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $this->logger->info(json_encode($data));
+        $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        //调用手机号验证码登录方法
+        $openId = (new WechatService)->getOpenIdByCode($this->key_config->aliyun->wechat,$code);
+        //日志记录
+        $this->logger->info(json_encode($openId));
+        return $this->success($openId);
+    }
 
 	/*
      * 忘记密码
