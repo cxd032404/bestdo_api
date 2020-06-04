@@ -250,7 +250,7 @@ class PostsService extends BaseService
             }
             $list = (new \HJ\Posts())->find($params);
             $this->redis->set($cacheName,json_encode($list));
-            $this->redis->expire($cacheName,60);
+            $this->redis->expire($cacheName,10);
         }
         $return = [
             'data'=>[]
