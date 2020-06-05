@@ -137,7 +137,7 @@ class PageService extends BaseService
                         $user_id = isset($user_info['data']['user_id'])?[$user_info['data']['user_id']]:[];
                         $postExists = (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1);
                         //已经提交过
-                        if($postExists['count']>0)
+                        if(count($postExists)>0)
                         {
                             $pageElementList[$key]['detail']['available'] = 0;
                         }
