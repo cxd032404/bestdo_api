@@ -46,7 +46,7 @@ class PostsService extends BaseService
                 if($create)
                 {
                     $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'new_key'=>array_keys($upload)]];
-                    (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1,0);
+                    (new PostsService())->getPostsList($list_id,[$user_id??0],"post_id","post_id DESC",0,1,1,0);
                 }
                 else
                 {
