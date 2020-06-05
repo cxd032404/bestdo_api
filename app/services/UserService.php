@@ -493,6 +493,7 @@ class UserService extends BaseService
             if ($posts->update() === false) {
                 $transaction->rollback($this->msgList['posts_error']);
             }
+            (new PostsService())->getPosts($post_id,'*',0);
             //新增点赞记录
             $postskudos = new PostsKudos();
             $postskudos->setTransaction($transaction);
@@ -504,6 +505,8 @@ class UserService extends BaseService
             if($postskudos->save() === false){
                 $transaction->rollback($this->msgList['posts_kudos_error']);
             }
+
+
 
             $msg = $this->msgList['congratulation'].$this->kudosTypeList[$listInfo->detail['type']??"vote"].$this->msgList['posts_success'];
             $return  = ['result'=>1, 'msg'=>$msg, 'code'=>200, 'data'=>['kudos'=>intval($posts->kudos)]];
