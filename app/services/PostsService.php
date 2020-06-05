@@ -46,6 +46,7 @@ class PostsService extends BaseService
                 if($create)
                 {
                     $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'new_key'=>array_keys($upload)]];
+                    (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1,0);
                 }
                 else
                 {
@@ -211,7 +212,7 @@ class PostsService extends BaseService
     //order：排序
     //page:页码
     //pageSize：单页数量
-    public function getPostsList($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =4)
+    public function getPostsList($list_id,$user_id,$columns = "*",$order = "post_id DESC",$start = 0,$page = 1,$pageSize =4,$cache=1)
     {
         $user_ids =':';
         sort($user_id);
@@ -221,37 +222,53 @@ class PostsService extends BaseService
         }
 
         $cacheName = 'user_post:list_id:'.$list_id.':user_id'.$user_ids.':order:'.$order.':start:'.$start.':page:'.$page.':pageSize:'.$pageSize;
-        $posts_id = $this->redis->get($cacheName);
-        //判断是否有缓存
-        if($posts_id)
-        {
-            //缓存
-          $list = json_decode($posts_id);
-        }
-        else
-        {
-            //读库
-            if(is_array($list_id))
-            {
-                $params = [
-                    ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id in (".implode(",",$list_id).")"." ".($start>0?(" and post_id <".$start):"")." and visible=1",
-                    "columns" => 'post_id',
-                    "order" => $order,
-                    "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
-                ];
+
+        if($cache == 1) {
+            $posts_id = $this->redis->get($cacheName);
+            //判断是否有缓存
+            if ($posts_id) {
+                //缓存
+                $list = json_decode($posts_id);
+            } else {
+                //读库
+                if (is_array($list_id)) {
+                    $params = [
+                        ($user_id ? ("user_id  in (" . implode(",", $user_id) . ") and ") : "") . "list_id in (" . implode(",", $list_id) . ")" . " " . ($start > 0 ? (" and post_id <" . $start) : "") . " and visible=1",
+                        "columns" => 'post_id',
+                        "order" => $order,
+                        "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+                    ];
+                } else {
+                    $params = [
+                        ($user_id ? ("user_id  in (" . implode(",", $user_id) . ") and ") : "") . "list_id = '" . $list_id . "'" . " " . ($start > 0 ? (" and post_id <" . $start) : "") . " and visible=1",
+                        "columns" => 'post_id',
+                        "order" => $order,
+                        "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+                    ];
+                }
+                $list = (new \HJ\Posts())->find($params);
+                $this->redis->set($cacheName, json_encode($list));
+                $this->redis->expire($cacheName, 10);
             }
-            else
-            {
+        }else{
+            if (is_array($list_id)) {
                 $params = [
-                    ($user_id?("user_id  in (".implode(",",$user_id).") and "):"")."list_id = '".$list_id."'"." ".($start>0?(" and post_id <".$start):"")." and visible=1" ,
+                    ($user_id ? ("user_id  in (" . implode(",", $user_id) . ") and ") : "") . "list_id in (" . implode(",", $list_id) . ")" . " " . ($start > 0 ? (" and post_id <" . $start) : "") . " and visible=1",
                     "columns" => 'post_id',
                     "order" => $order,
-                    "limit" => ["offset"=>($page-1)*$pageSize,"number"=>$pageSize]
+                    "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+                ];
+            } else {
+                $params = [
+                    ($user_id ? ("user_id  in (" . implode(",", $user_id) . ") and ") : "") . "list_id = '" . $list_id . "'" . " " . ($start > 0 ? (" and post_id <" . $start) : "") . " and visible=1",
+                    "columns" => 'post_id',
+                    "order" => $order,
+                    "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
                 ];
             }
             $list = (new \HJ\Posts())->find($params);
-            $this->redis->set($cacheName,json_encode($list));
-            $this->redis->expire($cacheName,10);
+            $this->redis->set($cacheName, json_encode($list));
+            $this->redis->expire($cacheName, 10);
         }
         $return = [
             'data'=>[]
