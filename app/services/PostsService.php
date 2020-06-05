@@ -367,6 +367,7 @@ class PostsService extends BaseService
         {
             $posts->views = $posts->views + 1;
             return $posts->save();
+            $this->getPosts($post_id,'post_id',0);
         }
         else
         {
