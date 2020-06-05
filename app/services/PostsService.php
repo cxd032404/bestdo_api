@@ -164,7 +164,8 @@ class PostsService extends BaseService
                     $postInfo->source[$k] = $file;
                 }
                 $postInfo->source = json_encode($postInfo->source);
-                $update = self::updatePost($postInfo->post_id,$postInfo);
+                $data = json_decode(json_encode($postInfo),true);
+                $update = self::updatePost($postInfo->post_id,$data);
                 if($update)
                 {
                     $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
@@ -183,18 +184,19 @@ class PostsService extends BaseService
     public function updateDisplay($post_id,$display)
     {
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,list_id,visible,views,update_time")->toArray();
-        if(!isset($postInfo['post_id']))
+        $postInfo = self::getPosts(intval($post_id),"post_id,list_id,visible,views,update_time");
+        if(!isset($postInfo->post_id))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
         }
         else
         {
-            $postInfo['visible'] = $display;
-            $update = self::updatePost($postInfo['post_id'],$postInfo);
+            $postInfo->visible = $display;
+            $data = json_decode(json_encode($postInfo),true);
+            $update = self::updatePost($postInfo->post_id,$data);
             if($update)
             {
-                $return = ['result'=>true,'data'=>['post_id'=>$postInfo['post_id']]];
+                $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
             }
             else
             {
