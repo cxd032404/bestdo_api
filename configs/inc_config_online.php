@@ -98,6 +98,11 @@ $config = [
     ],
     'user_token' => [
         'exceed_time' => 3600*24*30,
+    ],
+    'cache_settings' =>[
+        'list'=>['name'=>'list_','expire'=>3600],
+        'postList'=>['name'=>'list_','expire'=>60],
+        'post'=>['name'=>'user_posts_','expire'=>3600],
     ]
 
 

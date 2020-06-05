@@ -9,7 +9,8 @@ class ListService extends BaseService
     //cloumns：数据库的字段列表
     public function getListInfo($list_id,$columns = "list_id,company_id,detail",$cache = 1)
     {
-        $cacheName = 'list:'.$list_id;
+        $cacheSettings = $this->config->cache_settings;
+        $cacheName = $cacheSettings->list->name.$list_id;
         if($cache == 1)
         {
             $cacheData = $this->redis->get($cacheName);
@@ -25,7 +26,7 @@ class ListService extends BaseService
                         "columns" => '*'
                     ]);
                 $this->redis->set($cacheName,json_encode($listData));
-                $this->redis->expire($cacheName,3600);
+                $this->redis->expire($cacheName,$cacheSettings->list->expire);
                 $return = $listData;
             }
         }else
@@ -36,7 +37,7 @@ class ListService extends BaseService
                     "columns" => '*'
                 ]);
             $this->redis->set($cacheName,json_encode($listData));
-            $this->redis->expire($cacheName,3600);
+            $this->redis->expire($cacheName,$cacheSettings->list->expire);
             $return = $listData;
         }
         if($columns != "*")
