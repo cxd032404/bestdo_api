@@ -177,8 +177,8 @@ class PageService extends BaseService
                             $connectedList = $postsService->getPostsList($listInfo['detail']['connect'],[],'post_id,title,source,views');
                             foreach($connectedList['data'] as $pid => $pdetail)
                             {
-                                $connectedList['data'][$pid]->source = json_decode($pdetail['source'],true);
-                                $connectedList['data'][$pid]->source = (new UploadService())->parthSource($connectedList['data'][$pid]['source']);
+                                $connectedList['data'][$pid]->source = json_decode($pdetail->source,true);
+                                $connectedList['data'][$pid]->source = (new UploadService())->parthSource($connectedList['data'][$pid]->source);
                                 $new = [];
                                 foreach($connectedList['data'][$pid]->source as $k2 => $v2)
                                 {
