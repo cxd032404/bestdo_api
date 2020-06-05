@@ -57,6 +57,7 @@ class UserService extends BaseService
         "company_user_error"=>"企业用户身份验证失败！",
 
         "sendcode_invalid"=>"验证码已失效，请重新发送！",
+        "user_openid_valid"=>"用户openid为空",
         "user_token_invalid"=>"用户token已失效，请登录！",
 
         "mobile_register"=>"手机号已注册，请填写正确的手机号码！",
@@ -912,11 +913,16 @@ class UserService extends BaseService
     public function wechatLogin($openId = "")
     {
         $userinfo = $this->getUserInfoByWechat($openId);
-        //修改用户登录时间
-        $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',time())],$userinfo->user_id);
-        //生成token
-        $tokeninfo = $this->getToken($userinfo->user_id);
-        $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
+        if(!$userinfo)
+        {
+            $return['msg']  = $this->msgList['user_openid_valid'];
+        }else {
+            //修改用户登录时间
+            $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', time())], $userinfo->user_id);
+            //生成token
+            $tokeninfo = $this->getToken($userinfo->user_id);
+            $return = ['result' => 1, 'msg' => $this->msgList['login_success'], 'code' => 200, 'data' => ['user_info' => $tokeninfo['map'], 'user_token' => $tokeninfo['token']]];
+        }
         return $return;
     }
 }

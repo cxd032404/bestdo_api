@@ -170,9 +170,9 @@ class PageService extends BaseService
                         $posts['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
                         $posts['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:"";
                         $postsInfo->user_info = $posts;
-                        $listInfo = $listService->getListInfo($postsInfo->list_id,"list_id,detail,list_name")->toArray();
-                        $listInfo['detail'] = json_decode($listInfo['detail'],true);
-                        if(isset($listInfo['detail']['connect']) && $listInfo['detail']['connect']>0)
+                        $listInfo = $listService->getListInfo($postsInfo->list_id,"list_id,detail,list_name");
+                        $listInfo->detail = json_decode($listInfo->detail,true);
+                        if(isset($listInfo->detail['connect']) && $listInfo->detail['connect']>0)
                         {
                             $connectedList = $postsService->getPostsList($listInfo->detail['connect'],[],'post_id,title,source,views');
                             foreach($connectedList['data'] as $pid => $pdetail)
@@ -188,10 +188,10 @@ class PageService extends BaseService
                             }
 
                             $postsInfo->connect_list = array_values($connectedList['data']);
-                            $connectedListInfo  =  $listService->getListInfo($listInfo['detail']['connect'],"list_id,list_name")->toArray();
-                            $postsInfo->connect_list_name = (($listInfo['detail']['connect_name']??"")=="")?$connectedListInfo['list_name']:$listInfo['detail']['connect_name'];
+                            $connectedListInfo  =  $listService->getListInfo($listInfo->detail['connect'],"list_id,list_name");
+                            $postsInfo->connect_list_name = (($listInfo->detail['connect_name']??"")=="")?$connectedListInfo['list_name']:$listInfo->detail['connect_name'];
                         }
-                        $postsInfo->list_name = $listInfo['list_name'];
+                        $postsInfo->list_name = $listInfo->list_name;
                         $pageElementList[$key]['detail'] = json_decode(json_encode($postsInfo));
                     }
                 }
