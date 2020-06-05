@@ -300,7 +300,7 @@ class PostsService extends BaseService
             if(isset($posts->post_id))
             {
                 $this->redis->set($cacheName,json_encode($posts));
-                $this->redis->expire($cacheName,$cacheSettings->post->expire);
+                $this->redis->expire($cacheName,$cacheSettings->expire);
             }else
                 {
                     $posts = [];
