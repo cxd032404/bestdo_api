@@ -20,6 +20,21 @@ class WechatService extends BaseService
 {
 
     /*更新用户微信信息*/
+    public function getOpenIdByCode($wechat = [],$code="")
+    {
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
+        //第二步：获取网页授权access_token和openid
+        $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+        //var_dump($oauth2);
+        $openId = "";
+        if (!array_key_exists('errcode', $oauth2)) {
+            $openid = $oauth2['openid'];
+        }
+        return $openId;
+    }
+
+    /*更新用户微信信息*/
     public function getWechatUserAction($wechat=[],$user_id=0,$code="")
     {
         $appid = $wechat['appid'];
