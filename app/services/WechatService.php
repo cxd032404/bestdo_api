@@ -29,7 +29,7 @@ class WechatService extends BaseService
         //var_dump($oauth2);
         $openId = "";
         if (!array_key_exists('errcode', $oauth2)) {
-            $openid = $oauth2['openid'];
+            $openId = $oauth2['openid'];
         }
         return $openId;
     }
