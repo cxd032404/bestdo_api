@@ -20,7 +20,6 @@ class ApiController extends BaseController
 
 	public function testAction( $id = 0 ) 
 	{
-	    echo 1;die();
         $data = (new listService())->getListInfo(1,'list_type,list_id');
         print_r($data);die();
 	    $return  = (new TestService)->test();

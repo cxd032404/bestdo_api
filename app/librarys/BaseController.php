@@ -16,7 +16,9 @@ use Phalcon\Mvc\Controller,
  * 不需要验证的基类控制器
  */
 class BaseController extends Controller {
-
+    public $start_microtime;
+    public $end_microtime;
+    public $log_token;
 	public $sign;
 	/**
 	 * 执行路由之前的事件（优先级003）
@@ -27,6 +29,13 @@ class BaseController extends Controller {
 	 * @return void || bool
 	 */
 	public function beforeExecuteRoute() {
+        $log_data = $this->request->get();
+        $log_data['ip'] = $this->request->getClientAddress();
+
+        $this->log_token = md5(time().$log_data['ip']);
+        $log_data['log_token'] = $this->log_token;
+        $this->logger->info(json_encode($log_data));
+        $this->start_microtime = microtime(true);//date('Y-m-d H:i:s',time());
 	    //echo '<h1>beforeExecuteRoute!</h1>\n';
 	}
 	/**
@@ -38,6 +47,7 @@ class BaseController extends Controller {
 	 * @return void || bool
 	 */
 	public function afterExecuteRoute() {
+
     	//echo '<h1>afterExecuteRoute!</h1>\n';
 	}
 	/**
@@ -132,7 +142,6 @@ class BaseController extends Controller {
 			$result['data'] = $data;
 		if (!empty($code))
 			$result['code'] = $code;
-
 		$this -> json($result,200);
 	}
 
@@ -166,7 +175,13 @@ class BaseController extends Controller {
 	 * @return void
 	 */
 	public function json($data,$status_code=200) {
-		$result = json_encode($data);
+	    $log_data = $data;
+        $this->end_microtime = microtime(true);
+        $use_time = $this->end_microtime-$this->start_microtime;
+        $log_data['use_time'] = $use_time;
+        $log_data['log_token'] = $this->log_token;
+        $this->response_logger->info(json_encode($log_data));
+        $result = json_encode($data);
 		$this -> response
 		//-> setStatusCode($status_code, '')
 		-> setContent($result) -> send();

@@ -493,7 +493,7 @@ class UserService extends BaseService
             $sender_wechatid = '';
             if($sender_id>0) {
                 $userInfo = (new UserService())->getUserInfo($sender_id, 'user_id,wechatid');
-                $sender_wechatid = $userInfo->wechatid??"";
+                $sender_wechatid = $userInfo->wechatid;
             }
             //新增点赞记录
             $postskudos = new PostsKudos();
@@ -502,7 +502,7 @@ class UserService extends BaseService
             $postskudos->receiver_id = $posts->user_id;
             $postskudos->list_id = $posts->list_id;
             $postskudos->post_id = $post_id;
-            $postskudos->sender_wechatid = $sender_wechatid;
+            $postskudos->wechatid = $sender_wechatid;
             $postskudos->date = date("Y-m-d",$current_time);
             $postskudos->create_time = date("Y-m-d H:i:s",$current_time);
             if($postskudos->save() === false){

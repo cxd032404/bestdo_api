@@ -57,7 +57,8 @@ class Bootstrap
 			'WebCurl',  # 初始化远程请求服务
 			//'WebRedis', # 初始化Redis 服务
 			'WebPages', # 初始化页面服务
-			'Logger',	# 初始化写日志服务
+			'RequestLogger',	# 初始化写日志服务
+            'ResponseLogger',
             'Redis',    # 初始化Redis服务
             //'Elasticsearch',  # 初始化Elasiticsearch服务
             'KeyConfig',    # 各类key的配置
@@ -323,19 +324,34 @@ class Bootstrap
 	 * @param array $options 需要传值的数组对象
 	 * @return void
 	 */
-	protected function initLogger( $options = [] ): void
+	protected function initRequestLogger( $options = [] ): void
 	{
 		$config = $this->di['config'];
-		$this->di -> set('logger', 
+		$this->di -> set('logger',
 		function($filename = null, $format = null) use ($config) {
-			$format = $format ? : $config -> get('logger') -> format;
-			$filename = trim($filename ? : $config -> get('logger') -> filename, '\\/');
-			$path = rtrim($config -> get('logger') -> path, '\\/') . DIRECTORY_SEPARATOR;
-			$formatter = new PhFormatterLine($format, $config -> get('logger') -> date);
-			$logger = new PhFileLogger($path . $filename);
-			$logger -> setFormatter($formatter);
-			$logger -> setLogLevel($config -> get('logger') -> logLevel);
-			return $logger;
+			$format = $format ? : $config -> get('request_logger') -> format;
+			$filename = trim($filename ? : $config -> get('request_logger') -> filename, '\\/');
+			$path = rtrim($config -> get('request_logger') -> path, '\\/') . DIRECTORY_SEPARATOR;
+			$formatter = new PhFormatterLine($format, $config -> get('request_logger') -> date);
+			$request_logger = new PhFileLogger($path . $filename);
+			$request_logger -> setFormatter($formatter);
+			$request_logger -> setLogLevel($config -> get('request_logger') -> logLevel);
+			return $request_logger;
 		});
 	}
+    protected function initResponseLogger( $options = [] ): void
+    {
+        $config = $this->di['config'];
+        $this->di -> set('response_logger',
+            function($filename = null, $format = null) use ($config) {
+                $format = $format ? : $config -> get('response_logger') -> format;
+                $filename = trim($filename ? : $config -> get('response_logger') -> filename, '\\/');
+                $path = rtrim($config -> get('response_logger') -> path, '\\/') . DIRECTORY_SEPARATOR;
+                $formatter = new PhFormatterLine($format, $config -> get('response_logger') -> date);
+                $response_logger = new PhFileLogger($path . $filename);
+                $response_logger -> setFormatter($formatter);
+                $response_logger -> setLogLevel($config -> get('response_logger') -> logLevel);
+                return $response_logger;
+            });
+    }
 }
