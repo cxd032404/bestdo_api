@@ -40,7 +40,7 @@ class ListController extends BaseController
             $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')), $user_id, $detail, $visible);
         }
         if ($post['result']) {
-            return $this->success($post['data']);
+            return $this->success($post['data'],$post['data']['msg']);
         } else {
             return $this->failure([], $post['data']['msg']);
         }
