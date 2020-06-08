@@ -45,7 +45,7 @@ class PostsService extends BaseService
                 $create = $postInfo->create();
                 if($create)
                 {
-                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'new_key'=>array_keys($upload)]];
+                    $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'new_key'=>array_keys($upload),'msg'=>"上传成功"]];
                     (new PostsService())->getPostsList($list_id,[$user_id??0],"post_id","post_id DESC",0,1,1,0);
                 }
                 else
@@ -117,7 +117,7 @@ class PostsService extends BaseService
                     $update = $this->updatePost($postInfo->post_id,$data);
                     if($update)
                     {
-                        $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'new_key'=>$new_add]];
+                        $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'new_key'=>$new_add,'msg'=>"上传成功"]];
                     }
                     else
                     {
