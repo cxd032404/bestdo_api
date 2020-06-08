@@ -63,7 +63,7 @@ class PostsService extends BaseService
     {
         $oUpload = new UploadService();
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,user_id,list_id,content,source,update_time");
+        $postInfo = self::getPosts(intval($post_id),"post_id,user_id,list_id,content,source,create_time,update_time");
 
         if(!isset($postInfo->post_id))
         {
