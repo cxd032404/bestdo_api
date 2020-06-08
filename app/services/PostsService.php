@@ -63,7 +63,7 @@ class PostsService extends BaseService
     {
         $oUpload = new UploadService();
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,user_id,list_id,content,source,create_time,update_time");
+        $postInfo = $this->getPosts(intval($post_id),"post_id,user_id,list_id,content,source,update_time");
 
         if(!isset($postInfo->post_id))
         {
@@ -114,14 +114,14 @@ class PostsService extends BaseService
                     $postInfo->source = json_encode($postInfo->source);
                     $postInfo->content = trim($detail['comment']);
                     $data = json_decode(json_encode($postInfo),true);
-                    $update = self::updatePost($postInfo->post_id,$data);
+                    $update = $this->updatePost($postInfo->post_id,$data);
                     if($update)
                     {
                         $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id,'new_key'=>$new_add]];
                     }
                     else
                     {
-                        $return = ['result'=>false,'data'=>['msg'=>"发布失败"]];
+                        $return = ['result'=>false,'data'=>['msg'=>"上传失败"]];
                     }
                 }
             }
@@ -134,7 +134,7 @@ class PostsService extends BaseService
     public function removeSource($post_id,$sid)
     {
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,source,update_time");
+        $postInfo = $this->getPosts(intval($post_id),"post_id,source,update_time");
         if(!isset($postInfo->post_id))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
@@ -166,7 +166,7 @@ class PostsService extends BaseService
                 }
                 $postInfo->source = json_encode($postInfo->source);
                 $data = json_decode(json_encode($postInfo),true);
-                $update = self::updatePost($postInfo->post_id,$data);
+                $update = $this->updatePost($postInfo->post_id,$data);
                 if($update)
                 {
                     $return = ['result'=>true,'data'=>['post_id'=>$postInfo->post_id]];
@@ -185,7 +185,7 @@ class PostsService extends BaseService
     public function updateDisplay($post_id,$display)
     {
         //获取列表信息
-        $postInfo = self::getPosts(intval($post_id),"post_id,list_id,visible,user_id,views,update_time");
+        $postInfo = $this->getPosts(intval($post_id),"post_id,list_id,visible,user_id,views,update_time");
         if(!isset($postInfo->post_id))
         {
             $return = ['result'=>false,'data'=>['msg'=>"文章不存在"]];
@@ -194,7 +194,7 @@ class PostsService extends BaseService
         {
             $postInfo->visible = $display;
             $data = json_decode(json_encode($postInfo),true);
-            $update = self::updatePost($postInfo->post_id,$data);
+            $update = $this->updatePost($postInfo->post_id,$data);
             if($update)
             {
                 (new PostsService())->getPostsList($postInfo->list_id,[$postInfo->user_id??0],"post_id","post_id DESC",0,1,1,0);
