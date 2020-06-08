@@ -62,6 +62,7 @@ class PageService extends BaseService
                         $pageElementList[$key]['data']['data'][$k]->source[0]['title'] = $postDetail->title;
                         $pageElementList[$key]['data']['data'][$k]->list_type = $listInfo->list_type;
                         $pageElementList[$key]['data']['data'][$k]->content = htmlspecialchars_decode($postDetail->content);
+                        /*
                         $postskudos_info = PostsKudos::findFirst([
                             "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
                             'bind'=>[
@@ -71,6 +72,8 @@ class PageService extends BaseService
                                 'endtime'=>date('Y-m-d').' 23:59:59',
                             ]
                         ]);
+                        */
+                        $postskudos_info = (new PostsService())->checkKudos($user_info['data']['user_id']??0,"",$pageElementList[$key]['data']['data'][$k]->post_id);
                         $pageElementList[$key]['data']['data'][$k]->is_kudos = 0;
                         if(isset($postskudos_info->id)){
                             $pageElementList[$key]['data']['data'][$k]->is_kudos = 1;
@@ -221,6 +224,14 @@ class PageService extends BaseService
                         }
                     }
                     $pageElementList[$key]['data'] = (new UserService())->getPostByActivityAction($post_list,$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",1));
+                    foreach($pageElementList[$key]['data']['data'] as $post_key=>$log)
+                    {
+                        $postskudos_info = (new PostsService())->checkKudos($user_info['data']['user_id']??0,"",$log['post_id']);
+                        $pageElementList[$key]['data']['data'][$post_key]['is_kudos'] = 0;
+                        if(isset($postskudos_info->id)){
+                            $pageElementList[$key]['data']['data'][$post_key]['is_kudos'] = 1;
+                        }
+                    }
                 }
                 elseif($elementDetail['element_type'] == "rankByKudos")
                 {

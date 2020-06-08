@@ -374,4 +374,26 @@ class PostsService extends BaseService
             return true;
         }
     }
+    public function checkKudos($user_id,$openid,$post_id)
+    {
+        if(!$user_id)
+        {
+            return false;
+        }
+        else
+        {
+            $postskudos_info = PostsKudos::findFirst([
+                "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
+                'bind'=>[
+                    'sender_id'=>$user_id,
+                    'post_id'=>$post_id,
+                    'starttime'=>date('Y-m-d').' 00:00:00',
+                    'endtime'=>date('Y-m-d').' 23:59:59',
+                ]
+            ]);
+            return $postskudos_info;
+        }
+
+    }
+
 }
