@@ -383,12 +383,11 @@ class PostsService extends BaseService
         else
         {
             $postskudos_info = PostsKudos::findFirst([
-                "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
+                "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and date = :date: ",
                 'bind'=>[
                     'sender_id'=>$user_id,
                     'post_id'=>$post_id,
-                    'starttime'=>date('Y-m-d').' 00:00:00',
-                    'endtime'=>date('Y-m-d').' 23:59:59',
+                    'date'=>date('Y-m-d',time())
                 ]
             ]);
             return $postskudos_info;

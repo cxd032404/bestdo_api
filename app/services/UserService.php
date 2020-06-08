@@ -475,15 +475,9 @@ class UserService extends BaseService
                 $transaction->rollback($this->msgList['posts_empty']);
             }
             //查询点赞记录
-            $postskudos_info = PostsKudos::findFirst([
-                "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
-                'bind'=>[
-                    'sender_id'=>$sender_id,
-                    'post_id'=>$post_id,
-                    'starttime'=>date('Y-m-d').' 00:00:00',
-                    'endtime'=>date('Y-m-d').' 23:59:59',
-                ]
-            ]);
+
+            $postskudos_info = (new PostsService())->checkKudos($sender_id??0,"",$post_id);
+
             if(isset($postskudos_info->id)){
                 $transaction->rollback($this->msgList['posts_'.($listInfo->detail['type']??"kudo").'_exist']);
             }
@@ -494,6 +488,7 @@ class UserService extends BaseService
                 $transaction->rollback($this->msgList['posts_error']);
             }
             (new PostsService())->getPosts($post_id,'*',0);
+            $current_time = time();
             //新增点赞记录
             $postskudos = new PostsKudos();
             $postskudos->setTransaction($transaction);
@@ -501,7 +496,9 @@ class UserService extends BaseService
             $postskudos->receiver_id = $posts->user_id;
             $postskudos->list_id = $posts->list_id;
             $postskudos->post_id = $post_id;
-            $postskudos->date = date("Y-m-d");
+            $postskudos->date = date("Y-m-d",$current_time);
+            $postskudos->create_time = date("Y-m-d H:i:s",$current_time);
+
             if($postskudos->save() === false){
                 $transaction->rollback($this->msgList['posts_kudos_error']);
             }
