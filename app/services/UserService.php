@@ -474,8 +474,8 @@ class UserService extends BaseService
             if(!isset($posts->post_id)){
                 $transaction->rollback($this->msgList['posts_empty']);
             }
-            //查询点赞记录
 
+            //查询点赞记录
             $postskudos_info = (new PostsService())->checkKudos($sender_id??0,"",$post_id);
 
             if(isset($postskudos_info->id)){
@@ -489,6 +489,12 @@ class UserService extends BaseService
             }
             (new PostsService())->getPosts($post_id,'*',0);
             $current_time = time();
+            //查询用户信息
+            $sender_wechatid = '';
+            if($sender_id>0) {
+                $userInfo = (new UserService())->getUserInfo($sender_id, 'user_id,wechatid');
+                $sender_wechatid = $userInfo->wechatid??"";
+            }
             //新增点赞记录
             $postskudos = new PostsKudos();
             $postskudos->setTransaction($transaction);
@@ -496,9 +502,9 @@ class UserService extends BaseService
             $postskudos->receiver_id = $posts->user_id;
             $postskudos->list_id = $posts->list_id;
             $postskudos->post_id = $post_id;
+            $postskudos->sender_wechatid = $sender_wechatid;
             $postskudos->date = date("Y-m-d",$current_time);
             $postskudos->create_time = date("Y-m-d H:i:s",$current_time);
-
             if($postskudos->save() === false){
                 $transaction->rollback($this->msgList['posts_kudos_error']);
             }
