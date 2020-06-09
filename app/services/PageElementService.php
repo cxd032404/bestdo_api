@@ -106,7 +106,6 @@ class PageElementService extends BaseService
         return $data;
     }
     /*
-
      * userinfo 滑动导航
      * company_id 公司id
      * data 用户包含的element信息
@@ -304,7 +303,7 @@ class PageElementService extends BaseService
             $posts[$p_key]['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
             $posts[$p_key]['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:0;
         }
-        $data['self'] = $self??[];
+        $data['detail']['self'] = $self??[];
         $data['detail']['all'] = $posts;
         return $data;
     }
