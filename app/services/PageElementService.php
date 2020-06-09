@@ -3,6 +3,13 @@
 
 class PageElementService extends BaseService
 {
+    /*
+     * 列表
+     * userinfo 用户信息
+     * company_id 公司id
+     * data 用户包含的element信息
+     * params 页面标识和company_id
+     */
 
     public function getElementPage_list($data,$params,$user_info,$company_id){
         //指定数据
@@ -56,7 +63,13 @@ class PageElementService extends BaseService
         return $data;
 
     }
-
+    /*
+        * 报名记录
+        * userinfo 用户信息
+        * company_id 公司id
+        * data 用户包含的element信息
+        * params 页面标识和company_id
+        */
     public function getElementPage_activityLog($data,$params,$user_info){
         $post_id = $this->getFromParams($params,"post_id","");
         if($post_id){
@@ -92,7 +105,13 @@ class PageElementService extends BaseService
         }
         return $data;
     }
+    /*
 
+     * userinfo 滑动导航
+     * company_id 公司id
+     * data 用户包含的element信息
+     * params 页面标识和company_id
+     */
     public function getElementPage_slideNavi($data,$params,$user_info,$company_id){
         if($data['detail']['source_from']=="from_vote")
         {
@@ -116,17 +135,37 @@ class PageElementService extends BaseService
         return $data;
 
     }
+    /*
+    * 企业信息
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
 
     public function getElementPage_companyInfo($data,$params,$user_info,$company_id){
         $data['detail'] = (new CompanyService())->getCompanyInfo($company_id)->toArray();
         return $data;
     }
+    /*
+    * 用户信息
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
 
     public function getElementPage_userInfo($data,$params,$user_info,$company_id){
         $data['detail']['user_info'] = $user_info;
         return $data;
     }
-
+    /*
+    * 提交
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
     public function getElementPage_post($data,$params,$user_info,$company_id){
         $data['detail']['available'] = 1;
 
@@ -165,6 +204,14 @@ class PageElementService extends BaseService
         $data['detail']['after_action'] = $afterActions;
         return $data;
     }
+
+    /*
+    * 文章详情
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
 
     public function getElementPage_postsDetail($data,$params,$user_info,$company_id){
         $postsService = new PostsService();
@@ -217,6 +264,13 @@ class PageElementService extends BaseService
         return $data;
     }
 
+    /*
+    * 基于用户点赞的排行
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
     public function getElementPage_rankByKudos( $data,$params,$user_info,$company_id){
         //指定数据
         if(isset($data['detail']['list_id']))
@@ -254,6 +308,15 @@ class PageElementService extends BaseService
         $data['detail']['all'] = $posts;
         return $data;
     }
+
+
+    /*
+    * 活动报名
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
     public function getElementPage_activityApply($data,$params,$user_info,$company_id){
 
         if(isset($data['detail']['auto']) && $data['detail']['auto']==1)
