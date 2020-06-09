@@ -26,7 +26,6 @@ class PageService extends BaseService
 	        $pageElementList  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_name,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
 	        foreach($pageElementList as $key => $elementDetail)
             {
-
                 //数组解包
                 $pageElementList[$key]['detail'] = json_decode($elementDetail['detail'],true);
                 $functionName = "getElementPage_".$elementDetail['element_type'];
@@ -39,8 +38,6 @@ class PageService extends BaseService
 
                 }
             }
-	        print_r($pageElementList);die();
-
 	        $pageElementList = array_combine(array_column($pageElementList,'element_sign'),array_values($pageElementList));
             $return = ['result'=>1,'code'=>200,'data'=>['pageInfo'=>$pageInfo,'pageElementList'=>$pageElementList]];
         }

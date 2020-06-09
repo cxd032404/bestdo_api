@@ -113,6 +113,7 @@ class PageElementService extends BaseService
             }
             $data['detail']['jump_urls'] = $navList;
         }
+        return $data;
 
     }
 
