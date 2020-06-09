@@ -22,7 +22,8 @@ class WechatService extends BaseService
     /*更新用户微信信息*/
     public function getOpenIdByCode($wechat = [],$code="")
     {
-        $redis_key = 'wechat_token_'.$code;
+        $wechat_cache = $this->config->cache_setting->wechat;
+        $redis_key = $wechat_cache->name.$code;
         $appid = $wechat['appid'];
         $cache = $this->redis->get($redis_key);
         if($cache!= "")
@@ -44,7 +45,7 @@ class WechatService extends BaseService
         {
             //用户token存入redis缓存中
             $this->redis->set($redis_key,json_encode($oauth2));
-            $this->redis->expire($redis_key,$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
+            $this->redis->expire($redis_key,$wechat_cache->expire);//设置过期时间,不设置过去时间时，默认为永久保持
         }
 
         return $openId;
@@ -53,7 +54,8 @@ class WechatService extends BaseService
     /*更新用户微信信息*/
     public function getWechatUserAction($wechat=[],$user_id=0,$code="")
     {
-        $redis_key = 'wechat_token_'.$code;
+        $wechat_cache = $this->config->cache_setting->wechat;
+        $redis_key = $wechat_cache->name.$code;
         $cache = $this->redis->get($redis_key);
         if($cache!= "")
         {
