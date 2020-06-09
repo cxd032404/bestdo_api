@@ -44,7 +44,7 @@ class UserService extends BaseService
         "decrypt_error"=>"用户token解析失败！",
         "code_status_error"=>"验证码状态修改失败！",
         "activity_error"=>"报名失败！",
-        "filluserinfo_error"=>"信息完善失败！",
+        "update_userinfo_error"=>"用户信息更新失败！",
         "posts_error"=>"点赞失败！",
         "companyuser_status_error"=>"企业用户名单状态修改失败！",
         "posts_kudos_error"=>"点赞记录新增失败！",
@@ -68,7 +68,7 @@ class UserService extends BaseService
         "register_success"=>"注册成功！",
         "decrypt_success"=>"用户token解析成功！",
         "activity_success"=>"报名成功！",
-        "filluserinfo_success"=>"信息完善成功！",
+        "update_userinfo_success"=>"用户信息更新成功！",
         "posts_success"=>"成功！",
         "posts_del_success"=>"活动记录删除成功！",
         "posts_remove_success"=>"取消点赞成功！",
@@ -457,11 +457,12 @@ class UserService extends BaseService
                 $userinfo->$key = $value;
             }
         }
+        $userinfo->last_update_time = date("Y-m-d H:i:s");
         if ($userinfo->update() === false) {
-            $return['msg']  = $this->msgList['filluserinfo_error'];
+            $return['msg']  = $this->msgList['update_userinfo_error'];
         }else {
             $this->getUserInfo($user_id.'*',0);
-            $return = ['result' => 1, 'msg' => $this->msgList['filluserinfo_success'], 'code' => 200, 'data' => []];
+            $return = ['result' => 1, 'msg' => $this->msgList['update_userinfo_success'], 'code' => 200, 'data' => []];
         }
         return $return;
     }
