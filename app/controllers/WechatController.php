@@ -24,6 +24,14 @@ class WechatController extends BaseController
         return $this->success($return);
     }
 
+    public function bind4ManagerAction()
+    {
+        $data = $this->request->get();
+        print_R($data);
+        (new WechatService())->getCodeForManager();
+        die();
+    }
+
 
 
 }
