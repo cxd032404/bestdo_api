@@ -279,23 +279,7 @@ class PageElementService extends BaseService
         }
         return $data;
     }
-    //暂未使用
 
-    public function getElementPage_singlePic($data,$params,$user_info,$company_id){
-
-    }
-    public function getElementPage_backgroundPic($data,$params,$user_info,$company_id){
-
-    }
-    public function getElementPage_picList($data,$params,$user_info,$company_id){
-
-    }
-    public function getElementPage_richText($data,$params,$user_info,$company_id){
-
-    }
-    public function getElementPage_slidePic($data,$params,$user_info,$company_id){
-
-    }
 
 
 
