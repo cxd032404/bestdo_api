@@ -44,7 +44,7 @@ class UserService extends BaseService
         "decrypt_error"=>"用户token解析失败！",
         "code_status_error"=>"验证码状态修改失败！",
         "activity_error"=>"报名失败！",
-        "filluserinfo_error"=>"信息完善失败！",
+        "update_userinfo_error"=>"用户信息更新失败！",
         "posts_error"=>"点赞失败！",
         "companyuser_status_error"=>"企业用户名单状态修改失败！",
         "posts_kudos_error"=>"点赞记录新增失败！",
@@ -68,7 +68,7 @@ class UserService extends BaseService
         "register_success"=>"注册成功！",
         "decrypt_success"=>"用户token解析成功！",
         "activity_success"=>"报名成功！",
-        "filluserinfo_success"=>"信息完善成功！",
+        "update_userinfo_success"=>"用户信息更新成功！",
         "posts_success"=>"成功！",
         "posts_del_success"=>"活动记录删除成功！",
         "posts_remove_success"=>"取消点赞成功！",
@@ -155,8 +155,11 @@ class UserService extends BaseService
                             }
                             //生成token
                             $tokeninfo = $this->getToken($userinfo->user_id);
+                            $currentTime = time();
                             //修改用户登录时间
-                            $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',time())],$userinfo->user_id);
+                            $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
+                                'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
+                                'last_login_source'=>"Mobile"],$userinfo->user_id);
                             $this->redis->expire('login_'.$mobile,0);
                             $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                         }
@@ -184,8 +187,11 @@ class UserService extends BaseService
                                 }
                                 //生成token
                                 $tokeninfo = $this->getToken($userinfo->user_id);
+                                $currentTime = time();
                                 //修改用户登录时间
-                                $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',time())],$userinfo->user_id);
+                                $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
+                                    'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
+                                    'last_login_source'=>"Mobile"],$userinfo->user_id);
                                 $this->redis->expire('login_'.$mobile,0);
                                 $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                             }
@@ -215,6 +221,7 @@ class UserService extends BaseService
                     if(!isset($companyuserlist->id)){
                         $transaction->rollback($this->msgList['companyuser_empty']);
                     }
+                    $currentTime = time();
                     //创建用户
                     $user = new UserInfo();
                     $user->setTransaction($transaction);
@@ -224,6 +231,10 @@ class UserService extends BaseService
                     $user->worker_id = $companyuserlist->worker_id;
                     $user->true_name = $companyuserlist->name;
                     $user->nick_name = $companyuserlist->name;
+                    $user->last_login_time = date("Y-m-d H:i:s",$currentTime);
+                    $user->last_update_time = date("Y-m-d H:i:s",$currentTime);
+                    $user->last_login_source = "Mobile";
+
                     if ($user->create() === false) {
                         $transaction->rollback($this->msgList['register_error']);
                     }
@@ -446,11 +457,12 @@ class UserService extends BaseService
                 $userinfo->$key = $value;
             }
         }
+        $userinfo->last_update_time = date("Y-m-d H:i:s");
         if ($userinfo->update() === false) {
-            $return['msg']  = $this->msgList['filluserinfo_error'];
+            $return['msg']  = $this->msgList['update_userinfo_error'];
         }else {
             $this->getUserInfo($user_id.'*',0);
-            $return = ['result' => 1, 'msg' => $this->msgList['filluserinfo_success'], 'code' => 200, 'data' => []];
+            $return = ['result' => 1, 'msg' => $this->msgList['update_userinfo_success'], 'code' => 200, 'data' => []];
         }
         return $return;
     }
@@ -923,8 +935,11 @@ class UserService extends BaseService
         {
             $return['msg']  = $this->msgList['user_openid_valid'];
         }else {
+            $currentTime = time();
             //修改用户登录时间
-            $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', time())], $userinfo->user_id);
+            $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', $currentTime),
+                'last_update_time' => date('Y-m-d H:i:s', $currentTime),
+                'last_login_source' => "WeChat"], $userinfo->user_id);
             //生成token
             $tokeninfo = $this->getToken($userinfo->user_id);
             $return = ['result' => 1, 'msg' => $this->msgList['login_success'], 'code' => 200, 'data' => ['user_info' => $tokeninfo['map'], 'user_token' => $tokeninfo['token']]];
