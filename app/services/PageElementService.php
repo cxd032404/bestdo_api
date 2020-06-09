@@ -296,20 +296,12 @@ class PageElementService extends BaseService
         array_multisort(array_column($posts,'count'),SORT_DESC,$posts);
         foreach($posts as $p_key=>$p_val){
             $userinfo = (new UserService())->getUserInfo($p_val['user_id'],"user_id,nick_name,true_name,user_img,company_id");
-            if(isset($userinfo->user_id) && $userinfo->user_id==($user_info['data']['user_id']??0)){
-                $self['user_id'] = $userinfo->user_id??"";
-                $self['nick_name'] = $userinfo->nick_name??"";
-                $self['true_name'] = $userinfo->true_name??"";
-                $self['user_img'] = $userinfo->user_img??"";
-                $self['company_id'] = $userinfo->company_id??0;
-                $self['count'] = $p_val['count']??0;
-            }
             $posts[$p_key]['nick_name'] = (isset($userinfo->user_id))?$userinfo->nick_name:"";
             $posts[$p_key]['true_name'] = (isset($userinfo->user_id))?$userinfo->true_name:"";
             $posts[$p_key]['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
             $posts[$p_key]['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:0;
+            $posts[$p_key]['highlight'] = ($p_val['user_id'] == $user_info['data']['user_id'])?1:0;
         }
-        $data['detail']['self'] = $self??[];
         $data['detail']['all'] = $posts;
         return $data;
     }
