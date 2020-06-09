@@ -28,59 +28,10 @@ class PageService extends BaseService
             {
                 //数组解包
                 $pageElementList[$key]['detail'] = json_decode($elementDetail['detail'],true);
-                //列表
-                if($elementDetail['element_type'] == "list")
-                {
-                    //指定数据
-                    if(isset($pageElementList[$key]['detail']['list_id']))
-                    {
-                        $list_id = $pageElementList[$key]['detail']['list_id'];
-                    }
-                    else//页面获取
-                    {
-                        $list_id = $this->getFromParams($params,$pageElementList[$key]['detail']['from_params'],0);
-                    }
-                    //获取列表
-                    $listInfo = (new ListService())->getListInfo($list_id,"list_id,list_type");
-                    //获取符合查询条件用户
-                    $search_content = $this->getFromParams($params,"search_content","");
-                    $userList = [];
-                    if($search_content){
-                        $userList = UserInfo::find([
-                            "nick_name like '%".$search_content."%' and is_del=0 and company_id='".$company_id."'",
-                            'columns'=>'user_id',
-                            'order'=>'user_id desc'
-                        ])->toArray();
-                        $userList = array_column($userList,'user_id');
-                    }
-                    $pageElementList[$key]['data'] = (new PostsService())->getPostsList($listInfo->list_id,$userList,"*","post_id DESC",$this->getFromParams($params,"start",0),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
-                    foreach($pageElementList[$key]['data']['data'] as $k => $postDetail)
-                    {
-                        $pageElementList[$key]['data']['data'][$k]->source = json_decode($postDetail->source,true);
-                        $pageElementList[$key]['data']['data'][$k]->source = (new UploadService())->parthSource($pageElementList[$key]['data']['data'][$k]->source);
-                        $pageElementList[$key]['data']['data'][$k]->source[0]['post_id'] = $postDetail->post_id;
-                        $pageElementList[$key]['data']['data'][$k]->source[0]['title'] = $postDetail->title;
-                        $pageElementList[$key]['data']['data'][$k]->list_type = $listInfo->list_type;
-                        $pageElementList[$key]['data']['data'][$k]->content = htmlspecialchars_decode($postDetail->content);
-                        /*
-                        $postskudos_info = PostsKudos::findFirst([
-                            "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
-                            'bind'=>[
-                                'sender_id'=>$user_info['data']['user_id']??0,
-                                'post_id'=>$pageElementList[$key]['data']['data'][$k]->post_id,
-                                'starttime'=>date('Y-m-d').' 00:00:00',
-                                'endtime'=>date('Y-m-d').' 23:59:59',
-                            ]
-                        ]);
-                        */
-                        $postskudos_info = (new PostsService())->checkKudos($user_info['data']['user_id']??0,"",$pageElementList[$key]['data']['data'][$k]->post_id);
-                        $pageElementList[$key]['data']['data'][$k]->is_kudos = 0;
-                        if(isset($postskudos_info->id)){
-                            $pageElementList[$key]['data']['data'][$k]->is_kudos = 1;
-                        }
-                    }
-                }
-                elseif($elementDetail['element_type'] == "slideNavi")
+                $functionName = "getElementPage_".$elementDetail['element_type'];
+                $return = (new PageElementService())->$functionName($pageElementList[$key],$params,$user_info,$company_id);
+                $pageElementList[$key] = $return;
+                if($elementDetail['element_type'] == "slideNavi")
                 {
                     if($pageElementList[$key]['detail']['source_from']=="from_vote")
                     {
@@ -334,6 +285,7 @@ class PageService extends BaseService
         {
             $params[] = "page_id = ".$page_id;
         }
+
         return (new \HJ\PageElement())->find(
             $params
         );
