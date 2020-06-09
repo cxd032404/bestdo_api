@@ -75,7 +75,16 @@ $config = [
        'path_librarys'  => ROOT_PATH . '/app/librarys/',
        'path_services'  => ROOT_PATH . '/app/services/'
     ],
+    'logger' => [
+        'adapter' =>'logger',
+        'path'     => ROOT_PATH . '/runtime/logs/',
+        'format'   => '%date% [%type%] %message%',
+        'date'     => 'H:i:s',
+        'logLevel' => Phalcon\Logger::DEBUG,
+        'filename' => 'logger-'.date('Y-m-d') .'.log',
+    ],
     'request_logger' => [
+        'adapter' =>'logger',
         'path'     => ROOT_PATH . '/runtime/logs/',
         'format'   => '%date% [%type%] %message%',
         'date'     => 'H:i:s',
@@ -83,6 +92,7 @@ $config = [
         'filename' => 'request-'.date('Y-m-d') .'.log',
     ],
     'response_logger' => [
+        'adapter' =>'logger',
         'path'     => ROOT_PATH . '/runtime/logs/',
         'format'   => '%date% [%type%] %message%',
         'date'     => 'H:i:s',

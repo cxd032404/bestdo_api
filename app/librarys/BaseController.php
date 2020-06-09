@@ -34,7 +34,7 @@ class BaseController extends Controller {
 
         $this->log_token = md5(time().$log_data['ip']);
         $log_data['log_token'] = $this->log_token;
-        $this->logger->info(json_encode($log_data));
+        $this->request_logger->info(json_encode($log_data));
         $this->start_microtime = microtime(true);//date('Y-m-d H:i:s',time());
 	    //echo '<h1>beforeExecuteRoute!</h1>\n';
 	}
