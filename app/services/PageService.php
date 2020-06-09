@@ -24,8 +24,10 @@ class PageService extends BaseService
             $pageInfo = $pageInfo->toArray();
             //获取页面元素详情
 	        $pageElementList  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_name,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
+	        print_r($pageElementList);die();
 	        foreach($pageElementList as $key => $elementDetail)
             {
+
                 //数组解包
                 $pageElementList[$key]['detail'] = json_decode($elementDetail['detail'],true);
                 $functionName = "getElementPage_".$elementDetail['element_type'];
