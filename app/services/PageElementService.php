@@ -43,6 +43,12 @@ class PageElementService extends BaseService
             $data['data']['data'][$k]->source[0]['title'] = $postDetail->title;
             $data['data']['data'][$k]->list_type = $listInfo->list_type;
             $data['data']['data'][$k]->content = htmlspecialchars_decode($postDetail->content);
+            $t = json_decode(json_encode($data['data']['data'][$k]->user_info),true);
+            unset($data['data']['data'][$k]->user_info);
+            foreach ($t as $userkey=>$value)
+            {
+                $data['data']['data'][$k]->$userkey = $value;
+            }
             /*
             $postskudos_info = PostsKudos::findFirst([
                 "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
