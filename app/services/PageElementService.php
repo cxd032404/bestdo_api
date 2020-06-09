@@ -93,6 +93,194 @@ class PageElementService extends BaseService
         return $data;
     }
 
+    public function getElementPage_slideNavi($data,$params,$user_info,$company_id){
+        if($data['detail']['source_from']=="from_vote")
+        {
+            $voteInfo = (new VoteService())->getVote($data['detail']['vote_id'])->toArray();
+            $voteInfo['detail'] = json_decode($voteInfo['detail'],true);
+            $data['detail']['vote_option'] = $voteInfo['detail'];
+        }
+        if(isset($data['detail']['jump_urls']))
+        {
+            //滑动导航数据转化
+            $navList = [];
+            foreach ($data['detail']['jump_urls'] as $navkey=>$nacvalue) {
+                $data['name'] = $navkey;
+                $nav_type = explode('#',str_replace('"', '', $nacvalue));
+                $data['url'] = reset($nav_type);
+                $data['type'] = explode('.',str_replace('"', '', end($nav_type)));
+                $navList[] = $data;
+            }
+            $data['detail']['jump_urls'] = $navList;
+        }
+
+    }
+
+    public function getElementPage_companyInfo($data,$params,$user_info,$company_id){
+        $data['detail'] = (new CompanyService())->getCompanyInfo($company_id)->toArray();
+        return $data;
+    }
+
+    public function getElementPage_userInfo($data,$params,$user_info,$company_id){
+        $data['detail']['user_info'] = $user_info;
+        return $data;
+    }
+
+    public function getElementPage_post($data,$params,$user_info,$company_id){
+        $data['detail']['available'] = 1;
+
+        if(isset($data['detail']['list_id']))
+        {
+            $list_id = $data['detail']['list_id'];
+        }
+        else
+        {
+            $list_id = $this->getFromParams($params,$dat['detail']['from_params'],0);
+        }
+        $data['detail']['available'] = 1;
+        //获取列表信息
+        $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail");
+        if($listInfo->activity_id>0)
+        {
+            $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo->activity_id);
+            if(!$activitylog_info)
+            {
+                $data['detail']['available'] = 0;
+            }
+        }
+        if($data['detail']['available'] == 1)
+        {
+            //数据解包
+            $listInfo->detail = json_decode($listInfo->detail,true);
+            $user_id = isset($user_info['data']['user_id'])?[$user_info['data']['user_id']]:[];
+            $postExists = (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1);
+            //已经提交过
+            if(count($postExists['data'])>0)
+            {
+                $data['detail']['available'] = 0;
+            }
+        }
+        $afterActions = (new ListService())->processAfterPostAction($listInfo->list_id,$user_info['data']['user_id']??0,$listInfo->detail);
+        $data['detail']['after_action'] = $afterActions;
+        return $data;
+    }
+
+    public function getElementPage_postsDetail($data,$params,$user_info,$company_id){
+        $postsService = new PostsService();
+        $listService = new ListService();
+        $post_id = $this->getFromParams($params,$data['detail']['from_params'],0);
+        $postsService->updatePostView($post_id);
+        $postsInfo = $postsService->getPosts($post_id,"post_id,list_id,user_id,title,content,source,views,kudos,create_time,update_time");
+        if($postsInfo)
+        {
+            $postsInfo->source = json_decode($postsInfo->source,true);
+            $postsInfo->source = (new UploadService())->parthSource($postsInfo->source);
+            $postsInfo->source['0']['title'] = $postsInfo->title;
+            $postsInfo->source['0']['post_id'] = $postsInfo->post_id;
+            $postsInfo->content = htmlspecialchars_decode($postsInfo->content);
+            //是否可以修改
+            $postsInfo->editable = 0;
+            $userinfo = UserInfo::findFirst([
+                "user_id = '".$postsInfo->user_id."'",
+                "columns"=>"user_id,nick_name,true_name,user_img,company_id"
+            ]);
+            $posts['nick_name'] = (isset($userinfo->user_id))?$userinfo->nick_name:"";
+            $posts['true_name'] = (isset($userinfo->user_id))?$userinfo->true_name:"";
+            $posts['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
+            $posts['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:"";
+            $postsInfo->user_info = $posts;
+            $listInfo = $listService->getListInfo($postsInfo->list_id,"list_id,detail,list_name");
+            $listInfo->detail = json_decode($listInfo->detail,true);
+            if(isset($listInfo->detail['connect']) && $listInfo->detail['connect']>0)
+            {
+                $connectedList = $postsService->getPostsList($listInfo->detail['connect'],[],'post_id,title,source,views');
+                foreach($connectedList['data'] as $pid => $pdetail)
+                {
+                    $connectedList['data'][$pid]->source = json_decode($pdetail->source,true);
+                    $connectedList['data'][$pid]->source = (new UploadService())->parthSource($connectedList['data'][$pid]->source);
+                    $new = [];
+                    foreach($connectedList['data'][$pid]->source as $k2 => $v2)
+                    {
+                        $new[str_replace(".","_",$k2)] = $v2;
+                    }
+                    $connectedList['data'][$pid]->source = $new;
+                }
+
+                $postsInfo->connect_list = array_values($connectedList['data']);
+                $connectedListInfo  =  $listService->getListInfo($listInfo->detail['connect'],"list_id,list_name");
+                $postsInfo->connect_list_name = (($listInfo->detail['connect_name']??"")=="")?$connectedListInfo['list_name']:$listInfo->detail['connect_name'];
+            }
+            $postsInfo->list_name = $listInfo->list_name;
+            $data['detail'] = json_decode(json_encode($postsInfo));
+        }
+        return $data;
+    }
+
+    public function getElementPage_rankByKudos( $data,$params,$user_info,$company_id){
+        //指定数据
+        if(isset($data['detail']['list_id']))
+        {
+            $list_id = $data['detail']['list_id'];
+        }
+        else//页面获取
+        {
+            $list_id = $this->getFromParams($params,$data['detail']['from_params'],0);
+        }
+        $groups = ['user_id'];
+        //查询列表内容
+        $posts = \HJ\Posts::find([
+            "list_id='".$list_id."' and visible=1",
+            "columns"=>array_merge($groups,['count(1) as count']),
+            "group"=>$groups
+        ])->toArray();
+        array_multisort(array_column($posts,'count'),SORT_DESC,$posts);
+        foreach($posts as $p_key=>$p_val){
+            $userinfo = (new UserService())->getUserInfo($p_val['user_id'],"user_id,nick_name,true_name,user_img,company_id");
+            if(isset($userinfo->user_id) && $userinfo->user_id==($user_info['data']['user_id']??0)){
+                $self['user_id'] = $userinfo->user_id??"";
+                $self['nick_name'] = $userinfo->nick_name??"";
+                $self['true_name'] = $userinfo->true_name??"";
+                $self['user_img'] = $userinfo->user_img??"";
+                $self['company_id'] = $userinfo->company_id??0;
+                $self['count'] = $p_val['count']??0;
+            }
+            $posts[$p_key]['nick_name'] = (isset($userinfo->user_id))?$userinfo->nick_name:"";
+            $posts[$p_key]['true_name'] = (isset($userinfo->user_id))?$userinfo->true_name:"";
+            $posts[$p_key]['user_img'] = (isset($userinfo->user_id))?$userinfo->user_img:"";
+            $posts[$p_key]['company_id'] = (isset($userinfo->user_id))?$userinfo->company_id:0;
+        }
+        $data['self'] = $self??[];
+        $data['detail']['all'] = $posts;
+        return $data;
+    }
+    public function getElementPage_activityApply($data,$params,$user_info,$company_id){
+
+        if(isset($data['detail']['auto']) && $data['detail']['auto']==1)
+        {
+            $map = [];
+            $map['mobile'] = $user_info['data']['mobile']??"";
+            $map['user_name'] = $user_info['data']['true_name']??"";
+            $map['department'] = "";
+            $map['activity_id'] = $data['detail']['activity_id']??0;
+            unset($pageElementList[$key]);
+        }
+        else
+        {
+            $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$data['detail']['activity_id']);
+            if(!$activitylog_info)
+            {
+                $data['detail']['applied'] = 0;
+            }
+            else
+            {
+                $data['detail']['applied'] = 1;
+                //unset($pageElementList[$key]);
+            }
+        }
+        return $data;
+    }
+
+
     //从页面参数重获取数据
     //$params:页面参数json串
     //$param_name: 变量名  .表示层级
