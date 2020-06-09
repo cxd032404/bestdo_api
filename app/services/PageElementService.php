@@ -264,6 +264,7 @@ class PageElementService extends BaseService
             $map['department'] = "";
             $map['activity_id'] = $data['detail']['activity_id']??0;
             unset($data);
+            return false;
         }
         else
         {

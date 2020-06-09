@@ -31,7 +31,11 @@ class PageService extends BaseService
                 $functionName = "getElementPage_".$elementDetail['element_type'];
                 if(method_exists(PageElementService::class,$functionName)) {
                     $return = (new PageElementService())->$functionName($pageElementList[$key], $params, $user_info, $company_id);
-                    $pageElementList[$key] = $return;
+                    if(!$return) {
+                        unset($pageElementList[$key]);
+                        continue;
+                    }
+                        $pageElementList[$key] = $return;
                 }else
                 {
                     $pageElementList[$key] = $pageElementList[$key];
