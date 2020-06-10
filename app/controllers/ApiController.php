@@ -20,6 +20,11 @@ class ApiController extends BaseController
 
 	public function testAction( $id = 0 ) 
 	{
+        $appid = $this->key_config->aliyun->wechat->appid??"";
+        $appsecret = $this->key_config->aliyun->wechat->appsecret??"";
+        $AccessToken = (new WechatService())->checkWechatAccessToken();
+        print_r($AccessToken);
+        die();
         $data = (new listService())->getListInfo(1,'list_type,list_id');
         print_r($data);die();
 	    $return  = (new TestService)->test();

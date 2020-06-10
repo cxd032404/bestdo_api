@@ -336,5 +336,35 @@ class WechatService extends BaseService
         $value = $this->redis->del($key);
         return $value;
     }
+
+
+    /*
+     * 检测accessToken
+     */
+    public function checkWechatAccessToken(){
+        $redisSettings = $this->config->cache_settings->accessToken;
+        $accessToken = $this->redis->get($redisSettings->name);
+        if($accessToken)
+        {
+            return $accessToken;
+        }else
+        {
+            return $this->getWechatAccessToken();
+        }
+    }
+    /*
+     * 获取最新accessToken
+     */
+    public function getWechatAccessToken(){
+        $redisSettings = $this->config->cache_settings->accessToken;
+        $appid = $this->key_config->aliyun->wechat->appid??"";
+        $appsecret = $this->key_config->aliyun->wechat->appsecret??"";
+        $AccessTokenUri =  "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=$appid&secret=$appsecret";
+        $data = file_get_contents($AccessTokenUri);
+        $accessTokenInfo = json_decode($data,true);
+        $this->redis->set($redisSettings->name,$accessTokenInfo['access_token']);
+        $this->redis->expire($redisSettings->name,$accessTokenInfo['expires_in']);
+        return $accessTokenInfo['access_token'];
+    }
 	
 }

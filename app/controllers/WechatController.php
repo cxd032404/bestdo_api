@@ -32,6 +32,19 @@ class WechatController extends BaseController
         die();
     }
 
+    /*
+     * 微信公众号推送消息接口
+     */
+    public function sendMessage(){
+        $accessToken = (new WechatService())->checkWechatAccessToken();
+        $sendMessageUrl =  "https://api.weixin.qq.com/cgi-bin/template/api_set_industry?access_token=";
+
+
+
+
+
+    }
+
 
 
 }
