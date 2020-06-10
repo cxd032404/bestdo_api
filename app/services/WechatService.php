@@ -22,7 +22,8 @@ class WechatService extends BaseService
     /*更新用户微信信息*/
     public function getOpenIdByCode($wechat = [],$code="")
     {
-        $redis_key = 'wechat_token_'.$code;
+        $wechat_cache = $this->config->cache_setting->wechat;
+        $redis_key = $wechat_cache->name.$code;
         $appid = $wechat['appid'];
         $cache = $this->redis->get($redis_key);
         if($cache!= "")
@@ -44,7 +45,7 @@ class WechatService extends BaseService
         {
             //用户token存入redis缓存中
             $this->redis->set($redis_key,json_encode($oauth2));
-            $this->redis->expire($redis_key,$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
+            $this->redis->expire($redis_key,$wechat_cache->expire);//设置过期时间,不设置过去时间时，默认为永久保持
         }
 
         return $openId;
@@ -53,7 +54,8 @@ class WechatService extends BaseService
     /*更新用户微信信息*/
     public function getWechatUserAction($wechat=[],$user_id=0,$code="")
     {
-        $redis_key = 'wechat_token_'.$code;
+        $wechat_cache = $this->config->cache_setting->wechat;
+        $redis_key = $wechat_cache->name.$code;
         $cache = $this->redis->get($redis_key);
         if($cache!= "")
         {
@@ -94,8 +96,8 @@ class WechatService extends BaseService
     public function indexAction()
     {
         echo '测试信息';die;
-        $appid = $this->key_config->aliyun->wechat->appid;
-        $appsecret = $this->key_config->aliyun->wechat->appsecret;
+        $appid = $this->key_config->wechat->appid;
+        $appsecret = $this->key_config->wechat->appsecret;
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
             $company_id = $_REQUEST['company_id']??"1";
             $redirect_url = 'http://api.staffhome.cn/Wechat/index';
@@ -133,44 +135,23 @@ class WechatService extends BaseService
     /*测试----获取用户信息并判断是否关注*/
     public function getCodeForManager()
     {
-        echo '测试信息';die;
-        $appid = $this->key_config->aliyun->wechat->appid;
-        $appsecret = $this->key_config->aliyun->wechat->appsecret;
+        $appid = $this->key_config->wechat->appid;
+        $appsecret = $this->key_config->wechat->appsecret;
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
-            $company_id = $_REQUEST['company_id']??"1";
-            $redirect_url = 'http://api.staffhome.cn/Wechat/index';
-            $this->getCode($appid,$redirect_url,$company_id);
+            $redirect_url = $this->request->getServerName().$this->request->getURI();
+            $this->getCode($appid,$redirect_url,0);
             return;
         }else{
             //第二步：获取网页授权access_token和openid
             $code = $_REQUEST['code']??"";
-            echo $code;
-            die();
             $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
             if (array_key_exists('errcode', $oauth2) && $oauth2['errcode'] != '0') {
                 return $this->failure($oauth2);
             }
             $openid = $oauth2['openid'];
-            //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
-            $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
-            if (array_key_exists('errcode', $oauth_userinfo) && $oauth_userinfo['errcode'] != '0') {
-                return $this->failure($oauth_userinfo);
-            }
+            $redirect_url = $_REQUEST["redirect"]."?openid=".$openid;
+            header("Location:" . $redirect_url);
         }
-        //第四步：根据appid和appsecret获取全局access_token
-        $access_token = $this->getAccessToken($appid,$appsecret);
-        //第五步：根据全局access_token和openid获取用户信息
-        $userinfo = $this->getUserInfo($access_token,$openid);
-        if (array_key_exists('errcode', $userinfo) && $userinfo['errcode'] != '0') {
-            return $this->failure($userinfo);
-        }
-        if($userinfo['subscribe']==1){
-            echo '已关注';
-        }else{
-            echo '未关注';
-        }
-        $return  = ['result'=>1, 'msg'=>"", 'code'=>200, 'data'=>['access_token_user_info'=>$userinfo, 'oauth_access_token_user_info'=>$oauth_userinfo]];
-        return $this->success($return);
     }
 
 
