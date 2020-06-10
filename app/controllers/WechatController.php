@@ -18,8 +18,8 @@ class WechatController extends BaseController
         if(!preg_match('/http:\/\/[\w.]+[\w\/]*[\w.]*\??[\w=&\+\%]*/is',$url)){
             return $this->failure([],'请传输正确的url地址！',400);
         }
-        $appid = $this->key_config->aliyun->wechat->appid??"";
-        $appsecret = $this->key_config->aliyun->wechat->appsecret??"";
+        $appid = $this->key_config->wechat->appid??"";
+        $appsecret = $this->key_config->wechat->appsecret??"";
         $return  = (new WechatService)->getSignPackage($appid,$appsecret,$url);
         return $this->success($return);
     }

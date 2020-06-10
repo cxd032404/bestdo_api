@@ -151,7 +151,7 @@ class UserService extends BaseService
                         }else{
                             if(!empty($code)){
                                 //完善用户微信资料
-                                (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$userinfo->user_id,$code);
+                                (new WechatService)->getWechatUserAction($this->key_config->wechat,$userinfo->user_id,$code);
                             }
                             //生成token
                             $tokeninfo = $this->getToken($userinfo->user_id);
@@ -183,7 +183,7 @@ class UserService extends BaseService
                             }else{
                                 if(!empty($code)){
                                     //完善用户微信资料
-                                    (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$userinfo->user_id,$code);
+                                    (new WechatService)->getWechatUserAction($this->key_config->wechat,$userinfo->user_id,$code);
                                 }
                                 //生成token
                                 $tokeninfo = $this->getToken($userinfo->user_id);
@@ -240,7 +240,7 @@ class UserService extends BaseService
                     }
                     if(!empty($code)){
                         //完善用户微信资料
-                        (new WechatService)->getWechatUserAction($this->key_config->aliyun->wechat,$user->user_id,$code);
+                        (new WechatService)->getWechatUserAction($this->key_config->wechat,$user->user_id,$code);
                     }
                     //修改验证码记录状态
                     $sendcode = $this->setMobileCode($mobile,$logincode);
