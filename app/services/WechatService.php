@@ -149,7 +149,7 @@ class WechatService extends BaseService
                 return $this->failure($oauth2);
             }
             $openid = $oauth2['openid'];
-            $redirect_url = $_REQUEST["redirect"]."?openid=".$openid;
+            $redirect_url = $_REQUEST["redirect"]."&openid=".$openid;
             header("Location:" . $redirect_url);
         }
     }
