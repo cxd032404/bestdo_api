@@ -135,24 +135,23 @@ class WechatService extends BaseService
     /*测试----获取用户信息并判断是否关注*/
     public function getCodeForManager()
     {
-        echo '测试信息';die;
         $appid = $this->key_config->aliyun->wechat->appid;
         $appsecret = $this->key_config->aliyun->wechat->appsecret;
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
-            $company_id = $_REQUEST['company_id']??"1";
-            $redirect_url = 'http://api.staffhome.cn/Wechat/index';
-            $this->getCode($appid,$redirect_url,$company_id);
+            $redirect_url = $this->request->getServerName().$this->request->getURI();
+            $this->getCode($appid,$redirect_url,0);
             return;
         }else{
             //第二步：获取网页授权access_token和openid
             $code = $_REQUEST['code']??"";
-            echo $code;
-            die();
             $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
             if (array_key_exists('errcode', $oauth2) && $oauth2['errcode'] != '0') {
                 return $this->failure($oauth2);
             }
             $openid = $oauth2['openid'];
+            $redirect_url = $_REQUEST["redirect_uri"];
+            echo $redirect_url;
+            die();
             //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
             $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
             if (array_key_exists('errcode', $oauth_userinfo) && $oauth_userinfo['errcode'] != '0') {

@@ -27,6 +27,9 @@ class WechatController extends BaseController
     public function bind4ManagerAction()
     {
         $data = $this->request->get();
+        print_R($this->request->getServerName());
+        print_R($this->request->getURI());
+        die();
         print_R($data);
         (new WechatService())->getCodeForManager();
         die();
