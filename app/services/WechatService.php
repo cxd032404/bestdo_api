@@ -139,6 +139,7 @@ class WechatService extends BaseService
         $appsecret = $this->key_config->wechat->appsecret;
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
             $redirect_url = $this->request->getServerName().$this->request->getURI();
+            $redirect_url = str_replace("api.staffhome.cn","http://www.staffhome.cn/api",$redirect_url);
             $this->getCode($appid,$redirect_url,0);
             return;
         }else{
