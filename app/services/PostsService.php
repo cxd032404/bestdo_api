@@ -382,7 +382,7 @@ class PostsService extends BaseService
         }
         else
         {
-            $postskudos_info = PostsKudos::findFirst([
+            $postskudos_info = \HJ\PostsKudos::findFirst([
                 "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and date = :date: ",
                 'bind'=>[
                     'sender_id'=>$user_id,

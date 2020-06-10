@@ -27,7 +27,7 @@ class PageElementService extends BaseService
         $search_content = $this->getFromParams($params,"search_content","");
         $userList = [];
         if($search_content){
-            $userList = UserInfo::find([
+            $userList = \HJ\UserInfo::find([
                 "nick_name like '%".$search_content."%' and is_del=0 and company_id='".$company_id."'",
                 'columns'=>'user_id',
                 'order'=>'user_id desc'
@@ -50,7 +50,7 @@ class PageElementService extends BaseService
                 $data['data']['data'][$k]->$userkey = $value;
             }
             /*
-            $postskudos_info = PostsKudos::findFirst([
+            $postskudos_info = \HJ\PostsKudos::findFirst([
                 "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
                 'bind'=>[
                     'sender_id'=>$user_info['data']['user_id']??0,
@@ -82,7 +82,7 @@ class PageElementService extends BaseService
             $post_list = $post_id;
         }else{
             $post_list = [];
-            $activity_log = UserActivityLog::find([
+            $activity_log = \HJ\UserActivityLog::find([
                 "user_id='".$user_info['data']['user_id']."'",
                 "columns"=>"activity_id",
                 "group"=>"activity_id"
@@ -233,7 +233,7 @@ class PageElementService extends BaseService
             $postsInfo->content = htmlspecialchars_decode($postsInfo->content);
             //是否可以修改
             $postsInfo->editable = 0;
-            $userinfo = UserInfo::findFirst([
+            $userinfo = \HJ\UserInfo::findFirst([
                 "user_id = '".$postsInfo->user_id."'",
                 "columns"=>"user_id,nick_name,true_name,user_img,company_id"
             ]);

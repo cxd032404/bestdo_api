@@ -77,7 +77,7 @@ class WechatService extends BaseService
         //var_dump($oauth_userinfo);
         if (!array_key_exists('errcode', $oauth_userinfo)) {
             //修改用户信息
-            $userinfo = UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
+            $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
             //var_dump($userinfo);
             if($userinfo){
                 $userinfo->wechatid = $oauth_userinfo['openid'];

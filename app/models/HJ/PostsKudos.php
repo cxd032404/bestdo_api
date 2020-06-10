@@ -1,15 +1,18 @@
 <?php
 
+namespace HJ;
 use Phalcon\Mvc\Model;
 use Phalcon\Mvc\Model\Query;
 
-class SendCode extends Model
+class PostsKudos extends Model
 {
-    public $id;
-    public $name;
+    public $post_id;
+    public $user_id;
+    public $create_time;
+
     public function initialize()
     {
-        $this->setSource("send_code");
+        $this->setSource("user_posts_kudos");
         $this->setConnectionService("hj_user");
         $this->setReadConnectionService("hj_user");
         $this->setWriteConnectionService("hj_user");

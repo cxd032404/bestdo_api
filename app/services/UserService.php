@@ -99,7 +99,7 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['password_empty'];
         }else{
             //查询用户数据
-            $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','password','username','user_img','company_id']]);
+            $userinfo = \HJ\UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','password','username','user_img','company_id']]);
             if(!isset($userinfo->user_id)){
                 $return['msg']  = $this->msgList['mobile_noregister'];
             }else if($userinfo->is_del==1){
@@ -135,7 +135,7 @@ class UserService extends BaseService
         }
         else{
             //查询用户数据
-            $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id','last_login_time']]);
+            $userinfo = \HJ\UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id','last_login_time']]);
             if(isset($userinfo->user_id))
             {
                 if($companyuser_id==0)
@@ -168,7 +168,7 @@ class UserService extends BaseService
                 else
                 {
                     //查找企业名单
-                    $companyUserInfo = CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$companyuser_id]]);
+                    $companyUserInfo = \HJ\CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$companyuser_id]]);
                     //如果已经绑定且和当前用户一致
                     if(isset($companyUserInfo->user_id) && $companyUserInfo->user_id == $userinfo->user_id)
                     {
@@ -211,7 +211,7 @@ class UserService extends BaseService
                     // Request a transaction
                     $transaction = $manager->get();
                     //查询企业导入名单
-                    $companyuserlist = CompanyUserList::findFirst([
+                    $companyuserlist = \HJ\CompanyUserList::findFirst([
                         "id=:companyuser_id:",
                         'bind'=>[
                             'companyuser_id'=>$companyuser_id,
@@ -284,7 +284,7 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['password_empty'];
         }else{
             //查询用户数据
-            $userinfo = UserInfo::findFirst(["username = '".$mobile."'"]);
+            $userinfo = \HJ\UserInfo::findFirst(["username = '".$mobile."'"]);
             if(!isset($userinfo->user_id)){
                 $return['msg']  = $this->msgList['mobile_noregister'];
             }else if($userinfo->is_del==1){
@@ -337,12 +337,12 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['password_empty'];
         }else{
             //验证企业用户名单状态
-            $companyuserlist = CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$company_user_id], 'order'=>'id desc']);
+            $companyuserlist = \HJ\CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$company_user_id], 'order'=>'id desc']);
             if(!isset($companyuserlist->id)){
                 $return['msg']  = $this->msgList['companyuser_empty'];
             }else{
                 //查询用户数据
-                $userinfo = UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img']]);
+                $userinfo = \HJ\UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img']]);
                 if(isset($userinfo->user_id)){
                     $return['msg']  = $this->msgList['mobile_register'];
                     if($userinfo->is_del==1){
@@ -408,7 +408,7 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['activity_empty'];
         }else{
             //查询活动数据
-            $configactivity = ConfigActivity::findFirst(["activity_id = '".$map['activity_id']."'","columns"=>['activity_id','apply_start_time','apply_end_time','start_time','end_time','detail']]);
+            $configactivity = \HJ\Activity::findFirst(["activity_id = '".$map['activity_id']."'","columns"=>['activity_id','apply_start_time','apply_end_time','start_time','end_time','detail']]);
             if(!isset($configactivity->activity_id)){
                 $return['msg']  = $this->msgList['activity_empty'];
             }else if(time()<strtotime($configactivity->start_time)){
@@ -418,7 +418,7 @@ class UserService extends BaseService
             }else if(time()<strtotime($configactivity->apply_start_time) || time()>strtotime($configactivity->apply_end_time)){
                 $return['msg']  = $this->msgList['activity_expire'];
             }else{
-                $activitylog_info = UserActivityLog::findFirst([
+                $activitylog_info = \HJ\UserActivityLog::findFirst([
                     "activity_id=:activity_id: and user_id=:user_id:",
                     'bind'=>['activity_id'=>$map['activity_id'], 'user_id'=>$user_id],
                     'order'=>'id desc'
@@ -427,7 +427,7 @@ class UserService extends BaseService
                     $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[json_decode($configactivity['detail'])]];
                 }else{
                     //添加用户
-                    $useractivitylog = new UserActivityLog();
+                    $useractivitylog = new \HJ\UserActivityLog();
                     $useractivitylog->user_id = $user_id;
                     $useractivitylog->activity_id = $map['activity_id'];
                     $useractivitylog->user_name = $map['user_name'];
@@ -449,7 +449,7 @@ class UserService extends BaseService
     {
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         //修改用户信息
-        $userinfo = UserInfo::findFirst(["user_id = '".$user_id."'"]);
+        $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."'"]);
         foreach($map as $key => $value)
         {
             if(!empty($value))
@@ -550,7 +550,7 @@ class UserService extends BaseService
                 $transaction->rollback($this->msgList['posts_empty']);
             }
             //查询点赞记录
-            $postskudos = PostsKudos::findFirst([
+            $postskudos = \HJ\PostsKudos::findFirst([
                 "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
                 'bind'=>[
                     'sender_id'=>$sender_id,
@@ -623,7 +623,7 @@ class UserService extends BaseService
     //修改验证码状态
     public function setMobileCode($mobile,$code){
         //修改验证码记录状态
-        $sendcode = SendCode::findFirst([
+        $sendcode = \HJ\SendCode::findFirst([
             "to=:to: and type='mobile' and status=1 and code=:code:",
             'bind'=>['to'=>$mobile, 'code'=>$code], 'order'=>'id desc'
         ]);
@@ -638,7 +638,7 @@ class UserService extends BaseService
     //修改企业名单状态
     public function setCompanyUser($companyuser_id,$user_id){
         //查询企业导入名单
-        $companyuserlist = CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$companyuser_id], 'order'=>'id desc']);
+        $companyuserlist = \HJ\CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$companyuser_id], 'order'=>'id desc']);
         if(isset($companyuserlist->id)){
             //修改企业用户名单状态
             if ($companyuserlist->update(['user_id'=>$user_id,'update_time'=>date('Y-m-d H:i:s',time())]) === false) {
@@ -653,7 +653,7 @@ class UserService extends BaseService
         $userinfo = $this->getUserInfo($user_id,"*");
         $company_name = "";
         if(isset($userinfo->company_id)){
-            $configcompany = ConfigCompany::findFirst([
+            $configcompany = \HJ\Company::findFirst([
                 "company_id=:company_id:",
                 'bind'=>['company_id'=>$userinfo->user_id], 'order'=>'company_id desc'
             ]);
@@ -728,7 +728,7 @@ class UserService extends BaseService
         if($manager_id==0){
             $return['msg']  = $this->msgList['manager_id_error'];
         }else{
-            $userinfo = UserInfo::findFirst([
+            $userinfo = \HJ\UserInfo::findFirst([
                 "manager_id=:manager_id:",
                 'bind'=>['manager_id'=>$manager_id],
                 'order'=>'user_id desc'
@@ -751,7 +751,7 @@ class UserService extends BaseService
             "order" => "name desc",
             "limit" => ["offset"=>($params['page']-1)*$params['page_size'],"number"=>$params['page_size']]
         ];
-        $userList = CompanyUserList::find($searchParams);
+        $userList = \HJ\CompanyUserList::find($searchParams);
         return $userList;
     }
 
@@ -766,7 +766,7 @@ class UserService extends BaseService
         }else if(empty($name)){
             $return['msg']  = $this->msgList['name_empty'];
         }else{
-            $companyuser = CompanyUserList::findFirst([
+            $companyuser = \HJ\CompanyUserList::findFirst([
                 "company_id='".$company_id."' and worker_id='".$worker_id."' and name='".$name."' ",
                 "columns" => "*",
                 "order" => "id desc"
@@ -824,7 +824,7 @@ class UserService extends BaseService
                 ])->toArray();
                 if(isset($list['list_id'])){
                     $list['detail'] = json_decode($list['detail'],true);
-                    $activity = ConfigActivity::findFirst([
+                    $activity = \HJ\Activity::findFirst([
                         "activity_id='".$list['activity_id']."'",
                     ])->toArray();
                     if(isset($activity['activity_id'])){
@@ -843,7 +843,7 @@ class UserService extends BaseService
     }
     public function getActivityLogByUser($user_id,$activity_id)
     {
-        return  UserActivityLog::findFirst([
+        return  \HJ\UserActivityLog::findFirst([
             "activity_id=:activity_id: and user_id=:user_id:",
             'bind'=>['activity_id'=>$activity_id, 'user_id'=> $user_id] ,
             'order'=>'id desc'
@@ -856,7 +856,7 @@ class UserService extends BaseService
         if($cache == 0)
         {
             //获取列表作者信息
-            $userInfo = UserInfo::findFirst([
+            $userInfo = \HJ\UserInfo::findFirst([
                 "user_id='".$user_id."' and is_del=0",
                 'columns'=>'*',
             ]);
@@ -882,7 +882,7 @@ class UserService extends BaseService
             else
             {
                 //获取列表作者信息
-                $userInfo = UserInfo::findFirst([
+                $userInfo = \HJ\UserInfo::findFirst([
                     "user_id='".$user_id."' and is_del=0",
                     'columns'=>'*',
                 ]);
@@ -914,7 +914,7 @@ class UserService extends BaseService
     public function getUserInfoByWechat($openId = "")
     {
         //获取列表作者信息
-        $userInfo = UserInfo::findFirst([
+        $userInfo = \HJ\UserInfo::findFirst([
             "wechatid='".$openId."' and is_del=0",
             'columns'=>'*',
         ]);
