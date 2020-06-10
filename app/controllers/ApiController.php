@@ -18,12 +18,11 @@ use Monolog\Formatter\ElasticsearchFormatter;
 class ApiController extends BaseController 
 {
 
-	public function testAction( $id = 0 ) 
+	public function testAction( $id = 0 )
 	{
-        $appid = $this->key_config->aliyun->wechat->appid??"";
-        $appsecret = $this->key_config->aliyun->wechat->appsecret??"";
-        $AccessToken = (new WechatService())->checkWechatAccessToken();
-        print_r($AccessToken);
+        $data = (new WechatController())->sendMessage('oPCk01ftkc3CX4bybn_bVOWylKr8','-Qq05dZSlDIf7LyuSWf0V3tJ9AuXjypdempKDTSGUio','史说政的测试信息');
+            print_r($data);die();
+	    (new WechatController())->sendMessage('oPCk01ftkc3CX4bybn_bVOWylKr8',1,'史说政的测试信息');
         die();
         $data = (new listService())->getListInfo(1,'list_type,list_id');
         print_r($data);die();
@@ -33,5 +32,7 @@ class ApiController extends BaseController
 
         return $this->success($return);
     }
+
+
 
 }

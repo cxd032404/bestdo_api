@@ -113,9 +113,11 @@ class WebCurl extends Component {
 		$this -> _error = curl_error($ch);
 		$this -> _status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
+		$content = json_decode($this->_content,true);
+		$return = $content;
 		
 		# 返回状态码
-		return $this -> _status;
+		return $return;
 	}
 
 	/**

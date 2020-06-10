@@ -326,9 +326,9 @@ class WechatService extends BaseService
         $redisSettings = $this->config->cache_settings->accessToken;
         $accessToken = $this->redis->get($redisSettings->name);
         if($accessToken)
-        {
+       {
             return $accessToken;
-        }else
+       }else
         {
             return $this->getWechatAccessToken();
         }
@@ -338,8 +338,8 @@ class WechatService extends BaseService
      */
     public function getWechatAccessToken(){
         $redisSettings = $this->config->cache_settings->accessToken;
-        $appid = $this->key_config->aliyun->wechat->appid??"";
-        $appsecret = $this->key_config->aliyun->wechat->appsecret??"";
+        $appid = $this->key_config->wechat->appid??"";
+        $appsecret = $this->key_config->wechat->appsecret??"";
         $AccessTokenUri =  "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=$appid&secret=$appsecret";
         $data = file_get_contents($AccessTokenUri);
         $accessTokenInfo = json_decode($data,true);
@@ -347,5 +347,60 @@ class WechatService extends BaseService
         $this->redis->expire($redisSettings->name,$accessTokenInfo['expires_in']);
         return $accessTokenInfo['access_token'];
     }
-	
+    /*
+     * 推送微信公众号信息
+     */
+    public function sendWechatMessage($accessToken,$touser,$template_id,$data)
+    {
+       $sendUrl = "http://api.weixin.qq.com/cgi-bin/message/template/send?access_token=$accessToken";
+        $sendData = [
+           'touser'=>$touser,
+           'template_id'=>$template_id,
+            'appid'=>$this->key_config->wechat->appid,
+            'data'=>[
+                "cardNumber"=>[
+                     'value'=>$data,
+                     'color'=>'#173177'
+                ],
+                "type"=>[
+                    'value'=>$data,
+                    'color'=>'#173177'
+                ],
+                "VIPName"=>[
+                    'value'=>$data,
+                    'color'=>'#173177'
+                ],
+                "VIPPhone"=>[
+                    'value'=>$data,
+                    'color'=>'#173177'
+                ],
+                "expDate"=>[
+                    'value'=>$data,
+                    'color'=>'#173177'
+                ]
+            ]
+
+       ];
+       $res = $this->curl->post_request($sendUrl,$sendData);
+       if($res['errcode']==0)
+           return true;
+           return false;
+
+    }
+
+    /*
+     *curl 请求
+     */
+    public function curlRequest($url,$data){
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL,            $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
+        curl_setopt($ch, CURLOPT_POST,           1 );
+        curl_setopt($ch, CURLOPT_POSTFIELDS,     $data );
+        $result=curl_exec ($ch);
+        print_r($result);
+        curl_close($ch);
+        die();
+        return $result;
+    }
 }

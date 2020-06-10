@@ -33,17 +33,13 @@ class WechatController extends BaseController
 
     /*
      * 微信公众号推送消息接口
+     * touser 接收者openid
+     * template_id 模板id
+     * data 需要发送的信息
      */
-    public function sendMessage(){
+    public function sendMessage($touser,$template_id,$data){
         $accessToken = (new WechatService())->checkWechatAccessToken();
-        $sendMessageUrl =  "https://api.weixin.qq.com/cgi-bin/template/api_set_industry?access_token=";
-
-
-
-
-
+        $result = (new WechatService())->sendWechatMessage($accessToken,$touser,$template_id,$data);
+        return $result;
     }
-
-
-
 }
