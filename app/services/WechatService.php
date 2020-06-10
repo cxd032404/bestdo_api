@@ -77,7 +77,7 @@ class WechatService extends BaseService
         //var_dump($oauth_userinfo);
         if (!array_key_exists('errcode', $oauth_userinfo)) {
             //修改用户信息
-            $userinfo = UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
+            $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
             //var_dump($userinfo);
             if($userinfo){
                 $userinfo->wechatid = $oauth_userinfo['openid'];
@@ -139,6 +139,7 @@ class WechatService extends BaseService
         $appsecret = $this->key_config->wechat->appsecret;
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
             $redirect_url = $this->request->getServerName().$this->request->getURI();
+            $redirect_url = str_replace("api.staffhome.cn","http://www.staffhome.cn/api",$redirect_url);
             $this->getCode($appid,$redirect_url,0);
             return;
         }else{
@@ -149,7 +150,7 @@ class WechatService extends BaseService
                 return $this->failure($oauth2);
             }
             $openid = $oauth2['openid'];
-            $redirect_url = $_REQUEST["redirect"]."?openid=".$openid;
+            $redirect_url = $_REQUEST["redirect"]."&openid=".$openid;
             header("Location:" . $redirect_url);
         }
     }

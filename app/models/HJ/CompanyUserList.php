@@ -1,13 +1,13 @@
 <?php
-
+namespace HJ;
 use Phalcon\Mvc\Model;
 use Phalcon\Mvc\Model\Query;
 
-class UserCompany extends Model
+class CompanyUserList extends Model
 {
     public function initialize()
     {
-        $this->setSource("user_company");
+        $this->setSource("company_user_list");
         $this->setConnectionService("hj_user");
         $this->setReadConnectionService("hj_user");
         $this->setWriteConnectionService("hj_user");

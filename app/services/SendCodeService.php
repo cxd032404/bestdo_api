@@ -157,7 +157,7 @@ class SendCodeService extends BaseService
 
     //限制短信发送次数
     public function checkoutSendHour($mobile){
-        $sendcode_hour = SendCode::count([
+        $sendcode_hour = \HJ\SendCode::count([
             "to=:to: and type='mobile' and create_time>:starttime:",
             'bind'=>['to'=>$mobile,'starttime'=>date('Y-m-d H:i:s',time()-3600)]
         ]);
@@ -169,7 +169,7 @@ class SendCodeService extends BaseService
 
     //限制短信发送次数
     public function checkoutSendDay($mobile){
-        $sendcode_day = SendCode::count([
+        $sendcode_day = \HJ\SendCode::count([
             "to=:to: and type='mobile' and create_time>:starttime:",
             'bind'=>['to'=>$mobile,'starttime'=>date('Y-m-d H:i:s',time()-3600*24)]
         ]);
