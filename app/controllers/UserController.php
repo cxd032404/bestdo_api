@@ -41,8 +41,10 @@ class UserController extends BaseController
 			return $this->failure([],$return['msg'],$return['code']);
 		}
 		//用户token存入redis缓存中
-		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
+        $cacheSetting = $this->config->cache_settings->user_token;
+		$cacheName = $cacheSetting->name.$return['data']['user_info']['user_id'];
+		$this->redis->set($cacheName,$return['data']['user_token']);
+		$this->redis->expire($cacheName,$cacheSetting->expire);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
     }
 
@@ -71,8 +73,10 @@ class UserController extends BaseController
 			return $this->failure([],$return['msg'],$return['code']);
 		}
 		//用户token存入redis缓存中
-		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
+        $cacheSetting = $this->config->cache_settings->user_token;
+        $cacheName = $cacheSetting->name.$return['data']['user_info']['user_id'];
+        $this->redis->set($cacheName,$return['data']['user_token']);
+        $this->redis->expire($cacheName,$cacheSetting->expire);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
     /*
@@ -99,9 +103,10 @@ class UserController extends BaseController
         if($return['result']!=1){
             return $this->failure([],$return['msg'],$return['code']);
         }
-        //用户token存入redis缓存中
-        $this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-        $this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
+        $cacheSetting = $this->config->cache_settings->user_token;
+        $cacheName = $cacheSetting->name.$return['data']['user_info']['user_id'];
+        $this->redis->set($cacheName,$return['data']['user_token']);
+        $this->redis->expire($cacheName,$cacheSetting->expire);//设置过期时间,不设置过去时间时，默认为永久保持
         return $this->success($return['data']);
     }
 
@@ -155,9 +160,10 @@ class UserController extends BaseController
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
 		}
-		//用户token存入redis缓存中
-		$this->redis->set('user_token_'.$return['data']['user_info']['user_id'],$return['data']['user_token']);
-		$this->redis->expire('user_token_'.$return['data']['user_info']['user_id'],$this->config->user_token->exceed_time);//设置过期时间,不设置过去时间时，默认为永久保持
+        $cacheSetting = $this->config->cache_settings->user_token;
+        $cacheName = $cacheSetting->name.$return['data']['user_info']['user_id'];
+        $this->redis->set($cacheName,$return['data']['user_token']);
+        $this->redis->expire($cacheName,$cacheSetting->expire);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
 

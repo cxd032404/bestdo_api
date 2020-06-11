@@ -673,7 +673,7 @@ class UserService extends BaseService
             'worker_id'=>$userinfo->worker_id??"",
             'last_login_time'=>$userinfo->last_login_time??"",
             'manager_id'=>$userinfo->manager_id??0,
-            'expire_time'=>time()+$this->config->user_token->exceed_time
+            'expire_time'=>time()+$this->config->cache_settings->user_token->expire,
         ];
         $oJwt = new ThirdJwt();
         $data['map'] = $map;

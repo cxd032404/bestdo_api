@@ -113,15 +113,13 @@ $config = [
         'Content_Type' 	=> 'application/json;charset=utf-8',
         'Status_Code' 	=> 'okey!'
     ],
-    'user_token' => [
-        'exceed_time' => 3600*24*30,
-    ],
     'cache_settings' =>[
         'list'=>['name'=>'list_','expire'=>3600],
         'postList'=>['name'=>'list_','expire'=>60],
         'post'=>['name'=>'user_posts_','expire'=>3600],
         'wechat'=>['name'=>'wechat_token_','expire'=>3600],
-        'accessToken'=>['name'=>'wechat_access_token','expire'=>7200]
+        'accessToken'=>['name'=>'wechat_access_token','expire'=>7200],
+        'user_token'=>['name'=>'user_token_','expire'=>3600*24*30],
     ]
 
 
