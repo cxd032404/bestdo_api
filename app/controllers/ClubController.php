@@ -13,35 +13,57 @@ class ClubController extends BaseController
      */
      public function joinClubAction(){
          //验证token
-         $return  = (new UserService)->getDecrypt();
-         if($return['result']!=1){
+         $res = (new UserService)->getDecrypt();
+         if($res['result']!=1){
              return $this->failure([],$return['msg'],$return['code']);
          }
-         $user_id = $return['data']['user_info']->user_id;
+         $user_id = $res['data']['user_info']->user_id;
+         $company_id = $res['data']['user_info']->company_id;
          $operation = $this->request->get('operation')??'';
          if($operation == 'join')
          {
-             $res = (new ClubService())->joinClub($user_id);
+             $return  = (new ClubService())->joinClub($user_id,$company_id);
 
          }elseif($operation == 'cancel')
          {
-             //申请取消
-         }elseif($operation == 'pass')
+             $return  = (new ClubService())->cancelApplication($user_id);
+         }elseif($operation == 'pass'||$operation == 'reject')
          {
-             //通过申请
-         }elseif($operation == 'reject')
-         {
-             //拒绝申请
+             $return  = (new ClubService())->operateApplication($user_id);
          }else
          {
              //未知操作
          }
+         return $this->success($return);
      }
 
      /*
       * 邀请用户加入俱乐部
       */
     public function inviteToClub(){
+        //验证token
+        $res = (new UserService)->getDecrypt();
+        if($res['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        $user_id = $res['data']['user_info']->user_id;
+        $company_id = $res['data']['user_info']->company_id;
+        $operation = $this->request->get('operation')??'';
+        if($operation == 'join')
+        {
+            $return  = (new ClubService())->joinClub($user_id,$company_id);
+
+        }elseif($operation == 'cancel')
+        {
+            $return  = (new ClubService())->cancelApplication($user_id);
+        }elseif($operation == 'pass'||$operation == 'reject')
+        {
+            $return  = (new ClubService())->operateApplication($user_id);
+        }else
+        {
+            //未知操作
+        }
+        return $this->success($return);
 
     }
 
