@@ -119,7 +119,8 @@ $config = [
     'cache_settings' =>[
         'list'=>['name'=>'list_','expire'=>3600],
         'post'=>['name'=>'user_posts_','expire'=>3600],
-        'wechat'=>['name'=>'wechat_token_','expire'=>3600]
+        'wechat'=>['name'=>'wechat_token_','expire'=>3600],
+        'accessToken'=>['name'=>'wechat_access_token','expire'=>7200]
     ]
 
 
