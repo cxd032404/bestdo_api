@@ -153,7 +153,8 @@ class ClubService extends BaseService
      * 检测用户是否是管理员
      */
 
-    public function checkMemberRole(){
+    public function checkUserClubPermission($user_id = 0,$club_id = 0)
+    {
 
 
     }
