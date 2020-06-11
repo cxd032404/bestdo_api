@@ -150,13 +150,55 @@ class ClubService extends BaseService
     /*
      * 检测用户是否是管理员
      */
-
-    public function checkUserClubPermission($user_id = 0,$club_id = 0)
+    public function getUserClubMembership($user_id = 0,$club_id = 0,$cache = 1)
     {
-
-
+        $cacheSettings = $this->config->cache_settings->user_club_membership;
+        $cacheName = $cacheSettings->name.$user_id."_".$club_id;
+        $params =             [
+            "club_id = '".$club_id."' and user_id = '".$user_id."'",
+            "columns" => '*',
+            "order" => 'member_id desc'
+        ];
+        if($cache == 1)
+        {
+            $cache = $this->redis->get($cacheName);
+            $memberShip = json_decode($cache);
+            if(isset($permissionCache->member_id ))
+            {
+                //
+            }
+            else
+            {
+                $memberShip = (new \HJ\ClubMember())->findFirst($params);
+                if(isset($permission->member_id)) {
+                    $this->redis->set($cacheName, json_encode($permission));
+                    $this->redis->expire($cacheName, $cacheSettings->expire);
+                } else
+                {
+                    $memberShip = [];
+                }
+            }
+        }
+        else
+        {
+            $memberShip = (new \HJ\ClubMember())->findFirst($params);
+            if(isset($permission->member_id)) {
+                $this->redis->set($cacheName, json_encode($permission));
+                $this->redis->expire($cacheName, $cacheSettings->expire);
+            } else
+            {
+                $memberShip = [];
+            }
+        }
+        return $memberShip;
     }
 
-
-
+    public function getUserClubPermission($user_id = 0,$club_id = 0,$cache = 1)
+    {
+        $cacheSettings = $this->config->cache_settings->user_club_permission;
+        $cacheName = $cacheSettings->name.$user_id."_".$club_id;
+        $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,$cache);
+        $permission = $userClubMemberShip->permission??0;
+        return $permission;
+    }
 }

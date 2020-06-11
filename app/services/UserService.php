@@ -852,17 +852,18 @@ class UserService extends BaseService
     //获取用户信息
     public function getUserInfo($user_id,$columns = 'user_id,nick_name,true_name,user_img',$cache = 1)
     {
-        $cacheName = "user_info_".$user_id;
+        $cacheSettings = $this->config->cache_settings->user_info;
+        $cacheName = $cacheSettings->name.$user_id;
+        $params =             [
+            "user_id='".$user_id."' and is_del=0",
+            'columns'=>'*',
+        ];
         if($cache == 0)
         {
             //获取列表作者信息
-            $userInfo = \HJ\UserInfo::findFirst([
-                "user_id='".$user_id."' and is_del=0",
-                'columns'=>'*',
-            ]);
+            $userInfo = \HJ\UserInfo::findFirst($params);
             if(isset($userInfo->user_id))
             {
-                //$userInfo = $userInfo->toArray();
                 $this->redis->set($cacheName,json_encode($userInfo));
                 $this->redis->expire($cacheName,3600);
             }
@@ -882,15 +883,11 @@ class UserService extends BaseService
             else
             {
                 //获取列表作者信息
-                $userInfo = \HJ\UserInfo::findFirst([
-                    "user_id='".$user_id."' and is_del=0",
-                    'columns'=>'*',
-                ]);
+                $userInfo = \HJ\UserInfo::findFirst($params);
                 if(isset($userInfo->user_id))
                 {
-                    //$userInfo = $userInfo->toArray();
                     $this->redis->set($cacheName,json_encode($userInfo));
-                    $this->redis->expire($cacheName,3600);
+                    $this->redis->expire($cacheName,$cacheSettings->expire);
                 }
                 else
                 {

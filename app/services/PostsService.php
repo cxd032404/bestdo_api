@@ -341,8 +341,7 @@ class PostsService extends BaseService
         {
             $posts->user_info = (new UserService())->getUserInfo($posts->user_id);
         }
-
-     return $posts;
+        return $posts;
     }
 
     public function updatePost($post_id,$updateData)
