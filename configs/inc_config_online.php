@@ -115,11 +115,13 @@ $config = [
     ],
     'cache_settings' =>[
         'list'=>['name'=>'list_','expire'=>3600],
-        'postList'=>['name'=>'list_','expire'=>60],
         'post'=>['name'=>'user_posts_','expire'=>3600],
         'wechat'=>['name'=>'wechat_token_','expire'=>3600],
         'accessToken'=>['name'=>'wechat_access_token','expire'=>7200],
         'user_token'=>['name'=>'user_token_','expire'=>3600*24*30],
+        'user_club_permission'=>['name'=>'user_club_permission_','expire'=>3600],
+        'user_info'=>['name'=>'user_info_','expire'=>3600],
+        'user_club_membership'=>['name'=>'user_club_membership_','expire'=>3600],
     ]
 
 
