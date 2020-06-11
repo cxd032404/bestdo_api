@@ -11,8 +11,6 @@ class ClubService extends BaseService
      */
   public function joinClub($user_id,$company_id){
       $return = ['error_code'=> 0,'message'=>'申请成功'];
-
-
       $club_id = $this->request->get('club_id')??0;
       $params = [
           'user_id'=>$user_id,
@@ -112,7 +110,7 @@ class ClubService extends BaseService
     /*
      * 管理员操作用户申请
      */
-    public function operateApplication($user_id)
+    public function passApplication($user_id,$company_id)
     {
         //预留判断管理员操作
 
@@ -127,19 +125,38 @@ class ClubService extends BaseService
             $return = ['error_code'=> 1,'message'=>'通过失败'];
             return $return;
         }
-        if($this->request->get('operation')=='pass')
-        {
-            $club_member_log->result  = 1;
-        }else
-        {
-            $club_member_log->result  = 2;
-        }
+        $club_member_log->result  = 1;
         $club_member_log->operate_user_id = $user_id;
         $club_member_log->process_time = time();
         $res = $club_member_log->save();
         if($res)
         {
-            $return = ['error_code'=> 0,'message'=>'通过成功'];
+            $current_time = time();
+            $club_id = $club_member_log->club_id;
+            $company_id = $company_id;
+            $send_user = $club_member_log->user_id;
+            $status = 1;
+            $create_time = $current_time;
+            $update_time = $current_time;
+            $detail = '';
+            $insert_params = [
+                'club_id'=>$club_id,
+                'company_id'=>$company_id,
+                'user_id'=>$send_user, // 发起申请的人
+                'status'=>$status,
+                'create_time'=>$create_time,
+                'update_time'=>$update_time,
+                'detail'=>$detail
+            ];
+            $insert = $this->updateClubMember($insert_params);
+            if($insert)
+            {
+                $return = ['error_code'=> 0,'message'=>'通过成功'];
+
+            }else
+            {
+                $return = ['error_code'=> 1,'message'=>'通过失败'];
+            }
         }else
         {
             $return = ['error_code'=> 1,'message'=>'通过失败'];
@@ -147,6 +164,16 @@ class ClubService extends BaseService
 
         return $return;
 
+    }
+
+
+
+    /*
+     * 添加用户到俱乐部
+     */
+    public function updateClubMember($params){
+        $insert = (new \hj\ClubMemberLog())->create($params);
+        return $insert;
     }
 
     /*
