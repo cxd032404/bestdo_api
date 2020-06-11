@@ -11,6 +11,8 @@ class ClubService extends BaseService
      */
   public function joinClub($user_id,$company_id){
       $return = ['error_code'=> 0,'message'=>'申请成功'];
+
+
       $club_id = $this->request->get('club_id')??0;
       $params = [
           'user_id'=>$user_id,
@@ -152,6 +154,16 @@ class ClubService extends BaseService
      */
 
     public function checkMemberRole(){
+
+
+    }
+
+    /*
+     * 获取club信息
+     */
+
+    public function getClubInfo($club_id){
+
 
 
     }
