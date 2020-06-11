@@ -29,7 +29,7 @@ class ClubController extends BaseController
              $return  = (new ClubService())->cancelApplication($user_id);
          }elseif($operation == 'pass')
          {
-             $return  = (new ClubService())->operateApplication($user_id,$company_id);
+             $return  = (new ClubService())->passApplication($user_id,$company_id);
          }elseif($operation == 'reject')
          {
              //未知操作
