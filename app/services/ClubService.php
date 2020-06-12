@@ -6,6 +6,14 @@
 
 class ClubService extends BaseService
 {
+    private $permission = [
+        0=>'普通会员',
+        1=>'管理员',
+        9=>'超级管理员',
+    ];
+
+
+
     /*
      * 加入俱乐部
      */
@@ -18,7 +26,7 @@ class ClubService extends BaseService
       //$return = ['result'=> 0,'msg'=>'申请成功'];
       //判断是否已是俱乐部成员
       $member_ship = $this->getUserClubMembership($user_id,$club_id,0);
-      if(isset($member_ship->member_id))
+      if(isset($member_ship->member_id)&&$member_ship->status==1)
       {
           $return = ['result'=> 1,'msg'=>'已经是俱乐部成员了，无需重复申请'];
           return $return;
@@ -78,7 +86,7 @@ class ClubService extends BaseService
   /*
    * 撤销俱乐部申请
    */
-    public function applicationCancel($user_id,$log_id){
+    public function applicationCancel($user_id,$log_id = 0){
         $conditons = 'log_id = :log_id: and user_id = :user_id: and type = :type: and sub_type = :sub_type: and result=:result:';
         $select_params = [
             $conditons,
@@ -111,7 +119,7 @@ class ClubService extends BaseService
     /*
      * 管理员操作用户申请
      */
-    public function applicationOperate($user_id,$operation,$log_id)
+    public function applicationOperate($user_id,$operation,$log_id = 0)
     {
         $log_ids = explode(',',$log_id);
         if($operation == 'pass')
@@ -127,7 +135,7 @@ class ClubService extends BaseService
             }
             if($success)
             {
-                $return = ['result'=> 0,'msg'=>'操作成功'];
+                $return = ['result'=> 1,'msg'=>'操作成功'];
             }else{
                 $return = ['result'=> 0,'msg'=>'操作失败'];
             }
@@ -146,7 +154,7 @@ class ClubService extends BaseService
             }
             if($success)
             {
-                $return = ['result'=> 0,'msg'=>'操作成功'];
+                $return = ['result'=> 1,'msg'=>'操作成功'];
             }else{
                 $return = ['result'=> 0,'msg'=>'操作失败'];
             }
@@ -158,7 +166,7 @@ class ClubService extends BaseService
     /*
      * 管理员拒绝用户申请
      */
-    public function applicationReject($user_id,$log_id){
+    public function applicationReject($user_id,$log_id = 0){
         $club_member_log_info = $this->getClubMemberLog($log_id);
         $club_id = isset($club_member_log_info->club_id)??0;
         $permission = $this->getUserClubPermission($user_id,$club_id,0);
@@ -181,7 +189,7 @@ class ClubService extends BaseService
         }
         $current_time = time();
         $club_member_log->result  = 2;
-        $club_member_log->operate_user_id = $user_id;
+        $club_member_log->process_user_id = $user_id;
         $club_member_log->process_time = date("Y-m-d H:i:s",$current_time);
         $res = $club_member_log->save();
         if($res)
@@ -199,7 +207,7 @@ class ClubService extends BaseService
   *通过申请记录添加成员
   * log_id 记录id user_id 处理人id
   */
-   public function applicationPass($user_id,$log_id){
+   public function applicationPass($user_id,$log_id = 0){
        $club_member_log_info = $this->getClubMemberLog($log_id);
        $club_id = isset($club_member_log_info->club_id)??0;
        $permission = $this->getUserClubPermission($user_id,$club_id,0);
@@ -222,7 +230,7 @@ class ClubService extends BaseService
        }
        $current_time = time();
        $club_member_log->result  = 1;
-       $club_member_log->operate_user_id = $user_id;
+       $club_member_log->process_user_id = $user_id;
        $club_member_log->process_time = date("Y-m-d H:i:s",$current_time);
        $res = $club_member_log->save();
        if($res)
@@ -255,6 +263,62 @@ class ClubService extends BaseService
            }
            }
    }
+
+    /*
+   * 用户退出俱乐部
+   */
+    public function leaveClub($user_id,$club_id){
+        //检测是否是某个俱乐部会员
+        $member_ship = $this->getUserClubMembership($user_id,$club_id,0);
+        if(isset($member_ship->member_id)&&$member_ship->status == 1)
+        {
+            $conditions = 'user_id ='.$user_id.' and club_id ='.$club_id.' and status = 1';
+            $params = [
+              $conditions,
+            ];
+            $member_info = (new \HJ\ClubMember())->findFirst($params);
+            $member_info->status = 0;
+            $res = $member_info->save();
+            if(!$res)
+            {
+                $return = ['result'=> 1,'msg'=>'退出失败'];
+                return $return;
+            }
+            $current_time = time();
+            $type = 0;
+            $sub_type = 1;
+            $operate_user_id = $user_id;
+            $process_user_id = $user_id ;
+            $create_time = date("Y-m-d H:i:s",$current_time);
+            $update_time = date("Y-m-d H:i:s",$current_time);
+            $process_time = date("Y-m-d H:i:s",$current_time);
+            $user_info = (new UserService())->getUserInfo($user_id,"user_id,company_id");
+            $insert = new \hj\ClubMemberLog();
+            $insert->club_id = $club_id;
+            $insert->user_id = $user_id;
+            $insert->company_id = $user_info->company_id;
+            $insert->type = $type;
+            $insert->sub_type = $sub_type;
+            $insert->operate_user_id = $operate_user_id;
+            $insert->process_user_id = $process_user_id;
+            $insert->result = 1;
+            $insert->create_time = $create_time;
+            $insert->update_time = $update_time;
+            $insert->process_time = $process_time;
+            $insert_result = $insert->create();
+            if($insert_result)
+            {
+                $return = ['result'=> 1,'msg'=>'退出成功'];
+            }else
+            {
+                $return = ['result'=> 1,'msg'=>'退出失败'];
+            }
+        }else
+        {
+            $return = ['result'=> 1,'msg'=>'退出成功'];
+        }
+        return $return;
+    }
 
     /*
      * 添加用户到俱乐部
@@ -375,4 +439,51 @@ class ClubService extends BaseService
         }
         return $permission;
     }
+
+    /*
+     * 俱乐部成员列表
+     */
+    public function getClubMemberList($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$status='',$order = "member_id DESC"){
+        if(empty($status))
+        {
+            $conditions = "club_id = ".$club_id;
+        }else
+        {
+            $conditions = "club_id = ".$club_id.'status ='.$status;
+        }
+        $params = [
+                $conditions,
+                "columns" => '*',
+                "order" => $order,
+                "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+            ];
+            $memberList = (new \HJ\ClubMember())->find($params);
+            return $memberList;
+    }
+
+
+    /*
+     *申请记录列表
+     */
+
+    public function  getClubMemberLogInfo($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$result ='',$order = "log_id DESC"){
+        if(empty($result))
+        {
+            $conditions = "club_id = ".$club_id;
+        }else
+        {
+            $conditions = "club_id = ".$club_id.'result ='.$result;
+        }
+        $params = [
+            $conditions,
+            "columns" => '*',
+            "order" => $order,
+            "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+        ];
+        $memberList = (new \HJ\ClubMemberLog())->find($params);
+        return $memberList;
+    }
+
+
+
 }

@@ -20,6 +20,10 @@ class ApiController extends BaseController
 
 	public function testAction( $id = 0 )
 	{
+	    $data = (new ClubService())->getClubMemberLogInfo(1,'*',0,1,2)->toArray();
+	    print_r($data);die();
+
+
         $data = (new WechatController())->sendMessage('oPCk01ftkc3CX4bybn_bVOWylKr8','-Qq05dZSlDIf7LyuSWf0V3tJ9AuXjypdempKDTSGUio','史说政的测试信息');
             print_r($data);die();
 	    (new WechatController())->sendMessage('oPCk01ftkc3CX4bybn_bVOWylKr8',1,'史说政的测试信息');
