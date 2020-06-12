@@ -65,7 +65,7 @@ class ClubController extends BaseController
         }
         $user_id = $return['data']['user_info']->user_id;
         $club_id = $this->request->get('club_id')??0;
-        $return = (new ClubService())->leaveClub(2,1);
+        $return = (new ClubService())->leaveClub($user_id,$club_id);
         if($return['result'])
         {
             $this->success($return['data']??[],$return['msg']);
