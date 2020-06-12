@@ -119,7 +119,7 @@ class ClubService extends BaseService
             $success = 0;
             foreach ($log_ids as $log_id)
             {
-                $res = $this->ApplicationPass($log_id,$user_id);
+                $res = $this->ApplicationPass($user_id,$log_id);
                 if($res)
                 {
                     $success ++;
@@ -138,7 +138,7 @@ class ClubService extends BaseService
             $success = 0;
             foreach ($log_ids as $log_id)
             {
-                $res = $this->applicationReject($log_id,$user_id);
+                $res = $this->applicationReject($user_id,$log_id);
                 if($res)
                 {
                     $success ++;
@@ -153,10 +153,6 @@ class ClubService extends BaseService
             return $return;
 
         }
-
-
-
-
     }
 
     /*
@@ -168,7 +164,6 @@ class ClubService extends BaseService
         $permission = $this->getUserClubPermission($user_id,$club_id,0);
         if($permission == 0)
         {
-            $return = ['result'=> 0,'msg'=>'没有权限'];
             return false;
         }
         $conditons = "log_id = :log_id: and result = :result:";
@@ -204,7 +199,7 @@ class ClubService extends BaseService
   *通过申请记录添加成员
   * log_id 记录id user_id 处理人id
   */
-   public function applicationPass($log_id,$user_id){
+   public function applicationPass($user_id,$log_id){
        $club_member_log_info = $this->getClubMemberLog($log_id);
        $club_id = isset($club_member_log_info->club_id)??0;
        $permission = $this->getUserClubPermission($user_id,$club_id,0);
@@ -274,7 +269,7 @@ class ClubService extends BaseService
             "log_id=".$log_id,
             'columns'=>'*'
         ];
-        $club_member_log = (new \hj\ClubMemberLog())->findFirst($params)->toArray();
+        $club_member_log = (new \hj\ClubMemberLog())->findFirst($params);
         return $club_member_log;
     }
 
