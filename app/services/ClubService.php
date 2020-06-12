@@ -76,6 +76,9 @@ class ClubService extends BaseService
     public function cancelApplication($user_id){
         $return = ['error_code'=> 0,'message'=>'取消成功'];
         $log_id = $this->request->get('log_id')??0;
+        $club_id = $this->getClubId($log_id);
+
+
         $select_params = [
             'log_id'=>$log_id,
             'user_id'=>$user_id,
@@ -108,6 +111,13 @@ class ClubService extends BaseService
     {
         //预留判断管理员操作
         $log_id = $this->request->getPost('log_id')??0;
+        $club_id = $this->getClubId($log_id)??0;
+        $permission = $this->getUserClubPermission($user_id,$club_id);
+
+        if($permission == 0) {
+                $return = ['error_code' => 1, 'message' => '没有权限'];
+        }
+
         $conditons = "log_id = :log_id: and result = :result:";
         $select_params = [
             $conditons,
@@ -117,14 +127,7 @@ class ClubService extends BaseService
             ],
         ];
         $club_member_log = (new \hj\ClubMemberLog())->findFirst($select_params);
-        if(isset($club_member_log->club_id))
-        {
-            $permission = $this->getUserClubPermission($user_id,$club_member_log->club_id);
-            if($permission == 0)
-            {
-                $return = ['error_code'=> 1,'message'=>'没有权限'];
-            }
-        }
+
         if(!isset($club_member_log->log_id))
         {
                 $return = ['error_code'=> 1,'message'=>'通过成功'];
@@ -180,6 +183,15 @@ class ClubService extends BaseService
     public function updateClubMember($params){
         $insert = (new \hj\ClubMember())->create($params);
         return $insert;
+    }
+
+    public function getClubId($log_id){
+        $params = [
+            'log_id'=>$log_id,
+            'columns'=>'club_id'
+        ];
+        $club_member_log = (new \hj\ClubMemberLog())->findFirst($params);
+        return $club_member_log;
     }
 
     /*
