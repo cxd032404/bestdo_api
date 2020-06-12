@@ -18,25 +18,22 @@ class ClubController extends BaseController
              return $this->failure([],$return['msg'],$return['code']);
          }
          $user_id = $res['data']['user_info']->user_id;
-         $company_id = $res['data']['user_info']->company_id;
          $operation = $this->request->get('operation')??'';
          $log_id = $this->request->get('log_id')??0;
+         $club_id = $this->request->get('club_id')??0;
          if($operation == 'join')
          {
-             $return  = (new ClubService())->joinClub($user_id,$company_id);
+             $return  = (new ClubService())->joinClub($user_id,$club_id);
          }
          elseif($operation == 'cancel')
          {
-             $return  = (new ClubService())->cancelApplication($user_id,$log_id);
+             $return  = (new ClubService())->applicationCancel($user_id,$log_id);
          }
-         elseif($operation == 'pass')
+         elseif($operation == 'pass' || $operation == 'reject')
          {
-             $return  = (new ClubService())->passApplication($user_id,$log_id);
+             $return  = (new ClubService())->ApplicationOperate($user_id,$operation,$log_id);
          }
-         elseif($operation == 'reject')
-         {
-             //未知操作
-         }
+
          if($return['result'])
          {
              $this->success($return['data']??[],$return['msg']);

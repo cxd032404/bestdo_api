@@ -10,6 +10,11 @@ class ClubService extends BaseService
      * 加入俱乐部
      */
   public function joinClub($user_id,$club_id){
+      if(!$club_id)
+      {
+          $return = ['result'=> 0,'msg'=>'club_id未传'];
+          return $return;
+      }
       //$return = ['result'=> 0,'msg'=>'申请成功'];
       //判断是否已是俱乐部成员
       $member_ship = $this->getUserClubMembership($user_id,$club_id,0);
@@ -53,6 +58,7 @@ class ClubService extends BaseService
       $insert->type = $type;
       $insert->sub_type = $sub_type;
       $insert->operate_user_id = $operate_user_id;
+      $insert->process_user_id = $process_user_id;
       $insert->create_time = $create_time;
       $insert->update_time = $update_time;
       $insert->process_time = $process_time;
@@ -72,14 +78,17 @@ class ClubService extends BaseService
   /*
    * 撤销俱乐部申请
    */
-
-    public function cancelApplication($user_id,$log_id){
+    public function applicationCancel($user_id,$log_id){
+        $conditons = 'log_id = :log_id: and user_id = :user_id: and type = :type: and sub_type = :sub_type: and result=:result:';
         $select_params = [
+            $conditons,
+            'bind'=>[
             'log_id'=>$log_id,
             'user_id'=>$user_id,
             'type'=>1,
             'sub_type'=>1,
             'result'=>0,   //未处理的申请
+            ],
         ];
         $club_member_log = (new \hj\ClubMemberLog())->findfirst($select_params);
         if(!isset($club_member_log->log_id))
@@ -102,10 +111,66 @@ class ClubService extends BaseService
     /*
      * 管理员操作用户申请
      */
-    public function passApplication($user_id,$log_id)
+    public function applicationOperate($user_id,$operation,$log_id)
     {
-        //预留判断管理员操作
+        $log_ids = explode(',',$log_id);
+        if($operation == 'pass')
+        {
+            $success = 0;
+            foreach ($log_ids as $log_id)
+            {
+                $res = $this->ApplicationPass($log_id,$user_id);
+                if($res)
+                {
+                    $success ++;
+                }
+            }
+            if($success)
+            {
+                $return = ['result'=> 0,'msg'=>'操作成功'];
+            }else{
+                $return = ['result'=> 0,'msg'=>'操作失败'];
+            }
+            return $return;
+        }elseif($operation == 'reject')
+        {
 
+            $success = 0;
+            foreach ($log_ids as $log_id)
+            {
+                $res = $this->applicationReject($log_id,$user_id);
+                if($res)
+                {
+                    $success ++;
+                }
+            }
+            if($success)
+            {
+                $return = ['result'=> 0,'msg'=>'操作成功'];
+            }else{
+                $return = ['result'=> 0,'msg'=>'操作失败'];
+            }
+            return $return;
+
+        }
+
+
+
+
+    }
+
+    /*
+     * 管理员拒绝用户申请
+     */
+    public function applicationReject($user_id,$log_id){
+        $club_member_log_info = $this->getClubMemberLog($log_id);
+        $club_id = isset($club_member_log_info->club_id)??0;
+        $permission = $this->getUserClubPermission($user_id,$club_id,0);
+        if($permission == 0)
+        {
+            $return = ['result'=> 0,'msg'=>'没有权限'];
+            return false;
+        }
         $conditons = "log_id = :log_id: and result = :result:";
         $select_params = [
             $conditons,
@@ -115,64 +180,86 @@ class ClubService extends BaseService
             ],
         ];
         $club_member_log = (new \hj\ClubMemberLog())->findFirst($select_params);
-
-        if(isset($club_member_log->club_id))
-        {
-            $permission = $this->getUserClubPermission($user_id,$club_member_log->club_id);
-            if($permission == 0)
-            {
-                $return = ['result'=> 1,'msg'=>'没有权限'];
-            }
-        }
         if(!isset($club_member_log->log_id))
         {
-                $return = ['result'=> 1,'msg'=>'通过成功'];
-                return $return;
+            return true;  //修改过跳回无处理
         }
         $current_time = time();
-        $club_member_log->result  = 1;
+        $club_member_log->result  = 2;
         $club_member_log->operate_user_id = $user_id;
         $club_member_log->process_time = date("Y-m-d H:i:s",$current_time);
         $res = $club_member_log->save();
         if($res)
         {
-            $user_info = (new UserService())->getUserInfo($user_id,"user_id,company_id");
-            $club_id = $club_member_log->club_id;
-            $company_id = $user_info->company_id;
-            $send_user = $club_member_log->user_id;
-            $status = 1;
-            $create_time = date("Y-m-d H:i:s",$current_time);
-            $update_time = date("Y-m-d H:i:s",$current_time);
-            $detail = '';
-            $insert_params = [
-                'club_id'=>$club_id,
-                'company_id'=>$company_id,
-                'user_id'=>$send_user, // 发起申请的人
-                'status'=>$status,
-                'create_time'=>$create_time,
-                'update_time'=>$update_time,
-                'detail'=>json_encode($detail)
-            ];
-            $insert = $this->addClubMember($insert_params);
-            if($insert)
-            {
-                $this->getUserClubMembership($send_user,$club_id,0);
-                $return = ['result'=> 1,'msg'=>'操作成功'];
-
-            }else
-            {
-                $return = ['result'=> 0,'msg'=>'操作失败'];
-            }
+            return true;
         }else
         {
-            $return = ['result'=> 0,'msg'=>'操作失败'];
+            return false;
         }
-
-        return $return;
-
     }
 
 
+
+ /*
+  *通过申请记录添加成员
+  * log_id 记录id user_id 处理人id
+  */
+   public function applicationPass($log_id,$user_id){
+       $club_member_log_info = $this->getClubMemberLog($log_id);
+       $club_id = isset($club_member_log_info->club_id)??0;
+       $permission = $this->getUserClubPermission($user_id,$club_id,0);
+       if($permission == 0)
+       {
+           return false;
+       }
+       $conditons = "log_id = :log_id: and result = :result:";
+       $select_params = [
+           $conditons,
+           'bind'=>[
+               'log_id'=>$log_id,
+               'result'=>0
+           ],
+       ];
+       $club_member_log = (new \hj\ClubMemberLog())->findFirst($select_params);
+       if(!isset($club_member_log->log_id))
+       {
+           return true;  //修改过跳回无处理
+       }
+       $current_time = time();
+       $club_member_log->result  = 1;
+       $club_member_log->operate_user_id = $user_id;
+       $club_member_log->process_time = date("Y-m-d H:i:s",$current_time);
+       $res = $club_member_log->save();
+       if($res)
+       {
+           $user_info = (new UserService())->getUserInfo($user_id,"user_id,company_id");
+           $club_id = $club_member_log->club_id;
+           $company_id = $user_info->company_id;
+           $send_user = $club_member_log->user_id;
+           $status = 1;
+           $create_time = date("Y-m-d H:i:s",$current_time);
+           $update_time = date("Y-m-d H:i:s",$current_time);
+           $detail = '';
+           $insert_params = [
+               'club_id'=>$club_id,
+               'company_id'=>$company_id,
+               'user_id'=>$send_user, // 发起申请的人
+               'status'=>$status,
+               'create_time'=>$create_time,
+               'update_time'=>$update_time,
+               'detail'=>json_encode($detail)
+           ];
+           $insert = $this->addClubMember($insert_params);
+           if($insert)
+           {
+               $this->getUserClubMembership($send_user,$club_id,0);
+               return true;
+           }else
+           {
+               return false;
+           }
+           }
+   }
 
     /*
      * 添加用户到俱乐部
@@ -182,12 +269,12 @@ class ClubService extends BaseService
         return $insert;
     }
 
-    public function getClubId($log_id){
+    public function getClubMemberLog($log_id){
         $params = [
-            'log_id'=>$log_id,
-            'columns'=>'club_id'
+            "log_id=".$log_id,
+            'columns'=>'*'
         ];
-        $club_member_log = (new \hj\ClubMemberLog())->findFirst($params);
+        $club_member_log = (new \hj\ClubMemberLog())->findFirst($params)->toArray();
         return $club_member_log;
     }
 
