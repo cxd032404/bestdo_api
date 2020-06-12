@@ -20,21 +20,31 @@ class ClubController extends BaseController
          $user_id = $res['data']['user_info']->user_id;
          $company_id = $res['data']['user_info']->company_id;
          $operation = $this->request->get('operation')??'';
+         $log_id = $this->request->get('log_id')??0;
          if($operation == 'join')
          {
              $return  = (new ClubService())->joinClub($user_id,$company_id);
-
-         }elseif($operation == 'cancel')
+         }
+         elseif($operation == 'cancel')
          {
-             $return  = (new ClubService())->cancelApplication($user_id);
-         }elseif($operation == 'pass')
+             $return  = (new ClubService())->cancelApplication($user_id,$log_id);
+         }
+         elseif($operation == 'pass')
          {
-             $return  = (new ClubService())->passApplication($user_id,$company_id);
-         }elseif($operation == 'reject')
+             $return  = (new ClubService())->passApplication($user_id,$log_id);
+         }
+         elseif($operation == 'reject')
          {
              //未知操作
          }
-         return $this->success($return);
+         if($return['result'])
+         {
+             $this->success($return['data']??[],$return['msg']);
+         }
+         else
+         {
+             $this->failure([],$return['msg']);
+         }
      }
 
      /*
@@ -42,16 +52,17 @@ class ClubController extends BaseController
       */
     public function inviteToClub(){
         //验证token
-        $res = (new UserService)->getDecrypt();
-        if($res['result']!=1){
-            return $this->failure([],$return['msg'],$return['code']);
+        $user_info = (new UserService)->getDecrypt();
+        if($user_info['result']!=1){
+            return $this->failure([],$user_info['msg'],$user_info['code']);
         }
-        $user_id = $res['data']['user_info']->user_id;
-        $company_id = $res['data']['user_info']->company_id;
+        $user_id = $user_info['data']['user_info']->user_id;
+        $company_id = $user_info['data']['user_info']->company_id;
         $operation = $this->request->get('operation')??'';
+        $club_id = $this->request->get('club_id')??0;
         if($operation == 'join')
         {
-            $return  = (new ClubService())->joinClub($user_id,$company_id);
+            $return  = (new ClubService())->joinClub($user_id,$club_id);
 
         }elseif($operation == 'cancel')
         {
