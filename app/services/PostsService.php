@@ -210,7 +210,7 @@ class PostsService extends BaseService
     }
     //根据列表ID获取列表
     //$list_id：列表ID
-    //cloumns：数据库的字段列表
+    //columns：数据库的字段列表
     //order：排序
     //page:页码
     //pageSize：单页数量
