@@ -483,6 +483,64 @@ class ClubService extends BaseService
         $memberList = (new \HJ\ClubMemberLog())->find($params);
         return $memberList;
     }
+    public function getClubInfo($club_id,$columns = 'club_id,club_name',$cache = 1)
+    {
+        $cacheSettings = $this->config->cache_settings->club_info;
+        $cacheName = $cacheSettings->name.$club_id;
+        $params =             [
+            "club_id='".$club_id."'",
+            'columns'=>'*',
+        ];
+        if($cache == 0)
+        {
+            //获取俱乐部信息
+            $clubInfo = \HJ\Club::findFirst($params);
+            if(isset($clubInfo->club_id))
+            {
+                $this->redis->set($cacheName,json_encode($clubInfo));
+                $this->redis->expire($cacheName,3600);
+            }
+            else
+            {
+                return [];
+            }
+        }
+        else
+        {
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if(isset($cache->club_id))
+            {
+                $clubInfo = $cache;
+            }
+            else
+            {
+                //获取列表作者信息
+                $clubInfo = \HJ\Club::findFirst($params);
+                if(isset($clubInfo->club_id))
+                {
+                    $this->redis->set($cacheName,json_encode($clubInfo));
+                    $this->redis->expire($cacheName,$cacheSettings->expire);
+                }
+                else
+                {
+                    return [];
+                }
+            }
+        }
+        if($columns != "*")
+        {
+            $t = explode(",",$columns);
+            foreach($clubInfo as $key => $value)
+            {
+                if(!in_array($key,$t))
+                {
+                    unset($clubInfo->$key);
+                }
+            }
+        }
+        return $clubInfo;
+    }
 
 
 

@@ -49,17 +49,6 @@ class PageElementService extends BaseService
             {
                 $data['data']['data'][$k]->$userkey = $value;
             }
-            /*
-            $postskudos_info = \HJ\PostsKudos::findFirst([
-                "sender_id=:sender_id: and post_id=:post_id: and is_del=0 and create_time between :starttime: AND :endtime: ",
-                'bind'=>[
-                    'sender_id'=>$user_info['data']['user_id']??0,
-                    'post_id'=>$data['data']['data'][$k]->post_id,
-                    'starttime'=>date('Y-m-d').' 00:00:00',
-                    'endtime'=>date('Y-m-d').' 23:59:59',
-                ]
-            ]);
-            */
             $postskudos_info = (new PostsService())->checkKudos($user_info['data']['user_id']??0,"",$data['data']['data'][$k]->post_id);
             $data['data']['data'][$k]->is_kudos = 0;
             if(isset($postskudos_info->id)){
@@ -304,6 +293,30 @@ class PageElementService extends BaseService
         }
         $data['detail']['all'] = $posts;
         return $data;
+    }
+    /*
+     * 俱乐部信息
+     * userinfo 用户信息
+     * company_id 公司id
+     * data 用户包含的element信息
+     * params 页面标识和company_id
+     */
+
+    public function getElementPage_clubInfo($data,$params,$user_info,$company_id){
+        //指定数据
+        if(isset($data['detail']['club_id']))
+        {
+            $club_id = $data['detail']['club_id'];
+        }
+        else//页面获取
+        {
+            $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
+        }
+        //获取列表
+        $clubInfo = (new ClubService())->getClubInfo($club_id,"club_id,club_name");
+        $data['detail'] = $clubInfo;
+        return $data;
+
     }
 
 
