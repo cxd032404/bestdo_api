@@ -312,9 +312,12 @@ class PageElementService extends BaseService
         {
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
+        $clubService = new ClubService();
         //获取列表
-        $clubInfo = (new ClubService())->getClubInfo($club_id,"club_id,club_name");
+        $clubInfo = $clubService->getClubInfo($club_id,"club_id,club_name");
         $data['detail'] = $clubInfo;
+        $permission = $clubService->getUserClubPermission($user_info->user_id??0,$clubInfo->club_id??0);
+        $data['detail']->permission = $permission;
         return $data;
 
     }

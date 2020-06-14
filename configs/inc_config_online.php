@@ -122,6 +122,7 @@ $config = [
         'user_club_permission'=>['name'=>'user_club_permission_','expire'=>3600],
         'user_info'=>['name'=>'user_info_','expire'=>3600],
         'user_club_membership'=>['name'=>'user_club_membership_','expire'=>3600],
+        'club_info'=>['name'=>'club_info_','expire'=>3600],
     ]
 
 
