@@ -369,6 +369,8 @@ class PageElementService extends BaseService
         $user_info['data']['user_id'] = 11879;
         $userClubList = (new ClubService())->getUserClubList($user_info['data']['user_id'],"member_id,club_id,permission");
         $data['user_club_list'] = $userClubList;
+        $data['member_limit'] = [100=>"100人",10=>"10人",3=>"3人"];
+        $data['monthly_apply_limit'] = [1=>"1次",2=>"2次",3=>"3次"];
         return $data;
     }
 
