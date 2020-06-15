@@ -114,16 +114,16 @@ $config = [
         'Status_Code' 	=> 'okey!'
     ],
     'cache_settings' =>[
-        'list'=>['name'=>'list_','expire'=>3600],
-        'post'=>['name'=>'user_posts_','expire'=>3600],
-        'wechat'=>['name'=>'wechat_token_','expire'=>3600],
-        'accessToken'=>['name'=>'wechat_access_token','expire'=>7200],
-        'user_token'=>['name'=>'user_token_','expire'=>3600*24*30],
-        'user_club_permission'=>['name'=>'user_club_permission_','expire'=>3600],
-        'user_info'=>['name'=>'user_info_','expire'=>3600],
-        'user_club_membership'=>['name'=>'user_club_membership_','expire'=>3600],
-        'club_info'=>['name'=>'club_info_','expire'=>3600],
-
+        'list'=>['name'=>'list_','expire'=>3600],//列表
+        'post'=>['name'=>'user_posts_','expire'=>3600],//文章
+        'wechat'=>['name'=>'wechat_token_','expire'=>3600],//微信token
+        'accessToken'=>['name'=>'wechat_access_token','expire'=>7200],//微信access_token
+        'user_token'=>['name'=>'user_token_','expire'=>3600*24*30],//用户登录token
+        'user_club_permission'=>['name'=>'user_club_permission_','expire'=>3600],//用户对特定俱乐部的权限
+        'user_info'=>['name'=>'user_info_','expire'=>3600],//用户信息
+        'user_club_membership'=>['name'=>'user_club_membership_','expire'=>3600],//用户对特定俱乐部的身份
+        'user_club_permission_list'=>['name'=>'user_club_permission_list_','expire'=>3600],//用户拥有权限的俱乐部列表
+        'club_info'=>['name'=>'club_info_','expire'=>3600],//俱乐部信息
     ]
 
 

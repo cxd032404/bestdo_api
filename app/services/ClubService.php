@@ -449,7 +449,11 @@ class ClubService extends BaseService
             $conditions = "club_id = ".$club_id;
         }else
         {
-            $conditions = "club_id = ".$club_id.'status ='.$status;
+            $conditions = "club_id = ".$club_id.' and status ='.$status;
+        }
+        if($start)
+        {
+            $conditions.= ' and member_id <'.$start;
         }
         $params = [
                 $conditions,
@@ -472,7 +476,11 @@ class ClubService extends BaseService
             $conditions = "club_id = ".$club_id;
         }else
         {
-            $conditions = "club_id = ".$club_id.'result ='.$result;
+            $conditions = "club_id = ".$club_id.' and result ='.$result;
+        }
+        if($start)
+        {
+            $conditions.= ' and log_id <'.$start;
         }
         $params = [
             $conditions,
@@ -541,6 +549,82 @@ class ClubService extends BaseService
         }
         return $clubInfo;
     }
+    /*
+     * 成员参加的俱乐部列表
+     */
+    public function getUserClubList($user_id,$columns = "*",$status=1,$cache =1){
+        $cacheSettings = $this->config->cache_settings->user_club_list;
+        $cacheName = $cacheSettings->name.$user_id;
+        if($cache == 0)
+        {
+            $conditions = "user_id = ".$user_id.' and status ='.$status;
+            $params = [
+                $conditions,
+                "columns" => '*',
+                "order" => "member_id DESC",
+            ];
+            $clubList = (\HJ\ClubMember::find($params));
+            if(count($clubList))
+            {
+                $this->redis->set($cacheName,json_encode($clubList));
+                $this->redis->expire($cacheName,3600);
+            }
+            else
+            {
+                $clubList = [];
+            }
+        }
+        else
+        {
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if($cache)
+            {
+                $clubList = $cache;
+            }
+            else
+            {
+                $conditions = "user_id = ".$user_id.' and status ='.$status;
+                $params = [
+                    $conditions,
+                    "columns" => '*',
+                    "order" => "member_id DESC",
+                ];
+                $clubList = (\HJ\ClubMember::find($params));
+                if(count($clubList))
+                {
+                    $this->redis->set($cacheName,json_encode($clubList));
+                    $this->redis->expire($cacheName,3600);
+                }
+                else
+                {
+                    $clubList = [];
+                }
+            }
+        }
+        if($columns != "*")
+        {
+            $t = explode(",",$columns);
+            foreach($clubList as $key => $clubInfo)
+            {
+                foreach($clubInfo as $k => $v)
+                if(!in_array($k,$t))
+                {
+                    unset($clubList[$key]->$k);
+                }
+            }
+        }
+        foreach($clubList as $key => $club)
+        {
+            $clubInfo = $this->getClubInfo($club->club_id);
+            if($clubInfo->club_id)
+            {
+                $clubList[$key]->clubInfo = $clubInfo;
+            }
+        }
+        return $clubList;
+    }
+
 
 
 
