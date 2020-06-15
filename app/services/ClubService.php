@@ -519,14 +519,16 @@ class ClubService extends BaseService
      *申请记录列表
      */
 
-    public function  getClubMemberLogInfo($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$result =3,$order = "log_id DESC"){
-        if($result == 3)
+    public function  getClubMemberLogInfo($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$result =4,$order = "log_id DESC"){
+        if($result == 4)
         {
             $conditions = "club_id = ".$club_id;
+        }elseif($result == 3)
+        {
+            $conditions = "club_id = ".$club_id.' and result = 1 or result =2';
         }else
         {
             $conditions = "club_id = ".$club_id.' and result ='.$result;
-
         }
         if($start)
         {

@@ -407,7 +407,7 @@ class PageElementService extends BaseService
         $data['detail']['club_member_count'] = (new ClubService())->getClubMemberCount($club_id);
         $data['detail']['club_name'] = $club_info->club_name;
         $data['detail']['icon'] = $club_info->icon;
-        $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id,'log_id,club_id,create_time,user_id',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',0),$this->getFromParams($params,'pageSize',0),$this->getFromParams($params,'result',0));
+        $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id,'log_id,club_id,create_time,user_id,result',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',0),$this->getFromParams($params,'pageSize',0),$this->getFromParams($params,'result',0));
         $member_log_list = [];
         foreach ($club_member_logs as $key =>$value)
         {
@@ -417,8 +417,11 @@ class PageElementService extends BaseService
             $member_log_list[$key]['true_name'] = $user_info->true_name;
             $member_log_list[$key]['user_img'] = $user_info->user_img;
             $member_log_list[$key]['log_id'] = $value->log_id;
+            $member_log_list[$key]['result'] = $value->result;
+            $member_log_list[$key]['apply_club_name'] = $club_info->club_name;
             $member_log_list[$key]['create_time'] = date('Y/m/d h:i',strtotime($value->create_time));
         }
+        
         $data['detail']['member_log_list']= $member_log_list;
         return $data;
     }
