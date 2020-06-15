@@ -376,17 +376,22 @@ class PageElementService extends BaseService
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
 
-        $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id,'log_id,club_id,create_time',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',0),$this->getFromParams($params,'pageSize',0),$this->getFromParams($params,'result',0));
-        print_r($club_member_logs);die();
+        $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id,'log_id,club_id,create_time,user_id',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',0),$this->getFromParams($params,'pageSize',0),$this->getFromParams($params,'result',0));
+        $member_log_list = [];
 
-
-
+        foreach ($club_member_logs as $key =>$value)
+        {
+            $user_info = (new UserService())->getUserInfo($value->user_id??0,'user_id,nick_name,true_name');
+            $member_log_list[$key]['user_id'] = $user_info->user_id;
+            $member_log_list[$key]['nick_name'] = $user_info->nick_name;
+            $member_log_list[$key]['true_name'] = $user_info->true_name;
+        }
+        $data['detail']['member_log_list']= $member_log_list;
+        return $data;
     }
 
 
-
-
-
+    
     //从页面参数重获取数据
     //$params:页面参数json串
     //$param_name: 变量名  .表示层级

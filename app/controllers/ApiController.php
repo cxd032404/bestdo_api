@@ -20,6 +20,14 @@ class ApiController extends BaseController
 
 	public function testAction( $id = 0 )
 	{
+	    $array = [
+	        'start'=>0,
+            'page'=>1,
+            'pageSize'=>3,
+            'result'=>0
+        ];
+	    $json = json_encode($array);
+	    print_r($json);die();
 	    $data = (new ClubService())->getClubMemberLogInfo(1,'*',0,1,2,0)->toArray();
 	    print_r($data);die();
 

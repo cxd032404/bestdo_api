@@ -443,8 +443,8 @@ class ClubService extends BaseService
     /*
      * 俱乐部成员列表
      */
-    public function getClubMemberList($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$status='',$order = "member_id DESC"){
-        if(empty($status))
+    public function getClubMemberList($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$status=2,$order = "member_id DESC"){
+        if($status == 3)
         {
             $conditions = "club_id = ".$club_id;
         }else
@@ -458,6 +458,20 @@ class ClubService extends BaseService
                 "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
             ];
             $memberList = (new \HJ\ClubMember())->find($params);
+
+            $t = explode(",",$columns);
+            $return = [];
+            foreach($memberList as $key => $value)
+            {
+                foreach ($value as $k=>$v)
+                {
+                    if(!in_array($k,$t))
+                    {
+                        unset($memberList->$key->$k);
+                    }
+                }
+            }
+
             return $memberList;
     }
 
@@ -466,13 +480,13 @@ class ClubService extends BaseService
      *申请记录列表
      */
 
-    public function  getClubMemberLogInfo($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$result ='',$order = "log_id DESC"){
-        if(empty($result))
+    public function  getClubMemberLogInfo($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$result =3,$order = "log_id DESC"){
+        if($result == 3)
         {
             $conditions = "club_id = ".$club_id;
         }else
         {
-            $conditions = "club_id = ".$club_id.'result ='.$result;
+            $conditions = "club_id = ".$club_id.' and result ='.$result;
         }
         $params = [
             $conditions,
