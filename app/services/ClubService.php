@@ -9,7 +9,8 @@ class ClubService extends BaseService
     private $permission = [
         0=>'普通会员',
         1=>'管理员',
-        9=>'超级管理员',
+        9=>'俱乐部创建人',
+        99=>'超级管理员',
     ];
 
 
@@ -421,7 +422,16 @@ class ClubService extends BaseService
             if(!empty($permission))
             {
                 $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
-                $permission = $userClubMemberShip->permission??0;
+                //获取用户信息
+                $userInfo = (new UserService())->getUserInfo($user_id,"user_id,manager_id");
+                if($userInfo->manager_id>0)
+                {
+                    $permission = 99;
+                }
+                else
+                {
+                    $permission = $userClubMemberShip->permission??0;
+                }
                 $this->redis->set($cacheName, $permission);
                 $this->redis->expire($cacheName, $cacheSettings->expire);
             }
@@ -433,7 +443,16 @@ class ClubService extends BaseService
         else
         {
             $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
-            $permission = $userClubMemberShip->permission??0;
+            //获取用户信息
+            $userInfo = (new UserService())->getUserInfo($user_id,"user_id,manager_id");
+            if($userInfo->manager_id>0)
+            {
+                $permission = 99;
+            }
+            else
+            {
+                $permission = $userClubMemberShip->permission??0;
+            }
             $this->redis->set($cacheName, $permission);
             $this->redis->expire($cacheName, $cacheSettings->expire);
         }
@@ -549,6 +568,59 @@ class ClubService extends BaseService
         }
         return $clubInfo;
     }
+    public function getClubListByCompany($company_id,$columns = 'club_id,club_name',$cache = 1)
+    {
+        $cacheSettings = $this->config->cache_settings->club_list_by_company;
+        $cacheName = $cacheSettings->name.$company_id;
+        $params =             [
+            "company_id='".$company_id."'",
+            'columns'=>'*',
+            'order' => 'club_id DESC'
+        ];
+        if($cache == 0)
+        {
+            //获取俱乐部列表
+            $clubList = \HJ\Club::find($params);
+            if($clubList)
+            {
+                $this->redis->set($cacheName,json_encode($clubList));
+                $this->redis->expire($cacheName,3600);
+            }
+            else
+            {
+                $clubList = [];
+            }
+        }
+        else
+        {
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if($cache)
+            {
+                $clubList = $cache;
+            }
+            else
+            {
+                //获取俱乐部列表
+                $clubList = \HJ\Club::find($params);
+                if($clubList)
+                {
+                    $this->redis->set($cacheName,json_encode($clubList));
+                    $this->redis->expire($cacheName,3600);
+                }
+                else
+                {
+                    $clubList = [];
+                }
+            }
+        }
+        foreach($clubList as $key => $value)
+        {
+            $clubInfo = $this->getClubInfo($value->club_id,$columns);
+            $clubList[$key]->clubInfo = $clubInfo;
+        }
+        return $clubList;
+    }
     /*
      * 成员参加的俱乐部列表
      */
@@ -623,6 +695,25 @@ class ClubService extends BaseService
             }
         }
         return $clubList;
+    }
+    public function getUserClubListWithPermission($user_id)
+    {
+        $user_id = 11879;
+        $userClubList = $this->getUserClubList($user_id,"member_id,club_id,permission");
+        $userInfo = (new UserService())->getUserInfo($user_id,"user_id,company_id,manager_id");
+        if($userInfo->manager_id > 0)
+        {
+            $currentClubList = (array_column($userClubList,'club_id'));
+            $clubList = $this->getClubListByCompany($userInfo->company_id);
+            foreach($clubList as $key => $clubInfo)
+            {
+                if(!in_array($clubInfo->club_id,$currentClubList))
+                {
+                    $userClubList[] = ["member_id"=>0,"club_id"=>$clubInfo->club_id,"permission"=>99,'clubInfo'=>$this->getClubInfo($clubInfo->club_id)];
+                }
+            }
+        }
+        return ($userClubList);
     }
 
 

@@ -23,7 +23,7 @@ class UserController extends BaseController
 	/*
      * 手机号密码登录
      * 参数
-     * mobiel（必填）：账号
+     * mobile（必填）：账号
      * password（必填）：密码
      * */
 	public function mobileLoginAction()
@@ -311,7 +311,7 @@ class UserController extends BaseController
 	/*
      * 报名活动
      * 参数
-     * mobiel（必填）：手机号
+     * mobile（必填）：手机号
      * user_name（必填）：用户姓名
      * department（必填）：所属部门
      * activity_id（必填）：活动id

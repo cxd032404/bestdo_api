@@ -358,17 +358,18 @@ class PageElementService extends BaseService
     }
 
     /*
-    * 活动报名
+    * 创建活动入口
     * userinfo 用户信息
     * company_id 公司id
     * data 用户包含的element信息
     * params 页面标识和company_id
     */
     public function getElementPage_activityCreate($data,$params,$user_info,$company_id){
+        $userClubListWithPermission = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
 
-        $user_info['data']['user_id'] = 11879;
-        $userClubList = (new ClubService())->getUserClubList($user_info['data']['user_id'],"member_id,club_id,permission");
-        $data['user_club_list'] = $userClubList;
+//        $userClubList = (new ClubService())->getUserClubList($user_info['data']['user_id'],"member_id,club_id,permission");
+
+        $data['user_club_list'] = $userClubListWithPermission;
         $data['member_limit'] = [100=>"100人",10=>"10人",3=>"3人"];
         $data['monthly_apply_limit'] = [1=>"1次",2=>"2次",3=>"3次"];
         return $data;
