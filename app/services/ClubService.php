@@ -24,7 +24,15 @@ class ClubService extends BaseService
           return $return;
       }
       //$return = ['result'=> 0,'msg'=>'申请成功'];
+      //判断当前俱乐部是否允许加入
+      $club_info = $this->getClubInfo($club_id,'allow_enter');
+      if($club_info->allow_enter == 0)
+      {
+          $return = ['result'=> 0,'msg'=>'俱乐部不允许加入'];
+          return $return;
+      }
       //判断是否已是俱乐部成员
+
       $member_ship = $this->getUserClubMembership($user_id,$club_id,0);
       if(isset($member_ship->member_id)&&$member_ship->status==1)
       {
@@ -212,6 +220,14 @@ class ClubService extends BaseService
        $club_id = isset($club_member_log_info->club_id)??0;
        $permission = $this->getUserClubPermission($user_id,$club_id,0);
        if($permission == 0)
+       {
+           return false;
+       }
+       //判断人数是否超限
+       $club_info = $this->getClubInfo($club_id,'member_limit');
+       $member_limit = $club_info->member_limit;
+       $club_member_count = $this->getClubMemberCount($club_id);
+       if($member_limit<=$club_member_count)
        {
            return false;
        }
@@ -648,10 +664,6 @@ class ClubService extends BaseService
         $number = (new HJ\ClubMember())->query()->where("club_id =".$club_id)->andWhere('status = 1')->execute()->count();
         return $number;
     }
-
-
-
-
 
 
 }
