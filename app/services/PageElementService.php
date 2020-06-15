@@ -373,7 +373,6 @@ class PageElementService extends BaseService
         $data['detail']['user_club_list'] = $userClubListWithPermission;
         $data['detail']['member_limit'] = [100=>"100人",10=>"10人",3=>"3人"];
         $data['detail']['monthly_apply_limit'] = [1=>"1次",2=>"2次",3=>"3次"];
-        print_r($data);die();
         return $data;
     }
 
