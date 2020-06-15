@@ -48,20 +48,19 @@ class ActivityService extends BaseService
                     $activityParams['weekly_rebuild'] = ($activityParams['weekly_rebuild']>=0 && $activityParams['weekly_rebuild']<=6)?$activityParams['weekly_rebuild']:-1;
                     //写入数据
                     $activity = new Activity();
+                    $activity->activity_name = $activityParams['activity_name'];
                     $activity->club_id = $activityParams['club_id'];
                     $activity->company_id = $user_info->company_id;
                     $activity->start_time = $activityParams['start_time'];
                     $activity->end_time = $activityParams['end_time'];
                     $activity->apply_start_time = $activityParams['apply_start_time'];
                     $activity->apply_end_time = $activityParams['apply_end_time'];
-                    $activity->create_time = $activity->update_time = date("Y-m-d H:i:s",$currentTime);
+                    $activity->create_time = date("Y-m-d H:i:s",$currentTime);
+                    $activity->update_time = date("Y-m-d H:i:s",$currentTime);
                     $activity->club_member_only = $activityParams['club_member_only'];
                     $activity->member_limit = $activityParams['member_limit'];
                     $activity->icon = "";
                     $activity->activity_sign = "";
-                    $activity->detail = "";
-                    //print_R($activity);
-                    /*
                     $activity->detail = json_encode(
                         [
                             "checkin"=>[],
@@ -69,18 +68,14 @@ class ActivityService extends BaseService
                             "weekly_rebuild"=>$activityParams['weekly_rebuild']??-1
                             ]
                     );
-                    */
-                    $create = $activity->save();
-                    echo "create:";
-                    var_dump($create);
-                    die();
+                    $create = $activity->create();
                     if ($create === false)
                     {
                         $return  = ['result'=>0,"msg"=>"活动创建失败，请稍后再试",'code'=>400];
                     }
                     else
                     {
-                        $return  = ['result'=>1,"msg"=>"活动创建成功！",'data'=>$this->getActivityInfo($activity->id),'code'=>200];
+                        $return  = ['result'=>1,"msg"=>"活动创建成功！",'data'=>$this->getActivityInfo($activity->activity_id),'code'=>200];
                     }
                 }
             }
@@ -91,7 +86,7 @@ class ActivityService extends BaseService
     public function getActivityByName($activityName,$end_time = "",$company_id =0)
     {
         $params =             [
-            "activity_name = '$activityName' and company_id = '$company_id' and end_time <".$end_time,
+            "activity_name = '$activityName' and company_id = '$company_id' and end_time <='".$end_time."'",
             "columns" => "activity_id"
         ];
         return (new Activity())->findFirst($params);
