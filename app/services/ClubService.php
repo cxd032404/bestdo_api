@@ -418,7 +418,7 @@ class ClubService extends BaseService
         if($cache == 1)
         {
             $permission = $this->redis->get($cacheName);
-            if(!empty($permission))
+            if(empty($permission))
             {
                 $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
                 $permission = $userClubMemberShip->permission??0;
@@ -476,7 +476,7 @@ class ClubService extends BaseService
         }
         $params = [
             $conditions,
-            "columns" => '*',
+            "columns" => $columns,
             "order" => $order,
             "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
         ];
@@ -539,8 +539,11 @@ class ClubService extends BaseService
                 }
             }
         }
+
         return $clubInfo;
     }
+
+
 
 
 
