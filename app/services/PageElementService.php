@@ -387,20 +387,27 @@ class PageElementService extends BaseService
         {
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
+        $club_info = (new ClubService())->getClubInfo($club_id,'club_name,icon');
+        $data['detail']['club_member_count'] = (new ClubService())->getClubMemberCount($club_id);
+        $data['detail']['club_name'] = $club_info->club_name;
+        $data['detail']['icon'] = $club_info->icon;
+
         $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id,'log_id,club_id,create_time,user_id',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',0),$this->getFromParams($params,'pageSize',0),$this->getFromParams($params,'result',0));
         $member_log_list = [];
-
         foreach ($club_member_logs as $key =>$value)
         {
-            $user_info = (new UserService())->getUserInfo($value->user_id??0,'user_id,nick_name,true_name');
+            $user_info = (new UserService())->getUserInfo($value->user_id??0,'user_id,nick_name,true_name,user_img');
             $member_log_list[$key]['user_id'] = $user_info->user_id;
             $member_log_list[$key]['nick_name'] = $user_info->nick_name;
             $member_log_list[$key]['true_name'] = $user_info->true_name;
+            $member_log_list[$key]['user_img'] = $user_info->user_img;
+            $member_log_list[$key]['log_id'] = $value->log_id;
+            $member_log_list[$key]['create_time'] = date('Y/m/d h:i',strtotime($value->create_time));
         }
         $data['detail']['member_log_list']= $member_log_list;
         return $data;
     }
-    
+
     //从页面参数重获取数据
     //$params:页面参数json串
     //$param_name: 变量名  .表示层级
