@@ -696,10 +696,22 @@ class ClubService extends BaseService
         }
         return $clubList;
     }
+
+
+    /*
+     * 拥有权限的俱乐部列表
+     */
     public function getUserClubListWithPermission($user_id)
     {
-        $user_id = 11879;
+        //$user_id = 11879;
         $userClubList = $this->getUserClubList($user_id,"member_id,club_id,permission");
+        foreach ($userClubList as $key=>$club_info)
+        {
+            if($club_info->permission==0)
+            {
+                unset($userClubList[$key]);
+            }
+        }
         $userInfo = (new UserService())->getUserInfo($user_id,"user_id,company_id,manager_id");
         if($userInfo->manager_id > 0)
         {
