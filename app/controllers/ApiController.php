@@ -20,7 +20,10 @@ class ApiController extends BaseController
 
 	public function testAction( $id = 0 )
 	{
-	    $data = (new ClubService())->getClubMemberLogInfo(1,'*',0,1,2)->toArray();
+	    $data = (new ClubService())->getUserClubListWithPermission(1);
+	    print_r($data);die();
+	    $count = (new ClubService())->getClubMemberCount(1);die();
+	    $data = (new ClubService())->getClubMemberLogInfo(1,'*',0,1,2,0)->toArray();
 	    print_r($data);die();
 
 

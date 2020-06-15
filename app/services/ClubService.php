@@ -25,7 +25,15 @@ class ClubService extends BaseService
           return $return;
       }
       //$return = ['result'=> 0,'msg'=>'申请成功'];
+      //判断当前俱乐部是否允许加入
+      $club_info = $this->getClubInfo($club_id,'allow_enter');
+      if($club_info->allow_enter == 0)
+      {
+          $return = ['result'=> 0,'msg'=>'俱乐部不允许加入'];
+          return $return;
+      }
       //判断是否已是俱乐部成员
+
       $member_ship = $this->getUserClubMembership($user_id,$club_id,0);
       if(isset($member_ship->member_id)&&$member_ship->status==1)
       {
@@ -213,6 +221,14 @@ class ClubService extends BaseService
        $club_id = isset($club_member_log_info->club_id)??0;
        $permission = $this->getUserClubPermission($user_id,$club_id,0);
        if($permission == 0)
+       {
+           return false;
+       }
+       //判断人数是否超限
+       $club_info = $this->getClubInfo($club_id,'member_limit');
+       $member_limit = $club_info->member_limit;
+       $club_member_count = $this->getClubMemberCount($club_id);
+       if($member_limit<=$club_member_count)
        {
            return false;
        }
@@ -419,7 +435,7 @@ class ClubService extends BaseService
         if($cache == 1)
         {
             $permission = $this->redis->get($cacheName);
-            if(!empty($permission))
+            if(empty($permission))
             {
                 $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
                 //获取用户信息
@@ -462,8 +478,8 @@ class ClubService extends BaseService
     /*
      * 俱乐部成员列表
      */
-    public function getClubMemberList($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$status='',$order = "member_id DESC"){
-        if(empty($status))
+    public function getClubMemberList($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$status=2,$order = "member_id DESC"){
+        if($status == 3)
         {
             $conditions = "club_id = ".$club_id;
         }else
@@ -481,6 +497,20 @@ class ClubService extends BaseService
                 "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
             ];
             $memberList = (new \HJ\ClubMember())->find($params);
+
+            $t = explode(",",$columns);
+            $return = [];
+            foreach($memberList as $key => $value)
+            {
+                foreach ($value as $k=>$v)
+                {
+                    if(!in_array($k,$t))
+                    {
+                        unset($memberList->$key->$k);
+                    }
+                }
+            }
+
             return $memberList;
     }
 
@@ -489,13 +519,14 @@ class ClubService extends BaseService
      *申请记录列表
      */
 
-    public function  getClubMemberLogInfo($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$result ='',$order = "log_id DESC"){
-        if(empty($result))
+    public function  getClubMemberLogInfo($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$result =3,$order = "log_id DESC"){
+        if($result == 3)
         {
             $conditions = "club_id = ".$club_id;
         }else
         {
             $conditions = "club_id = ".$club_id.' and result ='.$result;
+
         }
         if($start)
         {
@@ -503,7 +534,7 @@ class ClubService extends BaseService
         }
         $params = [
             $conditions,
-            "columns" => '*',
+            "columns" => $columns,
             "order" => $order,
             "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
         ];
@@ -566,6 +597,7 @@ class ClubService extends BaseService
                 }
             }
         }
+
         return $clubInfo;
     }
     public function getClubListByCompany($company_id,$columns = 'club_id,club_name',$cache = 1)
@@ -697,13 +729,19 @@ class ClubService extends BaseService
         return $clubList;
     }
 
+    /*
+     * 查询俱乐部人数
+     */
+    public function getClubMemberCount($club_id = 0){
+        $number = (new HJ\ClubMember())->query()->where("club_id =".$club_id)->andWhere('status = 1')->execute()->count();
+        return $number;
+    }
 
     /*
      * 拥有权限的俱乐部列表
      */
     public function getUserClubListWithPermission($user_id)
     {
-        //$user_id = 11879;
         $userClubList = $this->getUserClubList($user_id,"member_id,club_id,permission");
         foreach ($userClubList as $key=>$club_info)
         {
@@ -725,9 +763,9 @@ class ClubService extends BaseService
                 }
             }
         }
+        $userClubList = json_decode(json_encode($userClubList));
         return ($userClubList);
     }
-
 
 
 
