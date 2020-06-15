@@ -124,6 +124,7 @@ $config = [
         'user_club_membership'=>['name'=>'user_club_membership_','expire'=>3600],//用户对特定俱乐部的身份
         'user_club_permission_list'=>['name'=>'user_club_permission_list_','expire'=>3600],//用户拥有权限的俱乐部列表
         'club_info'=>['name'=>'club_info_','expire'=>3600],//俱乐部信息
+        'club_list_by_company'=>['name'=>'club_list_by_company_','expire'=>3600],//单个企业下的俱乐部列表
     ]
 
 
