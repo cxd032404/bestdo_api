@@ -393,11 +393,15 @@ class PageElementService extends BaseService
         {
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
+        //管理的俱乐部列表
+        $club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
+        print_r($club_list);die();
+
+
         $club_info = (new ClubService())->getClubInfo($club_id,'club_name,icon');
         $data['detail']['club_member_count'] = (new ClubService())->getClubMemberCount($club_id);
         $data['detail']['club_name'] = $club_info->club_name;
         $data['detail']['icon'] = $club_info->icon;
-
         $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id,'log_id,club_id,create_time,user_id',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',0),$this->getFromParams($params,'pageSize',0),$this->getFromParams($params,'result',0));
         $member_log_list = [];
         foreach ($club_member_logs as $key =>$value)

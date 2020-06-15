@@ -729,7 +729,6 @@ class ClubService extends BaseService
         return $clubList;
     }
 
-<<<<<<< HEAD
     /*
      * 查询俱乐部人数
      */
@@ -737,7 +736,6 @@ class ClubService extends BaseService
         $number = (new HJ\ClubMember())->query()->where("club_id =".$club_id)->andWhere('status = 1')->execute()->count();
         return $number;
     }
-=======
 
     /*
      * 拥有权限的俱乐部列表
@@ -769,8 +767,6 @@ class ClubService extends BaseService
         return ($userClubList);
     }
 
-
->>>>>>> dev
 
 
 }
