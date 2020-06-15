@@ -367,12 +367,13 @@ class PageElementService extends BaseService
     */
     public function getElementPage_activityCreate($data,$params,$user_info,$company_id){
         $userClubListWithPermission = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
-
+       // print_r($userClubListWithPermission);die();
 //        $userClubList = (new ClubService())->getUserClubList($user_info['data']['user_id'],"member_id,club_id,permission");
 
-        $data['user_club_list'] = $userClubListWithPermission;
-        $data['member_limit'] = [100=>"100人",10=>"10人",3=>"3人"];
-        $data['monthly_apply_limit'] = [1=>"1次",2=>"2次",3=>"3次"];
+        $data['detail']['user_club_list'] = $userClubListWithPermission;
+        $data['detail']['member_limit'] = [100=>"100人",10=>"10人",3=>"3人"];
+        $data['detail']['monthly_apply_limit'] = [1=>"1次",2=>"2次",3=>"3次"];
+        print_r($data);die();
         return $data;
     }
 
@@ -394,11 +395,16 @@ class PageElementService extends BaseService
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
         //管理的俱乐部列表
-        $club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
-        print_r($club_list);die();
-
-
+        $club_list_permission = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
+        $club_list=[];
+        foreach ($club_list_permission as $key=> $value)
+        {
+            $club_list[$key]['club_id'] = $value->clubInfo->club_id;
+            $club_list[$key]['club_name'] = $value->clubInfo->club_name;
+        }
+        $data['detail']['club_list'] = $club_list;
         $club_info = (new ClubService())->getClubInfo($club_id,'club_name,icon');
+        $data['detail']['club_id'] = $club_id;
         $data['detail']['club_member_count'] = (new ClubService())->getClubMemberCount($club_id);
         $data['detail']['club_name'] = $club_info->club_name;
         $data['detail']['icon'] = $club_info->icon;

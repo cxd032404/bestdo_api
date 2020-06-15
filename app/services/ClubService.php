@@ -742,7 +742,6 @@ class ClubService extends BaseService
      */
     public function getUserClubListWithPermission($user_id)
     {
-        //$user_id = 11879;
         $userClubList = $this->getUserClubList($user_id,"member_id,club_id,permission");
         foreach ($userClubList as $key=>$club_info)
         {
@@ -764,6 +763,7 @@ class ClubService extends BaseService
                 }
             }
         }
+        $userClubList = json_decode(json_encode($userClubList));
         return ($userClubList);
     }
 
