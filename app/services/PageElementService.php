@@ -319,7 +319,6 @@ class PageElementService extends BaseService
         $permission = $clubService->getUserClubPermission($user_info->user_id??0,$clubInfo->club_id??0);
         $data['detail']->permission = $permission;
         return $data;
-
     }
 
 
@@ -360,6 +359,19 @@ class PageElementService extends BaseService
 
     /*
     * 俱乐部申请记录
+    * 活动报名
+     */
+    public function getElementPage_activityCreate($data,$params,$user_info,$company_id){
+
+        $user_info['data']['user_id'] = 11879;
+        $userClubList = (new ClubService())->getUserClubList($user_info['data']['user_id'],"member_id,club_id,permission");
+        $data['user_club_list'] = $userClubList;
+        $data['member_limit'] = [100=>"100人",10=>"10人",3=>"3人"];
+        $data['monthly_apply_limit'] = [1=>"1次",2=>"2次",3=>"3次"];
+        return $data;
+    }
+
+    /*
     * userinfo 用户信息
     * company_id 公司id
     * data 用户包含的element信息
@@ -375,7 +387,6 @@ class PageElementService extends BaseService
         {
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
-
         $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id,'log_id,club_id,create_time,user_id',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',0),$this->getFromParams($params,'pageSize',0),$this->getFromParams($params,'result',0));
         $member_log_list = [];
 
@@ -389,8 +400,6 @@ class PageElementService extends BaseService
         $data['detail']['member_log_list']= $member_log_list;
         return $data;
     }
-
-
     
     //从页面参数重获取数据
     //$params:页面参数json串
