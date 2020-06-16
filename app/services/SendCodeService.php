@@ -57,7 +57,7 @@ class SendCodeService extends BaseService
             $return_sms =  $this->sendAliDaYuAuthCode($data);
             if($return_sms['Code'] == "OK"){
                 //短信发送记录存入数据库中
-                $sendcode = new SendCode();
+                $sendcode = new HJ\SendCode();
                 $sendcode->to = $mobile;
                 $sendcode->type = "mobile";
                 $sendcode->code = $authCodeMT;
@@ -97,7 +97,7 @@ class SendCodeService extends BaseService
             $return_sms =  $this->sendAliDaYuAuthCode($data);
             if($return_sms['Code'] == "OK"){
                 //短信发送记录存入数据库中
-                $sendcode = new SendCode();
+                $sendcode = new HJ\SendCode();
                 $sendcode->to = $mobile;
                 $sendcode->type = "mobile";
                 $sendcode->code = $authCodeMT;
@@ -139,7 +139,7 @@ class SendCodeService extends BaseService
             $return_sms =  $this->sendAliDaYuAuthCode($data);
             if($return_sms['Code'] == "OK"){
                 //短信发送记录存入数据库中
-                $sendcode = new SendCode();
+                $sendcode = new HJ\SendCode();
                 $sendcode->to = $mobile;
                 $sendcode->type = "mobile";
                 $sendcode->code = $authCodeMT;
