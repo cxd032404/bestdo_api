@@ -309,42 +309,6 @@ class UserController extends BaseController
     }
 
 	/*
-     * 报名活动
-     * 参数
-     * mobile（必填）：手机号
-     * user_name（必填）：用户姓名
-     * department（必填）：所属部门
-     * activity_id（必填）：活动id
-     * UserToken（必填）：用户token
-     * */
-	public function activitySignAction()
-	{
-		/*验证token开始*/
-		$return  = (new UserService)->getDecrypt();
-		if($return['result']!=1){
-			return $this->failure([],$return['msg'],$return['code']);
-		}
-		/*验证token结束*/
-		$user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
-		//接收参数并格式化
-		$data = $this->request->get();
-		$map['mobile'] = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
-		$map['user_name'] = isset($data['user_name'])?preg_replace('# #','',$data['user_name']):"";
-		$map['department'] = isset($data['department'])?preg_replace('# #','',$data['department']):"";
-		$map['activity_id'] = isset($data['activity_id'])?intval($data['activity_id']):0;
-		//调用手机号密码登录方法
-		$return  = (new UserService)->activitySign($map,$user_id);
-		//日志记录
-		$this->logger->info(json_encode($return));
-		//返回值判断
-		if($return['result']!=1){
-			return $this->failure([],$return['msg'],$return['code']);
-		}
-		return $this->success($return['data']);
-
-	}
-
-	/*
      * 完善用户信息
      * 参数
      * nick_name（选填）：用户昵称

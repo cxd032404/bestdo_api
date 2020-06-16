@@ -176,8 +176,8 @@ class PageElementService extends BaseService
         $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail");
         if($listInfo->activity_id>0)
         {
-            $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo->activity_id);
-            if(!$activitylog_info)
+            $activityLog = (new ActivityService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo->activity_id);
+            if(!$activityLog)
             {
                 $data['detail']['available'] = 0;
             }
@@ -343,15 +343,14 @@ class PageElementService extends BaseService
         }
         else
         {
-            $activitylog_info = (new UserService())->getActivityLogByUser($user_info['data']['user_id'],$data['detail']['activity_id']);
-            if(!$activitylog_info)
+            $activityLog = (new ActivityService())->getActivityLogByUser($user_info['data']['user_id'],$data['detail']['activity_id']);
+            if(!$activityLog)
             {
                 $data['detail']['applied'] = 0;
             }
             else
             {
                 $data['detail']['applied'] = 1;
-                //unset($pageElementList[$key]);
             }
         }
         return $data;
