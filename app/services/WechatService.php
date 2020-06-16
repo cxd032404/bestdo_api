@@ -81,6 +81,7 @@ class WechatService extends BaseService
             //var_dump($userinfo);
             if($userinfo){
                 $userinfo->wechatid = $oauth_userinfo['openid'];
+                $userinfo->unionid = $oauth_userinfo['unionid']??"";
                 $userinfo->nick_name = $oauth_userinfo['nickname'];
                 $userinfo->sex = $oauth_userinfo['sex'];
                 $userinfo->user_img = $oauth_userinfo['headimgurl'];
