@@ -20,19 +20,6 @@ class ApiController extends BaseController
 
 	public function testAction( $id = 0 )
 	{
-	    $data = (new ClubService())->getUserClubListWithPermission(1);
-	    print_r($data);die();
-	    $count = (new ClubService())->getClubMemberCount(1);die();
-	    $data = (new ClubService())->getClubMemberLogInfo(1,'*',0,1,2,0)->toArray();
-	    print_r($data);die();
-
-
-        $data = (new WechatController())->sendMessage('oPCk01ftkc3CX4bybn_bVOWylKr8','-Qq05dZSlDIf7LyuSWf0V3tJ9AuXjypdempKDTSGUio','史说政的测试信息');
-            print_r($data);die();
-	    (new WechatController())->sendMessage('oPCk01ftkc3CX4bybn_bVOWylKr8',1,'史说政的测试信息');
-        die();
-        $data = (new listService())->getListInfo(1,'list_type,list_id');
-        print_r($data);die();
 	    $return  = (new TestService)->test();
         //$return = $oService->test();
         $this->logger->info(json_encode($return));

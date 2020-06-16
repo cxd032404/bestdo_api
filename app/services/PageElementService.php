@@ -321,6 +321,32 @@ class PageElementService extends BaseService
         return $data;
     }
 
+     /*
+     * 俱乐部成员列表
+     * userinfo 用户信息
+     * company_id 公司id
+     * data 用户包含的element信息
+     * params 页面标识和company_id
+     */
+    public function getElementPage_clubMemberList($data,$params,$user_info,$company_id){
+        if(isset($data['detail']['club_id']))
+        {
+            $club_id = $data['detail']['club_id'];
+        }
+        else//页面获取
+        {
+            $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
+        }
+
+        $club_member_list = (new ClubService())->ClubMemberList();
+
+
+
+
+    }
+
+
+
 
     /*
     * 活动报名

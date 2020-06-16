@@ -477,18 +477,26 @@ class ClubService extends BaseService
 
     /*
      * 俱乐部成员列表
+     * status 0 已不是成员 1俱乐部成员 2所有状态
      */
     public function getClubMemberList($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$status=2,$order = "member_id DESC"){
-        if($status == 3)
+
+        if($status == 2)
         {
             $conditions = "club_id = ".$club_id;
         }else
         {
             $conditions = "club_id = ".$club_id.' and status ='.$status;
         }
+
         if($start)
         {
             $conditions.= ' and member_id <'.$start;
+        }
+
+        if($permission!=0)
+        {
+            $conditions .= 'and permission > 0';
         }
         $params = [
                 $conditions,
@@ -517,6 +525,7 @@ class ClubService extends BaseService
 
     /*
      *申请记录列表
+     * result 0 待审核 1已通过 2失败 3通过和失败  4所有状态
      */
 
     public function  getClubMemberLogInfo($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$result =4,$order = "log_id DESC"){
