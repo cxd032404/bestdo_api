@@ -328,24 +328,62 @@ class PageElementService extends BaseService
      * data 用户包含的element信息
      * params 页面标识和company_id
      */
-    public function getElementPage_clubMemberList($data,$params,$user_info,$company_id){
-        if(isset($data['detail']['club_id']))
-        {
+    public function getElementPage_clubMemberList($data,$params,$user_info,$company_id)
+    {
+        if (isset($data['detail']['club_id'])) {
             $club_id = $data['detail']['club_id'];
-        }
-        else//页面获取
+        } else//页面获取
         {
-            $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
+            $club_id = $this->getFromParams($params, $data['detail']['from_params'], 0);
         }
-
-        $club_member_list = (new ClubService())->ClubMemberList();
-
-
-
-
+        $club_info = (new ClubService())->getClubInfo($club_id,'club_name,icon');
+        $data['detail']['club_id'] = $club_id;
+        $data['detail']['club_member_count'] = (new ClubService())->getClubMemberCount($club_id);
+        $data['detail']['club_name'] = $club_info->club_name;
+        $data['detail']['icon'] = $club_info->icon;
+        $club_member_list = (new ClubService())->getClubMemberList($club_id, '*', $this->getFromParams($params, 'start', 0), $this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3), 1)->toArray();
+        foreach ($club_member_list as $key => $value)
+        {
+            $club_member_info = (new UserService())->getUserInfo($value['user_id'],'user_id,nick_name,true_name,user_img');
+            $club_member_list[$key]['nick_name']=$club_member_info->nick_name;
+            $club_member_list[$key]['true_name']=$club_member_info->true_name;
+            $club_member_list[$key]['user_img']=$club_member_info->user_img;
+        }
+        $data['detail']['club_member_list'] = $club_member_list;
+        return $data;
     }
 
+    /*
+    * 用户参加的俱乐部列表
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
+    public function getElementPage_attendClubList($data,$params,$user_info,$company_id){
+          $club_list_info = (new  ClubService())->getUserClubList($user_info['data']['user_id'],'club_id,club_name,icon');
+          $club_list = [];
+          foreach ($club_list_info as $key=> $value)
+          {
+              $club_list[$key]['club_id'] = $value->clubInfo->club_id;
+              $club_list[$key]['club_name'] = $value->clubInfo->club_name;
+              $club_list[$key]['icon'] = $value->clubInfo->icon;
+          }
+           $data['detail'] = $club_list;
+           return $data;
+    }
 
+    /*
+     * 用户参加的活动列表
+     * userinfo 用户信息
+     * company_id 公司id
+     * data 用户包含的element信息
+     * params 页面标识和company_id
+     */
+     public function getElementPage_attendActivityList(){
+
+
+     }
 
 
     /*
@@ -396,10 +434,10 @@ class PageElementService extends BaseService
        // print_r($userClubListWithPermission);die();
 //        $userClubList = (new ClubService())->getUserClubList($user_info['data']['user_id'],"member_id,club_id,permission");
 
-        $data['detail']['user_club_list'] = $userClubListWithPermission;
-        $data['detail']['member_limit'] = [100=>"100人",10=>"10人",3=>"3人"];
-        $data['detail']['monthly_apply_limit'] = [1=>"1次",2=>"2次",3=>"3次"];
-        return $data;
+        $data['detail']['user_club_list'] =array_values(json_decode(json_encode($userClubListWithPermission),true));
+       $data['detail']['member_limit'] = [100,10,3];
+       $data['detail']['monthly_apply_limit'] = [1,2,3];
+       return $data;
     }
 
     /*

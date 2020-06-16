@@ -218,9 +218,9 @@ class ClubService extends BaseService
   */
    public function applicationPass($user_id,$log_id = 0){
        $club_member_log_info = $this->getClubMemberLog($log_id);
-       $club_id = isset($club_member_log_info->club_id)??0;
+       $club_id = $club_member_log_info->club_id;
        $permission = $this->getUserClubPermission($user_id,$club_id,0);
-       if($permission == 0)
+       if(!$permission)
        {
            return false;
        }
@@ -272,7 +272,10 @@ class ClubService extends BaseService
            $insert = $this->addClubMember($insert_params);
            if($insert)
            {
+               //刷新缓存
                $this->getUserClubMembership($send_user,$club_id,0);
+               $this->getUserClubList($send_user,'member_id',1,0);
+               $this->getUserClubListWithPermission($send_user);
                return true;
            }else
            {
@@ -325,6 +328,9 @@ class ClubService extends BaseService
             $insert_result = $insert->create();
             if($insert_result)
             {
+                $this->getUserClubMembership($user_id,$club_id,0);
+                $this->getUserClubList($user_id,'member_id',1,0);
+                $this->getUserClubListWithPermission($user_id);
                 $return = ['result'=> 1,'msg'=>'退出成功'];
             }else
             {
@@ -501,6 +507,7 @@ class ClubService extends BaseService
      */
     public function getClubMemberList($club_id,$columns = "*",$start = 0,$page = 1,$pageSize =4,$status=2,$order = "member_id DESC"){
 
+
         if($status == 2)
         {
             $conditions = "club_id = ".$club_id;
@@ -514,10 +521,6 @@ class ClubService extends BaseService
             $conditions.= ' and member_id <'.$start;
         }
 
-        if($permission!=0)
-        {
-            $conditions .= 'and permission > 0';
-        }
         $params = [
                 $conditions,
                 "columns" => '*',
@@ -572,7 +575,7 @@ class ClubService extends BaseService
         $memberList = (new \HJ\ClubMemberLog())->find($params);
         return $memberList;
     }
-    public function getClubInfo($club_id,$columns = 'club_id,club_name',$cache = 1)
+    public function getClubInfo($club_id,$columns = 'club_id,club_name,icon',$cache = 1)
     {
         $cacheSettings = $this->config->cache_settings->club_info;
         $cacheName = $cacheSettings->name.$club_id;
