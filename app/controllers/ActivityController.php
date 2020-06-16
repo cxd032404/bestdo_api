@@ -62,7 +62,7 @@ class ActivityController extends BaseController
         }
 		else
         {
-            return $this->failure($create['msg'],$create['code']);
+            return $this->failure([],$create['msg'],$create['code']);
 
         }
     }

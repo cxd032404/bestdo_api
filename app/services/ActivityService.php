@@ -31,7 +31,7 @@ class ActivityService extends BaseService
         {
             //检查对当前俱乐部的权限
             $permission = (new ClubService())->getUserClubPermission($user_info->user_id,$activityParams['club_id'],1);
-            if($permission == 0)
+            if(intval($permission) == 0)
             {
                 $return  = ['result'=>0,"msg"=>"您没有执行此操作的权限哦",'code'=>403];
             }
@@ -51,6 +51,7 @@ class ActivityService extends BaseService
                     $activity->activity_name = $activityParams['activity_name'];
                     $activity->club_id = $activityParams['club_id'];
                     $activity->company_id = $user_info->company_id;
+                    $activity->create_user_id = $user_info->user_id;
                     $activity->start_time = $activityParams['start_time'];
                     $activity->end_time = $activityParams['end_time'];
                     $activity->apply_start_time = $activityParams['apply_start_time'];

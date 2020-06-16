@@ -421,16 +421,26 @@ class ClubService extends BaseService
             $permission = $this->redis->get($cacheName);
             if(!empty($permission))
             {
-                $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
                 //获取用户信息
                 $userInfo = (new UserService())->getUserInfo($user_id,"user_id,manager_id");
+                //超级管理员
                 if($userInfo->manager_id>0)
                 {
                     $permission = 99;
                 }
                 else
                 {
-                    $permission = $userClubMemberShip->permission??0;
+                    //如果指定俱乐部
+                    if($club_id>0)
+                    {
+                        //查询成员列表
+                        $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
+                        $permission = $userClubMemberShip->permission??0;
+                    }
+                    else
+                    {
+                        $permission = 0;
+                    }
                 }
                 $this->redis->set($cacheName, $permission);
                 $this->redis->expire($cacheName, $cacheSettings->expire);
@@ -442,16 +452,26 @@ class ClubService extends BaseService
         }
         else
         {
-            $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
             //获取用户信息
             $userInfo = (new UserService())->getUserInfo($user_id,"user_id,manager_id");
+            //超级管理员
             if($userInfo->manager_id>0)
             {
                 $permission = 99;
             }
             else
             {
-                $permission = $userClubMemberShip->permission??0;
+                //如果指定俱乐部
+                if($club_id>0)
+                {
+                    //查询成员列表
+                    $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
+                    $permission = $userClubMemberShip->permission??0;
+                }
+                else
+                {
+                    $permission = 0;
+                }
             }
             $this->redis->set($cacheName, $permission);
             $this->redis->expire($cacheName, $cacheSettings->expire);
