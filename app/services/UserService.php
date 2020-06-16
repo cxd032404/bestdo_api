@@ -25,9 +25,7 @@ class UserService extends BaseService
         "mobile_empty"=>"手机号无效，请填写正确的手机号码！",
         "password_empty"=>"密码无效，请填写正确的密码！",
         "sendcode_empty"=>"验证码无效，请填写验证码！",
-        "user_name_empty"=>"用户姓名无效，请填写姓名！",
         "activity_empty"=>"活动无效，请选择正确的活动！",
-        "department_empty"=>"所属部门无效，请填写所属部门！",
         "companyuser_empty"=>"账户验证失败，当前账户尚未获得登录/注册权限！",
         "posts_empty"=>"列表内容查询不到，请选择正确的列表内容！",
         "company_id_empty"=>"企业编号无效",
@@ -43,7 +41,6 @@ class UserService extends BaseService
         "register_error"=>"注册失败！",
         "decrypt_error"=>"用户token解析失败！",
         "code_status_error"=>"验证码状态修改失败！",
-        "activity_error"=>"报名失败！",
         "update_userinfo_error"=>"用户信息更新失败！",
         "posts_error"=>"点赞失败！",
         "companyuser_status_error"=>"企业用户名单状态修改失败！",
@@ -67,7 +64,6 @@ class UserService extends BaseService
         "changepwd_success"=>"密码修改成功！",
         "register_success"=>"注册成功！",
         "decrypt_success"=>"用户token解析成功！",
-        "activity_success"=>"报名成功！",
         "update_userinfo_success"=>"用户信息更新成功！",
         "posts_success"=>"成功！",
         "posts_del_success"=>"活动记录删除成功！",
@@ -391,58 +387,7 @@ class UserService extends BaseService
     }
 
 
-    //活动报名方法
-    public function activitySign($map,$user_id=0)
-    {
-        $common = new Common();
-        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
-        if( empty($map['mobile']) || !$common->check_mobile($map['mobile']) ){
-            $return['msg']  = $this->msgList['mobile_empty'];
-        }else if(empty($map['user_name'])){
-            $return['msg']  = $this->msgList['user_name_empty'];
-        }
-        /*else if(empty($map['department'])){
-            $return['msg']  = $this->msgList['department_empty'];
-        }*/
-        else if(empty($map['activity_id'])){
-            $return['msg']  = $this->msgList['activity_empty'];
-        }else{
-            //查询活动数据
-            $configactivity = \HJ\Activity::findFirst(["activity_id = '".$map['activity_id']."'","columns"=>['activity_id','apply_start_time','apply_end_time','start_time','end_time','detail']]);
-            if(!isset($configactivity->activity_id)){
-                $return['msg']  = $this->msgList['activity_empty'];
-            }else if(time()<strtotime($configactivity->start_time)){
-                $return['msg']  = $this->msgList['activity_not_no'];
-            }else if(time()>strtotime($configactivity->end_time)){
-                $return['msg']  = $this->msgList['activity_ended'];
-            }else if(time()<strtotime($configactivity->apply_start_time) || time()>strtotime($configactivity->apply_end_time)){
-                $return['msg']  = $this->msgList['activity_expire'];
-            }else{
-                $activitylog_info = \HJ\UserActivityLog::findFirst([
-                    "activity_id=:activity_id: and user_id=:user_id:",
-                    'bind'=>['activity_id'=>$map['activity_id'], 'user_id'=>$user_id],
-                    'order'=>'id desc'
-                ]);
-                if(isset($activitylog_info->id)){
-                    $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[json_decode($configactivity['detail'])]];
-                }else{
-                    //添加用户
-                    $useractivitylog = new \HJ\UserActivityLog();
-                    $useractivitylog->user_id = $user_id;
-                    $useractivitylog->activity_id = $map['activity_id'];
-                    $useractivitylog->user_name = $map['user_name'];
-                    $useractivitylog->mobile = $map['mobile'];
-                    $useractivitylog->department = $map['department'];
-                    if ($useractivitylog->create() === false) {
-                        $return['msg']  = $this->msgList['activity_error'];
-                    }else{
-                        $return  = ['result'=>1, 'msg'=>$this->msgList['activity_success'], 'code'=>200, 'data'=>[json_decode($configactivity['detail'])]];
-                    }
-                }
-            }
-        }
-        return $return;
-    }
+
 
     //完善用户信息
     public function updateUserInfo($map,$user_id="")
@@ -841,14 +786,7 @@ class UserService extends BaseService
         $return  = ['data'=>$post_list,'count'=>$count,'total_page'=>ceil($count/$pageSize)];
         return $return;
     }
-    public function getActivityLogByUser($user_id,$activity_id)
-    {
-        return  \HJ\UserActivityLog::findFirst([
-            "activity_id=:activity_id: and user_id=:user_id:",
-            'bind'=>['activity_id'=>$activity_id, 'user_id'=> $user_id] ,
-            'order'=>'id desc'
-        ]);
-    }
+
     //获取用户信息
     public function getUserInfo($user_id,$columns = 'user_id,nick_name,true_name,user_img',$cache = 1)
     {

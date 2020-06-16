@@ -3,7 +3,14 @@ use HJ\Activity;
 use HJ\UserInfo;
 class ActivityService extends BaseService
 {
-	private $msg = 'success';
+    private $msgList = [
+        "activity_empty"=>"活动无效，请选择正确的活动！",
+        "activity_apply_not_started"=>"活动尚未开启报名，请耐心等待！",
+        "activity_ended"=>"活动已结束，不可报名！",
+        "activity_expire"=>"当前时间不在报名时间内！",
+        "activity_apply_success"=>"报名成功！",
+        "activity_apply_error"=>"报名失败！",
+    ];
 
     
     public function createActivity($activityParams = [],$user_info)
@@ -226,5 +233,55 @@ class ActivityService extends BaseService
             }
         }
         return $activity;
+    }
+    //活动报名方法
+    public function activityApply($activity_id,$user_id=0)
+    {
+        $common = new Common();
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
+        if(empty($activity_id)){
+            $return['msg']  = $this->msgList['activity_empty'];
+        }else{
+            //查询活动数据
+            $activityInfo = $this->getActivityInfo($activity_id,'*');
+            if(!isset($activityInfo->activity_id)){
+                $return['msg']  = $this->msgList['activity_empty'];
+            }else if(time()<strtotime($activityInfo->apply_start_time)){
+                $return['msg']  = $this->msgList['activity_apply_not_started'];
+            }else if(time()>strtotime($activityInfo->end_time)){
+                $return['msg']  = $this->msgList['activity_ended'];
+            }else if(time()<strtotime($activityInfo->apply_start_time) || time()>strtotime($activityInfo->apply_end_time)){
+                $return['msg']  = $this->msgList['activity_expire'];
+            }else{
+                $activityLog = $this->getActivityLogByUser($user_id,$activity_id);
+                if(isset($activityLog->id)){
+                    $return  = ['result'=>1, 'msg'=>$this->msgList['activity_apply_success'], 'code'=>200, 'data'=>$activityLog];
+                }else{
+                    $userInfo = (new UserService())->getUserInfo($user_id,"user_id,nick_name,true_name,mobile",1);
+                    //添加记录
+                    $useractivitylog = new \HJ\UserActivityLog();
+                    $useractivitylog->user_id = $user_id;
+                    $useractivitylog->activity_id = $activity_id;
+                    $useractivitylog->user_name = $userInfo->true_name;
+                    $useractivitylog->mobile = $userInfo->mobile??"";
+                    $useractivitylog->department = "";
+                    $useractivitylog->create_time = date("Y-m-d H:i:s");
+                    if ($useractivitylog->create() === false) {
+                        $return['msg']  = $this->msgList['activity_apply_error'];
+                    }else{
+                        $return  = ['result'=>1, 'msg'=>$this->msgList['activity_apply_success'], 'code'=>200, 'data'=>$useractivitylog];
+                    }
+                }
+            }
+        }
+        return $return;
+    }
+    public function getActivityLogByUser($user_id,$activity_id)
+    {
+        return  \HJ\UserActivityLog::findFirst([
+            "activity_id=:activity_id: and user_id=:user_id:",
+            'bind'=>['activity_id'=>$activity_id, 'user_id'=> $user_id] ,
+            'order'=>'id desc'
+        ]);
     }
 }
