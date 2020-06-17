@@ -601,5 +601,24 @@ class PageElementService extends BaseService
 
 
 
+    /*
+     * 更新活动信息页面
+     */
+
+    public function getElementPage_activityUpdate($data,$params,$user_info,$company_id){
+        if(isset($data['detail']['activity_id']))
+        {
+            $activity_id = $data['detail']['activity_id'];
+        }
+        else//页面获取
+        {
+            $activity_id = $this->getFromParams($params,$data['detail']['from_params'],0);
+        }
+        $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
+        $data['detail']['activity_info'] = $activity_info;
+        $data['detail']['member_limit'] = [100,10,3];
+        $data['detail']['monthly_apply_limit'] = [1,2,3];
+        return $data;
+    }
 
 }
