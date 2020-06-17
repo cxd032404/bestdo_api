@@ -235,6 +235,33 @@ class ActivityService extends BaseService
         }
         return $activity;
     }
+
+    /*
+     *获取用户参加的活动列表
+     */
+    public function getActivityList($user_id,$start = 0,$page = 1,$pageSize = 3,$order = 'id DESC'){
+        $conditions = 'user_id ='.$user_id;
+        if($start>0)
+        {
+            $conditions .= 'id >'.$start;
+        }
+        $params = [
+            $conditions,
+            "order" => $order,
+            "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+        ];
+        $activityList = (new \HJ\UserActivityLog())->find($params);
+        return $activityList;
+    }
+
+    /*
+     * 获取活动参加人数
+     */
+    public function getActivityMemberCount($activity_id){
+        $count =  (new \HJ\UserActivityLog())->query()->where('activity_id ='.$activity_id)->execute()->count();
+        return $count;
+
+}
     //活动报名方法
     public function activityApply($activity_id,$user_id=0)
     {

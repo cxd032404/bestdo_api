@@ -369,7 +369,7 @@ class PageElementService extends BaseService
               $club_list[$key]['club_name'] = $value->clubInfo->club_name;
               $club_list[$key]['icon'] = $value->clubInfo->icon;
           }
-           $data['detail'] = $club_list;
+           $data['detail']['club_list'] = $club_list;
            return $data;
     }
 
@@ -380,9 +380,33 @@ class PageElementService extends BaseService
      * data 用户包含的element信息
      * params 页面标识和company_id
      */
-     public function getElementPage_attendActivityList(){
-
-
+     public function getElementPage_attendActivityList($data,$params,$user_info,$company_id){
+           $activity = (new ActivityService())->getActivityList($user_info['data']['user_id'],$this->getFromParams($params,'start'),$this->getFromParams($params,'page'),$this->getFromParams($params,'pageSize'))->toArray();
+           foreach ($activity as $key=>$value)
+           {
+               $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
+               $activity_member_count = (new ActivityService())->getActivityMemberCount($value['activity_id']);
+               //活动人数
+               $activity_list[$key]['count'] = $activity_member_count;
+               $activity_list[$key]['activity_name'] = $activity_info->activity_name;
+               $activity_list[$key]['club_id'] = $activity_info->club_id;
+               $activity_list[$key]['icon'] = $activity_info->icon;
+               $activity_list[$key]['start_time'] = $activity_info->start_time;
+               $activity_list[$key]['end_time'] = $activity_info->end_time;
+               if(time()<$activity_info->start_time)
+               {
+                   $status = 0;
+               }elseif(time()>$activity_info->end_time)
+               {
+                   $status = 2;
+               }else
+               {
+                   $status = 1;
+               }
+               $activity_list[$key]['status'] = $status;
+           }
+           $data['detail']['activity_list'] = $activity_list;
+           return $data;
      }
 
 
@@ -432,11 +456,12 @@ class PageElementService extends BaseService
         $userClubListWithPermission = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
        // print_r($userClubListWithPermission);die();
 //        $userClubList = (new ClubService())->getUserClubList($user_info['data']['user_id'],"member_id,club_id,permission");
+        $userClubListWithPermission = get_object_vars($userClubListWithPermission);
 
-        $data['detail']['user_club_list'] =array_values(json_decode(json_encode($userClubListWithPermission),true));
-       $data['detail']['member_limit'] = [100,10,3];
-       $data['detail']['monthly_apply_limit'] = [1,2,3];
-       return $data;
+        $data['detail']['user_club_list'] =array_values($userClubListWithPermission);
+        $data['detail']['member_limit'] = [100,10,3];
+        $data['detail']['monthly_apply_limit'] = [1,2,3];
+        return $data;
     }
 
     /*
