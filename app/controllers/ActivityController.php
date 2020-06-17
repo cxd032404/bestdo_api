@@ -54,6 +54,11 @@ class ActivityController extends BaseController
         $activityData['monthly_apply_limit'] = intval($data['monthly_apply_limit']??1);
         $activityData['club_id'] = intval($data['club_id']??0);
         $activityData['weekly_rebuild'] = intval($data['weekly_rebuild']??-1);
+        $activityData['connect_activity_id'] = intval($data['connect_activity_id']??0);
+        $activityData['checkin'] = $data['checkin']??[];
+
+        //ALTER TABLE `config_activity` ADD `connect_activity_id` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '关联的活动id' AFTER `activity_id`, ADD INDEX (`connect_activity_id`);
+
         //创建活动
         $create = (new ActivityService())->createActivity($activityData, $userInfo);
 		if($create['result'])
@@ -102,6 +107,8 @@ class ActivityController extends BaseController
         $activityData['monthly_apply_limit'] = intval($data['monthly_apply_limit']??1);
         $activityData['club_id'] = intval($data['club_id']??0);
         $activityData['weekly_rebuild'] = intval($data['weekly_rebuild']??-1);
+        $activityData['connect_activity_id'] = intval($data['connect_activity_id']??0);
+        $activityData['checkin'] = $data['checkin']??[];
         //更新活动
         $update = (new ActivityService())->updateActivity($activityId,$activityData, $userInfo);
         if($update['result'])
