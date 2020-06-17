@@ -454,13 +454,15 @@ class PageElementService extends BaseService
     */
     public function getElementPage_activityCreate($data,$params,$user_info,$company_id){
         $userClubListWithPermission = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
-       // print_r($userClubListWithPermission);die();
-//        $userClubList = (new ClubService())->getUserClubList($user_info['data']['user_id'],"member_id,club_id,permission");
-        $userClubListWithPermission = get_object_vars($userClubListWithPermission);
 
+        $userClubListWithPermission = json_decode(json_encode($userClubListWithPermission),true);
+        $user_info['data']['user_id'] = 11907;
+        $positionList = (new ActivityService())->getPositionListByCreater($user_info['data']['company_id'],$user_info['data']['user_id']);
         $data['detail']['user_club_list'] =array_values($userClubListWithPermission);
         $data['detail']['member_limit'] = [100,10,3];
         $data['detail']['monthly_apply_limit'] = [1,2,3];
+        $data['detail']['recent_position_list'] = array_values($positionList);
+
         return $data;
     }
 
@@ -539,7 +541,7 @@ class PageElementService extends BaseService
      */
 
     public function getElementPage_activityInfo($data,$params,$user_info,$company_id){
-        if(isset($data['detail']['activity']))
+        if(isset($data['detail']['activity_id']))
         {
             $activity_id = $data['detail']['activity_id'];
         }
@@ -547,7 +549,6 @@ class PageElementService extends BaseService
         {
             $activity_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
-
         $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
         $data['detail']['activity_info'] = $activity_info;
         return $data;
