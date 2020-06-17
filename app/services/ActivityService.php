@@ -264,19 +264,21 @@ class ActivityService extends BaseService
     /*
      * 获取用户管理的活动列表
      */
-    public function getUserActivityListWithPermission($user_id){
+    public function getUserActivityListWithPermission($user_id,$club_id){
         //查询用户是否有超级管理员权限
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
         {
 
-            $activity_list = $this->getActivityListByCompany($user_info->company_id,"activity_id,activity_name",0);
+            $activity_list = $this->getActivityListByCompany($user_info->company_id,"activity_id,activity_name",$club_id,0);
         }
         else
         {
             $activity_list = [];
         }
-        $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name",0);
+        $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time",$club_id,0);
+      //  print_r($activity_list);die();
+       // print_r($created_activity_list);
         foreach($created_activity_list as $key => $created)
         {
             $flag = 0;
@@ -284,16 +286,15 @@ class ActivityService extends BaseService
             {
                 if($created->activity_id == $manager->activity_id)
                 {
-                    //unset($activity_list[$key]);
                     $flag = 1;
                     break;
                 }
             }
-            if($flag = 1)
+            if($flag == 1)
             {
-                break;
+                 continue;
             }
-            $activity_list[] = $created;
+                $activity_list[] = $created;
         }
         return $activity_list;
 
@@ -359,12 +360,18 @@ class ActivityService extends BaseService
         ]);
     }
     //获取企业下的所有活动列表
-    public function getActivityListByCompany($company_id,$columns = 'activity_id,activity_name',$cache = 1)
+    public function getActivityListByCompany($company_id,$columns = 'activity_id,activity_name',$club_id,$cache = 1)
     {
+        $conditions = "company_id='".$company_id."'";
+
+        if(strlen($club_id)!=0)
+        {
+            $conditions .= "and 'club_id' = ".$club_id;
+        }
         $cacheSetting = $this->config->cache_settings->activity_list_by_company;
         $cacheName = $cacheSetting->name.$company_id;
-        $params =             [
-            "company_id='".$company_id."'",
+        $params = [
+            $conditions,
             'columns'=>'activity_id',
             'order' => 'activity_id DESC'
         ];
@@ -415,12 +422,17 @@ class ActivityService extends BaseService
         return $activityList;
     }
     //获取企业下的特定用户创建的所有活动列表
-    public function getActivityListByCreater($company_id,$create_user_id,$columns = 'activity_id,activity_name',$cache = 1)
+    public function getActivityListByCreater($company_id,$create_user_id,$columns = 'activity_id,activity_name',$club_id='',$cache = 1)
     {
         $cacheSetting = $this->config->cache_settings->activity_list_by_company;
         $cacheName = $cacheSetting->name.$company_id;
+        $conditions = "company_id='".$company_id."' and create_user_id = '".$create_user_id."'";
+        if(strlen($club_id)!=0)
+        {
+            $conditions .= "and club_id = ".$club_id;
+        }
         $params =             [
-            "company_id='".$company_id."' and create_user_id = '".$create_user_id."'",
+            $conditions,
             'columns'=>'activity_id',
             'order' => 'activity_id DESC'
         ];

@@ -19,6 +19,11 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
+        if(''== 0)
+        {
+            echo 1;
+        }
+        die();
         print_r(mb_strlen('史说政'));
         print_r(strlen('史说政'));
         die();

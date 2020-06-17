@@ -782,7 +782,7 @@ class ClubService extends BaseService
      */
     public function getUserClubListWithPermission($user_id)
     {
-        $userClubList = $this->getUserClubList($user_id,"member_id,club_id,permission");
+        $userClubList = $this->getUserClubList($user_id,"member_id,club_id,permission",1,0);
         foreach ($userClubList as $key=>$club_info)
         {
             if($club_info->permission==0)
