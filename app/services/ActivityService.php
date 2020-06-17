@@ -21,6 +21,11 @@ class ActivityService extends BaseService
         {
             $return  = ['result'=>0,"msg"=>"活动时间有误，请重新输入",'code'=>400];
         }
+        //活动名称长度校验
+        elseif(strlen($activityParams['activity_name'])>=32)
+        {
+            $return  = ['result'=>0,"msg"=>"活动名称超长，请重新输入",'code'=>400];
+        }
         //报名时间校验
         elseif($activityParams['apply_start_time']=="" || $activityParams['apply_end_time']=="")
         {
@@ -266,7 +271,7 @@ class ActivityService extends BaseService
         {
             //超级管理员 找出公司下所有活动列表
             $activity_list = (new Activity())->query()->where('company_id = '.$user_info->company_id)->execute()->toArray();
-            if($activity_list)
+            if(!$activity_list)
             {
                 return [];
             }
@@ -274,7 +279,7 @@ class ActivityService extends BaseService
         }
         //查询创建者为本用户的活动
         $activity_list = (new Activity())->query()->where('create_user_id ='.$user_id)->execute()->toArray();
-        if($activity_list)
+        if(!$activity_list)
         {
          return [];
         }

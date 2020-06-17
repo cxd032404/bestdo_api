@@ -514,6 +514,56 @@ class PageElementService extends BaseService
         return $data;
     }
 
+
+    /*
+     * 获取活动信息
+     */
+
+    public function getElementPage_activityInfo($data,$params,$user_info,$company_id){
+        if(isset($data['detail']['activity']))
+        {
+            $activity_id = $data['detail']['activity_id'];
+        }
+        else//页面获取
+        {
+            $activity_id = $this->getFromParams($params,$data['detail']['from_params'],0);
+        }
+        $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
+        $data['detail']['activity_info'] = $activity_info;
+        return $data;
+    }
+
+    /*
+     * 获取用户可管理活动列表
+     */
+    public function getElementPage_managedActivityList($data,$params,$user_info,$company_id){
+        $managed_activity_list = (new ActivityService())->getManageActivityList($user_info['data']['user_id']);
+        foreach ($managed_activity_list as $key=>$value)
+        {
+            if($value['club_id']>0)
+            {
+                $managed_activity_list[$key]['club_info'] = (new ClubService())->getClubInfo($value['club_id'],'*');
+            }else
+            {
+                $managed_activity_list[$key]['club_info'] = [];
+            }
+
+        }
+        $data['detail']['managed_activity_list'] = $managed_activity_list;
+        return $data;
+    }
+    /*
+     * 获取用户可管理的俱乐部列表
+     */
+    public function getElementPage_managedClubList($data,$params,$user_info,$company_id)
+    {
+        $managed_club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
+        $managed_club_list = get_object_vars($managed_club_list);
+        $data['detail']['managed_club_list'] = array_values($managed_club_list);
+        return $data;
+    }
+
+
     //从页面参数重获取数据
     //$params:页面参数json串
     //$param_name: 变量名  .表示层级
@@ -532,25 +582,6 @@ class PageElementService extends BaseService
             }
         }
         return $params;
-    }
-
-    /*
-     * 获取活动信息
-     */
-
-    public function getElementPage_activityInfo($data,$params,$user_info,$company_id){
-        if(isset($data['detail']['activity']))
-        {
-            $activity_id = $data['detail']['activity_id'];
-        }
-        else//页面获取
-        {
-            $activity_id = $this->getFromParams($params,$data['detail']['from_params'],0);
-        }
-
-        $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
-        $data['detail']['activity_info'] = $activity_info;
-        return $data;
     }
 
 
