@@ -14,7 +14,7 @@ class ListService extends BaseService
         if($cache == 1)
         {
             $cacheData = $this->redis->get($cacheName);
-            $cacheData = json_decode($cacheData);
+            $listData = json_decode($cacheData);
             if(isset($cacheData->list_id))
             {
                 //$return = $cacheData;
