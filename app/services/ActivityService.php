@@ -478,4 +478,12 @@ class ActivityService extends BaseService
         }
         return $positionList;
     }
+
+    public function checkPostitionForCheckin($activity_id,$user_id,$position = [])
+    {
+        $activityInfo = $this->getActivityInfo($activity_id,"*");
+        $detail = json_decode($activityInfo->detail,true);
+        $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
+        return $distance;
+    }
 }
