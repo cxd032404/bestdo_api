@@ -790,8 +790,8 @@ class UserService extends BaseService
     //获取用户信息
     public function getUserInfo($user_id,$columns = 'user_id,nick_name,true_name,user_img',$cache = 1)
     {
-        $cacheSettings = $this->config->cache_settings->user_info;
-        $cacheName = $cacheSettings->name.$user_id;
+        $cacheSetting = $this->config->cache_settings->user_info;
+        $cacheName = $cacheSetting->name.$user_id;
         $params =             [
             "user_id='".$user_id."' and is_del=0",
             'columns'=>'*',
@@ -825,7 +825,7 @@ class UserService extends BaseService
                 if(isset($userInfo->user_id))
                 {
                     $this->redis->set($cacheName,json_encode($userInfo));
-                    $this->redis->expire($cacheName,$cacheSettings->expire);
+                    $this->redis->expire($cacheName,$cacheSetting->expire);
                 }
                 else
                 {

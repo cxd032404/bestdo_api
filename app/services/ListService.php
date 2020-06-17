@@ -9,15 +9,15 @@ class ListService extends BaseService
     //cloumns：数据库的字段列表
     public function getListInfo($list_id,$columns = "list_id,company_id,detail",$cache = 1)
     {
-        $cacheSettings = $this->config->cache_settings;
-        $cacheName = $cacheSettings->list->name.$list_id;
+        $cacheSetting = $this->config->cache_settings->list;
+        $cacheName = $cacheSetting->name.$list_id;
         if($cache == 1)
         {
             $cacheData = $this->redis->get($cacheName);
             $cacheData = json_decode($cacheData);
             if(isset($cacheData->list_id))
             {
-                $return = $cacheData;
+                //$return = $cacheData;
             }else
             {
                 $listData = (new ListModel())->findFirst(
@@ -26,8 +26,8 @@ class ListService extends BaseService
                         "columns" => '*'
                     ]);
                 $this->redis->set($cacheName,json_encode($listData));
-                $this->redis->expire($cacheName,$cacheSettings->list->expire);
-                $return = $listData;
+                $this->redis->expire($cacheName,$cacheSetting->expire);
+                $listData = json_decode($this->redis->get($cacheName));
             }
         }else
         {
@@ -37,21 +37,20 @@ class ListService extends BaseService
                     "columns" => '*'
                 ]);
             $this->redis->set($cacheName,json_encode($listData));
-            $this->redis->expire($cacheName,$cacheSettings->list->expire);
-            $return = $listData;
+            $this->redis->expire($cacheName,$cacheSetting->expire);
         }
         if($columns != "*")
         {
             $t = explode(",",$columns);
-            foreach($return as $key => $value)
+            foreach($listData as $key => $value)
             {
                 if(!in_array($key,$t))
                 {
-                    unset($return->$key);
+                    unset($listData->$key);
                 }
             }
         }
-        return $return;
+        return $listData;
     }
 
 

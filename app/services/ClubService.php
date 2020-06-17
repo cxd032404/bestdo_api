@@ -365,8 +365,8 @@ class ClubService extends BaseService
      */
     public function getUserClubMembership($user_id = 0,$club_id = 0,$cache = 1)
     {
-        $cacheSettings = $this->config->cache_settings->user_club_membership;
-        $cacheName = $cacheSettings->name.$user_id."_".$club_id;
+        $cacheSetting = $this->config->cache_settings->user_club_membership;
+        $cacheName = $cacheSetting->name.$user_id."_".$club_id;
         $params =             [
             "club_id = '".$club_id."' and user_id = '".$user_id."'",
             "columns" => '*',
@@ -395,7 +395,7 @@ class ClubService extends BaseService
                         $memberShip = [];
                     }
                     $this->redis->set($cacheName, json_encode($memberShip));
-                    $this->redis->expire($cacheName, $cacheSettings->expire);
+                    $this->redis->expire($cacheName, $cacheSetting->expire);
                 }
             }
             else
@@ -412,7 +412,7 @@ class ClubService extends BaseService
                     $memberShip = [];
                 }
                 $this->redis->set($cacheName, json_encode($memberShip));
-                $this->redis->expire($cacheName, $cacheSettings->expire);
+                $this->redis->expire($cacheName, $cacheSetting->expire);
             }
         }
         else
@@ -429,15 +429,16 @@ class ClubService extends BaseService
                 $memberShip = [];
             }
             $this->redis->set($cacheName, json_encode($memberShip));
-            $this->redis->expire($cacheName, $cacheSettings->expire);
+            $this->redis->expire($cacheName, $cacheSetting->expire);
+
         }
         return $memberShip;
     }
 
     public function getUserClubPermission($user_id = 0,$club_id = 0,$cache = 1)
     {
-        $cacheSettings = $this->config->cache_settings->user_club_permission;
-        $cacheName = $cacheSettings->name.$user_id."_".$club_id;
+        $cacheSetting = $this->config->cache_settings->user_club_permission;
+        $cacheName = $cacheSetting->name.$user_id."_".$club_id;
         if($cache == 1)
         {
             $permission = $this->redis->get($cacheName);
@@ -465,7 +466,7 @@ class ClubService extends BaseService
                     }
                 }
                 $this->redis->set($cacheName, $permission);
-                $this->redis->expire($cacheName, $cacheSettings->expire);
+                $this->redis->expire($cacheName, $cacheSetting->expire);
             }
             else
             {
@@ -496,7 +497,7 @@ class ClubService extends BaseService
                 }
             }
             $this->redis->set($cacheName, $permission);
-            $this->redis->expire($cacheName, $cacheSettings->expire);
+            $this->redis->expire($cacheName, $cacheSetting->expire);
         }
         return $permission;
     }
@@ -577,8 +578,8 @@ class ClubService extends BaseService
     }
     public function getClubInfo($club_id,$columns = 'club_id,club_name,icon',$cache = 1)
     {
-        $cacheSettings = $this->config->cache_settings->club_info;
-        $cacheName = $cacheSettings->name.$club_id;
+        $cacheSetting = $this->config->cache_settings->club_info;
+        $cacheName = $cacheSetting->name.$club_id;
         $params =             [
             "club_id='".$club_id."'",
             'columns'=>'*',
@@ -591,6 +592,7 @@ class ClubService extends BaseService
             {
                 $this->redis->set($cacheName,json_encode($clubInfo));
                 $this->redis->expire($cacheName,3600);
+                $clubInfo = json_decode($this->redis->get($cacheName));
             }
             else
             {
@@ -612,7 +614,8 @@ class ClubService extends BaseService
                 if(isset($clubInfo->club_id))
                 {
                     $this->redis->set($cacheName,json_encode($clubInfo));
-                    $this->redis->expire($cacheName,$cacheSettings->expire);
+                    $this->redis->expire($cacheName,$cacheSetting->expire);
+                    $clubInfo = json_decode($this->redis->get($cacheName));
                 }
                 else
                 {
@@ -636,8 +639,8 @@ class ClubService extends BaseService
     }
     public function getClubListByCompany($company_id,$columns = 'club_id,club_name',$cache = 1)
     {
-        $cacheSettings = $this->config->cache_settings->club_list_by_company;
-        $cacheName = $cacheSettings->name.$company_id;
+        $cacheSetting = $this->config->cache_settings->club_list_by_company;
+        $cacheName = $cacheSetting->name.$company_id;
         $params =             [
             "company_id='".$company_id."'",
             'columns'=>'*',
@@ -691,8 +694,8 @@ class ClubService extends BaseService
      * 成员参加的俱乐部列表
      */
     public function getUserClubList($user_id,$columns = "*",$status=1,$cache =1){
-        $cacheSettings = $this->config->cache_settings->user_club_list;
-        $cacheName = $cacheSettings->name.$user_id;
+        $cacheSetting = $this->config->cache_settings->user_club_list;
+        $cacheName = $cacheSetting->name.$user_id;
         if($cache == 0)
         {
             $conditions = "user_id = ".$user_id.' and status ='.$status;
@@ -705,7 +708,9 @@ class ClubService extends BaseService
             if(count($clubList))
             {
                 $this->redis->set($cacheName,json_encode($clubList));
-                $this->redis->expire($cacheName,3600);
+                $this->redis->expire($cacheName,$cacheSetting->expire);
+                $clubList = json_decode($this->redis->get($cacheName));
+
             }
             else
             {
@@ -732,7 +737,8 @@ class ClubService extends BaseService
                 if(count($clubList))
                 {
                     $this->redis->set($cacheName,json_encode($clubList));
-                    $this->redis->expire($cacheName,3600);
+                    $this->redis->expire($cacheName,$cacheSetting->expire);
+                    $clubList = json_decode($this->redis->get($cacheName));
                 }
                 else
                 {

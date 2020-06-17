@@ -182,8 +182,8 @@ class ActivityService extends BaseService
     }
     public function getActivityInfo($activity_id,$columns = "activity_id,activity_name",$cache = 1)
     {
-        $cacheSettings = $this->config->cache_settings->activity_info;
-        $cacheName = $cacheSettings->name.$activity_id;
+        $cacheSetting = $this->config->cache_settings->activity_info;
+        $cacheName = $cacheSetting->name.$activity_id;
         $params =             [
             "activity_id = ".$activity_id,
             "columns" => '*',
@@ -202,7 +202,7 @@ class ActivityService extends BaseService
                 $activity = (new \HJ\Activity())->findFirst($params);
                 if(isset($activity->activity_id)) {
                     $this->redis->set($cacheName, json_encode($activity));
-                    $this->redis->expire($cacheName, $cacheSettings->expire);
+                    $this->redis->expire($cacheName, $cacheSetting->expire);
                     $activity = json_decode($this->redis->get($cacheName));
                 }
                 else
@@ -216,7 +216,7 @@ class ActivityService extends BaseService
             $activity = (new \HJ\Activity())->findFirst($params);
             if(isset($activity->activity_id)) {
                 $this->redis->set($cacheName, json_encode($activity));
-                $this->redis->expire($cacheName, $cacheSettings->expire);
+                $this->redis->expire($cacheName, $cacheSetting->expire);
                 $activity = json_decode($this->redis->get($cacheName));
             }
             else

@@ -287,8 +287,8 @@ class PostsService extends BaseService
 
     public function getPosts($post_id,$columns = "post_id",$cache = 1)
     {
-        $cacheSettings = $this->config->cache_settings->post;
-        $cacheName = $cacheSettings->name.$post_id;
+        $cacheSetting = $this->config->cache_settings->post;
+        $cacheName = $cacheSetting->name.$post_id;
         $params =             [
             "post_id = ".$post_id,
             "columns" => '*',
@@ -306,7 +306,8 @@ class PostsService extends BaseService
                 $posts = (new \HJ\Posts())->findFirst($params);
                 if(isset($posts->post_id)) {
                     $this->redis->set($cacheName, json_encode($posts));
-                    $this->redis->expire($cacheName, $cacheSettings->expire);
+                    $this->redis->expire($cacheName, $cacheSetting->expire);
+                    $posts = json_decode($this->redis->get($cacheName));
                 } else
                 {
                     $posts = [];
@@ -319,7 +320,8 @@ class PostsService extends BaseService
             if(isset($posts->post_id))
             {
                 $this->redis->set($cacheName,json_encode($posts));
-                $this->redis->expire($cacheName,$cacheSettings->expire);
+                $this->redis->expire($cacheName,$cacheSetting->expire);
+                $posts = json_decode($this->redis->get($cacheName));
             }else
                 {
                     $posts = [];
