@@ -264,11 +264,12 @@ class ActivityService extends BaseService
     /*
      * 获取用户管理的活动列表
      */
-    public function getManageActivityList($user_id){
+    public function getUserActivityListWithPermission($user_id){
         //查询用户是否有超级管理员权限
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
         {
+<<<<<<< HEAD
             //超级管理员 找出公司下所有活动列表
             $activity_list = (new Activity())->query()->where('company_id = '.$user_info->company_id)->execute()->toArray();
             if(!$activity_list)
@@ -280,8 +281,26 @@ class ActivityService extends BaseService
         //查询创建者为本用户的活动
         $activity_list = (new Activity())->query()->where('create_user_id ='.$user_id)->execute()->toArray();
         if(!$activity_list)
+=======
+            $activity_list = $this->getActivityListByCompany($user_info->company_id,"activity_id,activity_name",0);
+        }
+        else
         {
-         return [];
+            $activity_list = [];
+        }
+        $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name",0);
+        foreach($created_activity_list as $key => $created)
+>>>>>>> e7e1d0aa2901c4b5227f1c1d9fad438509a731cc
+        {
+            foreach($activity_list as $key2 => $manager)
+            {
+                if($created->activity_id == $manager->activity_id)
+                {
+                    unset($activity_list[$key]);
+                    break;
+                }
+            }
+            $activity_list[] = $created;
         }
         return $activity_list;
 
@@ -345,5 +364,137 @@ class ActivityService extends BaseService
             'bind'=>['activity_id'=>$activity_id, 'user_id'=> $user_id] ,
             'order'=>'id desc'
         ]);
+    }
+    //获取企业下的所有活动列表
+    public function getActivityListByCompany($company_id,$columns = 'activity_id,activity_name',$cache = 1)
+    {
+        $cacheSetting = $this->config->cache_settings->activity_list_by_company;
+        $cacheName = $cacheSetting->name.$company_id;
+        $params =             [
+            "company_id='".$company_id."'",
+            'columns'=>'activity_id',
+            'order' => 'activity_id DESC'
+        ];
+        if($cache == 0)
+        {
+            //获取活动列表
+            $activityList = \HJ\Activity::find($params);
+            if($activityList)
+            {
+                $this->redis->set($cacheName,json_encode($activityList));
+                $this->redis->expire($cacheName,$cacheSetting->expire);
+                $activityList = json_decode($this->redis->get($cacheName));
+            }
+            else
+            {
+                $activityList = [];
+            }
+        }
+        else
+        {
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if($cache)
+            {
+                $activityList = $cache;
+            }
+            else
+            {
+                //获取活动列表
+                $activityList = \HJ\Activity::find($params);
+                if($activityList)
+                {
+                    $this->redis->set($cacheName,json_encode($activityList));
+                    $this->redis->expire($cacheName,$cacheSetting->expire);
+                    $activityList = json_decode($this->redis->get($cacheName));
+                }
+                else
+                {
+                    $activityList = [];
+                }
+            }
+        }
+        foreach($activityList as $key => $value)
+        {
+            $activityInfo = $this->getActivityInfo($value->activity_id,$columns);
+            $activityList[$key] = $activityInfo;
+        }
+        return $activityList;
+    }
+    //获取企业下的特定用户创建的所有活动列表
+    public function getActivityListByCreater($company_id,$create_user_id,$columns = 'activity_id,activity_name',$cache = 1)
+    {
+        $cacheSetting = $this->config->cache_settings->activity_list_by_company;
+        $cacheName = $cacheSetting->name.$company_id;
+        $params =             [
+            "company_id='".$company_id."' and create_user_id = '".$create_user_id."'",
+            'columns'=>'activity_id',
+            'order' => 'activity_id DESC'
+        ];
+        if($cache == 0)
+        {
+            //获取活动列表
+            $activityList = \HJ\Activity::find($params);
+            if($activityList)
+            {
+                $this->redis->set($cacheName,json_encode($activityList));
+                $this->redis->expire($cacheName,$cacheSetting->expire);
+                $activityList = json_decode($this->redis->get($cacheName));
+            }
+            else
+            {
+                $activityList = [];
+            }
+        }
+        else
+        {
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if($cache)
+            {
+                $activityList = $cache;
+            }
+            else
+            {
+                //获取活动列表
+                $activityList = \HJ\Activity::find($params);
+                if($activityList)
+                {
+                    $this->redis->set($cacheName,json_encode($activityList));
+                    $this->redis->expire($cacheName,$cacheSetting->expire);
+                    $activityList = json_decode($this->redis->get($cacheName));
+                }
+                else
+                {
+                    $activityList = [];
+                }
+            }
+        }
+        foreach($activityList as $key => $value)
+        {
+            $activityInfo = $this->getActivityInfo($value->activity_id,$columns);
+            $activityList[$key] = $activityInfo;
+        }
+        return $activityList;
+    }
+    //获取用户最近创建的活动关联的签到地址
+    public function getPositionListByCreater($company_id = 0,$create_user_id = 0)
+    {
+        $userCreatedAcitvityList = $this->getActivityListByCreater($company_id,$create_user_id,"activity_id,detail");
+        $positionList = [];
+        foreach($userCreatedAcitvityList as $key => $activityDetail)
+        {
+            $activityDetail->detail = json_decode($activityDetail->detail);
+            $checkin = $activityDetail->detail->checkin??[];
+            if(isset($checkin->address))
+            {
+                $m = md5(json_encode($checkin));
+                if(!isset($positionList[$m]))
+                {
+                    $positionList[$m] = $checkin;
+                }
+            }
+        }
+        return $positionList;
     }
 }

@@ -19,6 +19,9 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
+        print_r(mb_strlen('史说政'));
+        print_r(strlen('史说政'));
+        die();
         $data = (new ActivityService())->getActivityInfo(4)->toArray();
         print_r($data);die();
 

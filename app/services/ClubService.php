@@ -643,7 +643,7 @@ class ClubService extends BaseService
         $cacheName = $cacheSetting->name.$company_id;
         $params =             [
             "company_id='".$company_id."'",
-            'columns'=>'*',
+            'columns'=>'club_id',
             'order' => 'club_id DESC'
         ];
         if($cache == 0)
