@@ -43,12 +43,12 @@ class ActivityController extends BaseController
         $userInfo = $return['data']['user_info'];
 	    //接收参数并格式化
 		$data = $this->request->get();
-        $activityData['activity_name'] = isset($data['activity_name'])?substr(preg_replace('# #','',$data['activity_name']),0,32):"";
-        $activityData['comment'] = isset($data['comment'])?preg_replace('# #','',$data['comment']):"";
-        $activityData['start_time'] = isset($data['start_time'])?preg_replace('# #','',$data['start_time']):"";
-        $activityData['end_time'] = isset($data['end_time'])?preg_replace('# #','',$data['end_time']):"";
-        $activityData['apply_start_time'] = isset($data['apply_start_time'])?preg_replace('# #','',$data['apply_start_time']):"";
-        $activityData['apply_end_time'] = isset($data['apply_end_time'])?preg_replace('# #','',$data['apply_end_time']):"";
+        $activityData['activity_name'] = isset($data['activity_name'])?substr(trim($data['activity_name'],'#'),0,32):"";
+        $activityData['comment'] = isset($data['comment'])?trim($data['comment'],'#'):"";
+        $activityData['start_time'] = isset($data['start_time'])?trim($data['start_time'],'#'):"";
+        $activityData['end_time'] = isset($data['end_time'])?trim($data['end_time'],'#'):"";
+        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):"";
+        $activityData['apply_end_time'] = isset($data['apply_end_time'])?trim($data['apply_end_time'],'#'):"";
         $activityData['club_member_only'] = intval($data['club_member_only']??1);
         $activityData['member_limit'] = intval($data['member_limit']??100);
         $activityData['monthly_apply_limit'] = intval($data['monthly_apply_limit']??1);

@@ -202,6 +202,7 @@ class ActivityService extends BaseService
                 if(isset($activity->activity_id)) {
                     $this->redis->set($cacheName, json_encode($activity));
                     $this->redis->expire($cacheName, $cacheSettings->expire);
+                    $activity = json_decode($this->redis->get($cacheName));
                 }
                 else
                 {
@@ -215,6 +216,7 @@ class ActivityService extends BaseService
             if(isset($activity->activity_id)) {
                 $this->redis->set($cacheName, json_encode($activity));
                 $this->redis->expire($cacheName, $cacheSettings->expire);
+                $activity = json_decode($this->redis->get($cacheName));
             }
             else
             {
@@ -285,8 +287,9 @@ class ActivityService extends BaseService
     public function getActivityMemberCount($activity_id){
         $count =  (new \HJ\UserActivityLog())->query()->where('activity_id ='.$activity_id)->execute()->count();
         return $count;
-
 }
+
+
     //活动报名方法
     public function activityApply($activity_id,$user_id=0)
     {

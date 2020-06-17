@@ -19,6 +19,8 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
+        $data = (new ActivityService())->getActivityInfo(4)->toArray();
+        print_r($data);die();
 
             $return = (new TestService)->test();
             //$return = $oService->test();
