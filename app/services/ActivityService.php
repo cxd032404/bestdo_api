@@ -69,9 +69,10 @@ class ActivityService extends BaseService
                     $activity->member_limit = $activityParams['member_limit'];
                     $activity->icon = "";
                     $activity->activity_sign = "";
+                    $activity->connect_activity_id = $activityParams['connect_activity_id'];
                     $activity->detail = json_encode(
                         [
-                            "checkin"=>[],
+                            "checkin"=>$activityParams['checkin']??[],
                             "monthly_apply_limit"=>$activityParams['monthly_apply_limit'],
                             "weekly_rebuild"=>$activityParams['weekly_rebuild']??-1
                             ]
@@ -151,7 +152,7 @@ class ActivityService extends BaseService
                     $activity->icon = "";
                     $activity->detail = json_encode(
                         [
-                            "checkin"=>[],
+                            "checkin"=>$activityParams['checkin']??[],
                             "monthly_apply_limit"=>$activityParams['monthly_apply_limit'],
                             "weekly_rebuild"=>$activityParams['weekly_rebuild']??-1
                         ]
