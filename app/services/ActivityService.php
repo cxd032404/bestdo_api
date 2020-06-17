@@ -254,6 +254,32 @@ class ActivityService extends BaseService
     }
 
     /*
+     * 获取用户管理的活动列表
+     */
+    public function getManageActivityList($user_id){
+        //查询用户是否有超级管理员权限
+        $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
+        if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
+        {
+            //超级管理员 找出公司下所有活动列表
+            $activity_list = (new Activity())->query()->where('company_id = '.$user_info->company_id)->execute()->toArray();
+            if($activity_list)
+            {
+                return [];
+            }
+            return $activity_list;
+        }
+        //查询创建者为本用户的活动
+        $activity_list = (new Activity())->query()->where('create_user_id ='.$user_id)->execute()->toArray();
+        if($activity_list)
+        {
+         return [];
+        }
+        return $activity_list;
+
+    }
+
+    /*
      * 获取活动参加人数
      */
     public function getActivityMemberCount($activity_id){

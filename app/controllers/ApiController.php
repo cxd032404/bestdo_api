@@ -19,8 +19,7 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
-        $count = (new ActivityService())->getActivityMemberCount(5);
-        echo $count ;die();
+
             $return = (new TestService)->test();
             //$return = $oService->test();
             $this->logger->info(json_encode($return));

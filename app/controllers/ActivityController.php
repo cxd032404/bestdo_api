@@ -31,6 +31,7 @@ class ActivityController extends BaseController
 	 * start_time/end_time：活动时间
 	 * apply_start_time/apply_end_time：报名时间
 	 * club_member_only：是否只允许俱乐部内成员参加
+	 * weekly_rebuild -1表示不重复 0-6周日-周六
      * */
 	public function activityCreateAction()
 	{
@@ -146,4 +147,6 @@ class ActivityController extends BaseController
         return $this->success($return['data'],$return['msg'],$return['code']);
 
     }
+
+
 }
