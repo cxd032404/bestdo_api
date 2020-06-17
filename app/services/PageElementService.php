@@ -586,23 +586,7 @@ class PageElementService extends BaseService
         return $params;
     }
 
-    /*
-     * 获取活动信息
-     */
 
-    public function getElementPage_activityInfo($data,$params,$user_info,$company_id){
-        if(isset($data['detail']['activity_id']))
-        {
-            $activity_id = $data['detail']['activity_id'];
-        }
-        else//页面获取
-        {
-            $activity_id = $this->getFromParams($params,$data['detail']['from_params'],0);
-        }
-        $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
-        $data['detail']['activity_info'] = $activity_info;
-        return $data;
-    }
 
 
 }

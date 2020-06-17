@@ -269,19 +269,7 @@ class ActivityService extends BaseService
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
         {
-<<<<<<< HEAD
-            //超级管理员 找出公司下所有活动列表
-            $activity_list = (new Activity())->query()->where('company_id = '.$user_info->company_id)->execute()->toArray();
-            if(!$activity_list)
-            {
-                return [];
-            }
-            return $activity_list;
-        }
-        //查询创建者为本用户的活动
-        $activity_list = (new Activity())->query()->where('create_user_id ='.$user_id)->execute()->toArray();
-        if(!$activity_list)
-=======
+
             $activity_list = $this->getActivityListByCompany($user_info->company_id,"activity_id,activity_name",0);
         }
         else
@@ -290,15 +278,20 @@ class ActivityService extends BaseService
         }
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name",0);
         foreach($created_activity_list as $key => $created)
->>>>>>> e7e1d0aa2901c4b5227f1c1d9fad438509a731cc
         {
+            $flag = 0;
             foreach($activity_list as $key2 => $manager)
             {
                 if($created->activity_id == $manager->activity_id)
                 {
-                    unset($activity_list[$key]);
+                    //unset($activity_list[$key]);
+                    $flag = 1;
                     break;
                 }
+            }
+            if($flag = 1)
+            {
+                break;
             }
             $activity_list[] = $created;
         }
