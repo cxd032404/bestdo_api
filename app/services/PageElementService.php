@@ -611,21 +611,21 @@ class PageElementService extends BaseService
     * data 用户包含的element信息
     * params 页面标识和company_id
     */
-    public function getElementPage_ongoingAcitivity($data,$params,$user_info,$company_id){
-        $club_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'club_id,club_name,apply_start_time,apply_end_time');
+    public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
+        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'club_id,club_name,apply_start_time,apply_end_time');
         $currentTime = time();
-        foreach ($club_list as $key=> $club_info)
+        foreach ($activity_list as $key=> $activity_info)
         {
-            if((strtotime($club_info->apply_start_time)<=$currentTime) && (strtotime($club_info->apply_end_time)>=$currentTime))
+            if((strtotime($activity_info->apply_start_time)<=$currentTime) && (strtotime($activity_info->apply_end_time)>=$currentTime))
             {
 
             }
             else
             {
-                unset($club_list[$key]);
+                unset($activity_list[$key]);
             }
         }
-        $data['detail']['activity_list'] = array_values($club_list);
+        $data['detail']['activity_list'] = array_values($activity_list);
         return $data;
     }
 
