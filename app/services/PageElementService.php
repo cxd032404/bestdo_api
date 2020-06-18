@@ -585,7 +585,7 @@ class PageElementService extends BaseService
         $bannerList = [];
         foreach ($club_list as $key=> $club_info)
         {
-            $detail = json_decode($club_info->clubInfo->detail,true);
+            $detail = json_decode($club_info->clubInfo->detail??"",true);
             if(isset($detail['banner']))
             {
                 foreach($detail['banner'] as $k => $banner)
@@ -602,6 +602,30 @@ class PageElementService extends BaseService
             }
         }
         $data['detail']['banner_list'] = $bannerList;
+        return $data;
+    }
+    /*
+    * 报名中的活动
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
+    public function getElementPage_ongoingAcitivity($data,$params,$user_info,$company_id){
+        $club_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'club_id,club_name,apply_start_time,apply_end_time');
+        $currentTime = time();
+        foreach ($club_list as $key=> $club_info)
+        {
+            if((strtotime($club_info->apply_start_time)<=$currentTime) && (strtotime($club_info->apply_end_time)>=$currentTime))
+            {
+
+            }
+            else
+            {
+                unset($club_list[$key]);
+            }
+        }
+        $data['detail']['activity_list'] = array_values($club_list);
         return $data;
     }
 
