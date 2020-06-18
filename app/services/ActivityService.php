@@ -382,7 +382,7 @@ class ActivityService extends BaseService
         ]);
     }
     //获取企业下的所有活动列表
-    public function getActivityListByCompany($company_id,$columns = 'activity_id,activity_name',$club_id,$cache = 1)
+    public function getActivityListByCompany($company_id,$columns = 'activity_id,activity_name',$club_id = '',$cache = 1)
     {
         $conditions = "company_id='".$company_id."'";
 

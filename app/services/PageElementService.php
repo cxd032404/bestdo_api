@@ -722,13 +722,15 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
-        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'club_id,club_name,apply_start_time,apply_end_time');
+        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,club_id,activity_name,apply_start_time,apply_end_time');
         $currentTime = time();
+        $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
         {
             if((strtotime($activity_info->apply_start_time)<=$currentTime) && (strtotime($activity_info->apply_end_time)>=$currentTime))
             {
-
+                $clubInfo = $clubService->getClubInfo($activity_info->club_id,"club_id,club_name,icon");
+                $activity_list[$key] = (object)array_merge((array)$activity_info,(array)$clubInfo);
             }
             else
             {
