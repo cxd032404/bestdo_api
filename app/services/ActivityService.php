@@ -12,7 +12,6 @@ class ActivityService extends BaseService
         "activity_apply_error"=>"报名失败！",
     ];
 
-    
     public function createActivity($activityParams = [],$user_info)
     {
         $currentTime = time();
@@ -80,6 +79,7 @@ class ActivityService extends BaseService
                     $activity->icon = "";
                     $activity->activity_sign = "";
                     $activity->connect_activity_id = $activityParams['connect_activity_id'];
+                    $activity->status = 1;
                     $activity->detail = json_encode(
                         [
                             "checkin"=>$activityParams['checkin']??[],
@@ -160,6 +160,7 @@ class ActivityService extends BaseService
                     $activity->club_member_only = $activityParams['club_member_only'];
                     $activity->member_limit = $activityParams['member_limit'];
                     $activity->icon = "";
+                    $activity->status = 1;
                     $activity->detail = json_encode(
                         [
                             "checkin"=>$activityParams['checkin']??[],

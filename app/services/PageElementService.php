@@ -361,9 +361,9 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_attendClubList($data,$params,$user_info,$company_id){
-          $club_list_info = (new  ClubService())->getUserClubList($user_info['data']['user_id'],'club_id,club_name,icon');
+          $club_lsit = (new  ClubService())->getUserClubList($user_info['data']['user_id'],'club_id,club_name,icon');
           $club_list = [];
-          foreach ($club_list_info as $key=> $value)
+          foreach ($club_lsit as $key=> $value)
           {
               $club_list[$key]['club_id'] = $value->clubInfo->club_id;
               $club_list[$key]['club_name'] = $value->clubInfo->club_name;
@@ -681,6 +681,61 @@ class PageElementService extends BaseService
             $activity_member_list[] = $userInfo;
         }
         $data['detail']['activity_member_list'] = $activity_member_list;
+        return $data;
+    }
+    /*
+    * 用户对应企业的轮播图列表
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
+    public function getElementPage_clubBannerList($data,$params,$user_info,$company_id){
+        $club_list = (new  ClubService())->getClubListByCompany($user_info['data']['company_id'],'club_id,club_name,detail');
+        $bannerList = [];
+        foreach ($club_list as $key=> $club_info)
+        {
+            $detail = json_decode($club_info->clubInfo->detail??"",true);
+            if(isset($detail['banner']))
+            {
+                foreach($detail['banner'] as $k => $banner)
+                {
+                    if(count($bannerList)<=20)
+                    {
+                        $bannerList[] = $banner;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        $data['detail']['banner_list'] = $bannerList;
+        return $data;
+    }
+    /*
+    * 报名中的活动
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
+    public function getElementPage_ongoingAcitivity($data,$params,$user_info,$company_id){
+        $club_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'club_id,club_name,apply_start_time,apply_end_time');
+        $currentTime = time();
+        foreach ($club_list as $key=> $club_info)
+        {
+            if((strtotime($club_info->apply_start_time)<=$currentTime) && (strtotime($club_info->apply_end_time)>=$currentTime))
+            {
+
+            }
+            else
+            {
+                unset($club_list[$key]);
+            }
+        }
+        $data['detail']['activity_list'] = array_values($club_list);
         return $data;
     }
 
