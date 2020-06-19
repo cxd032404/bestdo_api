@@ -361,11 +361,13 @@ class ActivityService extends BaseService
                 $return['msg']  = $this->msgList['activity_expire'];
             }else if($member_count>=$activityInfo->member_limit){
                 $return['msg']  = $this->msgList['activity_member_limit'];
+                $rerurn['code'] = $this->config->special_code['activity_member_full'];
             }else if($activityInfo->club_member_only){
                 $is_member = (new ClubService())->checkUserIsClubMember($user_id,$activityInfo->club_id);
                 if(!$is_member)
                 {
                     $return['msg']  = $this->msgList['activity_club_limit'];
+                    $rerurn['code'] = $this->config->special_code['need_club_membership'];
                     return $return;
                 }
             }else{
