@@ -526,13 +526,65 @@ class ActivityService extends BaseService
         }
         return $positionList;
     }
-
+    //检查位置是否满足活动签到的条件
     public function checkPostitionForCheckin($activity_id,$user_id,$position = [])
     {
         $activityInfo = $this->getActivityInfo($activity_id,"*");
         $detail = json_decode($activityInfo->detail,true);
         $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
-        return $distance;
+        if($distance <= $this->config->checkin_max_distance)
+        {
+            $return  = ['result'=>1,"msg"=>"可以签到",'data'=>$distance,'code'=>200];
+        }
+        else
+        {
+            $return  = ['result'=>0,"msg"=>"距离过远",'code'=>400];
+        }
+        return $return;
+    }
+    //活动签到
+    public function activityCheckin($activity_id,$user_id,$position = [])
+    {
+        $activityInfo = $this->getActivityInfo($activity_id,"*");
+        $detail = json_decode($activityInfo->detail,true);
+        $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
+        //校验距离
+        if($distance <= $this->config->checkin_max_distance)
+        {
+            //获取报名记录
+            $activityLog = $this->getActivityLogByUser($user_id,$activity_id);
+            //如果找到
+            if(isset($activityLog->id))
+            {
+                //已经签到过了
+                if($activityLog->checkin_status==1)
+                {
+                    $return  = ['result'=>1,"msg"=>"签到成功",'data'=>[],'code'=>200];
+                }
+                else
+                {
+                    $data = ["checkin_status"=>1];
+                    $update = $this->updateActivityLog($activityLog->id,$data);
+                    if($update)
+                    {
+                        $return  = ['result'=>1,"msg"=>"签到成功",'data'=>[],'code'=>200];
+                    }
+                    else
+                    {
+                        $return  = ['result'=>0,"msg"=>"签到失败",'data'=>[],'code'=>200];
+                    }
+                }
+            }
+            else
+            {
+                $return  = ['result'=>0,"msg"=>"报名记录有误",'code'=>400];
+            }
+        }
+        else
+        {
+            $return  = ['result'=>0,"msg"=>"距离过远",'code'=>400];
+        }
+        return $return;
     }
 
     /*
@@ -610,6 +662,27 @@ class ActivityService extends BaseService
                 $return  = ['result'=>0,"msg"=>"取消失败",'code'=>400];
             }
             return $return;
+    }
+
+    //更新报名记录
+    public function updateActivityLog($id=0,$map)
+    {
+        //修改用户信息
+        $activity_log = \HJ\UserActivityLog::findFirst(["id = '".$id."'"]);
+        foreach($map as $key => $value)
+        {
+            if(!empty($value))
+            {
+                $activity_log->$key = $value;
+            }
+        }
+        $activity_log->last_update_time = date("Y-m-d H:i:s");
+        if ($activity_log->update() === false) {
+            $return['msg']  = "更新失败";
+        }else {
+            $return = ['result' => 1, 'msg' => "更新成功", 'code' => 200, 'data' => []];
+        }
+        return $return;
     }
 
 

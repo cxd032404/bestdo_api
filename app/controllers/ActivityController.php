@@ -167,7 +167,36 @@ class ActivityController extends BaseController
         $activity_id = intval($data['activity_id']??0);
         $position = json_decode($data['position']??'{"longitude":121.54619,"latitude":31.32054,"address":"\u4e0a\u6d77\u5e02\u6768\u6d66\u533a\u5ae9\u6c5f\u8def861\u53f7"}',true);
         $return = (new ActivityService())->checkPostitionForCheckin($activity_id,$return['data']['user_info']->user_id,$position);
-        return $this->success($return['data'],$return['msg'],$return['code']);
+        if($return['result'])
+        {
+            $this->success($return['data']??[],$return['msg']);
+        }
+        else
+        {
+            $this->failure([],$return['msg']);
+        }
+    }
+    public function activityCheckinAction()
+    {
+        /*验证token开始*/
+        $return  = (new UserService)->getDecrypt();
+        if($return['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        /*验证token结束*/
+        $data = $this->request->get();
+        //接收参数并格式化
+        $activity_id = intval($data['activity_id']??0);
+        $position = json_decode($data['position']??'{"longitude":121.54619,"latitude":31.32054,"address":"\u4e0a\u6d77\u5e02\u6768\u6d66\u533a\u5ae9\u6c5f\u8def861\u53f7"}',true);
+        $return = (new ActivityService())->activityCheckin($activity_id,$return['data']['user_info']->user_id,$position);
+        if($return['result'])
+        {
+            $this->success($return['data']??[],$return['msg']);
+        }
+        else
+        {
+            $this->failure([],$return['msg']);
+        }
     }
 
 

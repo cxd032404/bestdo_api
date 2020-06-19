@@ -389,7 +389,7 @@ class UserService extends BaseService
 
 
 
-    //完善用户信息
+    //更新用户信息
     public function updateUserInfo($map,$user_id="")
     {
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];

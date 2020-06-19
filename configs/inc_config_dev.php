@@ -113,6 +113,7 @@ $config = [
         'Content_Type' 	=> 'application/json;charset=utf-8',
         'Status_Code' 	=> 'okey!'
     ],
+    'checkin_max_distance' => 1000,
     'cache_settings' =>[
         'list'=>['name'=>'list_','expire'=>3600],//列表
         'post'=>['name'=>'user_posts_','expire'=>3600],//文章
