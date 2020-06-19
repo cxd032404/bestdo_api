@@ -204,7 +204,7 @@ class ActivityController extends BaseController
      * 取消活动
      */
 
-    public function cancelActivityAction(){
+    public function activityCancelAction(){
         /*验证token开始*/
         $return  = (new UserService)->getDecrypt();
         if($return['result']!=1){
@@ -215,7 +215,7 @@ class ActivityController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $activity_id = isset($data['activity_id'])?intval($data['activity_id']):0;
-        $return = (new ActivityService())->cancelActivity($user_id,$activity_id);
+        $return = (new ActivityService())->activityCancel($user_id,$activity_id);
         if($return['result'])
         {
             $this->success($return['data']??[],$return['msg']);
