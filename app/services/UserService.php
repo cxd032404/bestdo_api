@@ -37,17 +37,17 @@ class UserService extends BaseService
         "password_error"=>"密码错误，请填写正确的密码！",
         "sendcode_error"=>"验证码错误，请填写正确的验证码！",
         "changepwd_error"=>"密码修改失败！",
-        "login_error"=>"登录失败！",
-        "register_error"=>"注册失败！",
-        "decrypt_error"=>"用户token解析失败！",
+        "login_fail"=>"登录失败！",
+        "register_fail"=>"注册失败！",
+        "decrypt_fail"=>"用户token解析失败！",
         "code_status_error"=>"验证码状态修改失败！",
-        "update_userinfo_error"=>"用户信息更新失败！",
-        "posts_error"=>"点赞失败！",
-        "companyuser_status_error"=>"企业用户名单状态修改失败！",
-        "posts_kudos_error"=>"点赞记录新增失败！",
-        "posts_remove_error"=>"取消点赞失败！",
-        "posts_del_error"=>"活动记录删除失败！",
-        "posts_kudos_update_error"=>"点赞记录修改失败！",
+        "update_userinfo_fail"=>"用户信息更新失败！",
+        "kudos_fail"=>"点赞失败！",
+        "companyuser_update_fail"=>"企业用户名单状态修改失败！",
+        "posts_kudos_fail"=>"点赞记录新增失败！",
+        "posts_remove_fail"=>"取消点赞失败！",
+        "posts_delete_fail"=>"活动记录删除失败！",
+        "posts_kudos_update_fail"=>"点赞记录修改失败！",
         "manager_id_error"=>"后台用户id无效！",
         "manager_id_invalid"=>"后台用户id无效,无对应用户信息！",
         "activity_list_error"=>"您已提交过本次活动作品，不可重复提交！",
@@ -232,7 +232,7 @@ class UserService extends BaseService
                     $user->last_login_source = "Mobile";
 
                     if ($user->create() === false) {
-                        $transaction->rollback($this->msgList['register_error']);
+                        $transaction->rollback($this->msgList['register_fail']);
                     }
                     if(!empty($code)){
                         //完善用户微信资料
@@ -246,7 +246,7 @@ class UserService extends BaseService
                     //修改企业用户名单状态
                     $companyuser = $this->setCompanyUser($companyuserlist->id,$user->user_id);
                     if(!$companyuser){
-                        $transaction->rollback($this->msgList['companyuser_status_error']);
+                        $transaction->rollback($this->msgList['companyuser_update_fail']);
                     }
                     //生成token
                     $tokeninfo = $this->getToken($user->user_id);
@@ -359,7 +359,7 @@ class UserService extends BaseService
                         $user->password = md5($password);
                         $user->company_id = $companyuserlist->company_id??1;
                         if ($user->create() === false) {
-                            $transaction->rollback($this->msgList['register_error']);
+                            $transaction->rollback($this->msgList['register_fail']);
                         }
                         //修改验证码记录状态
                         $sendcode = $this->setMobileCode($mobile,$code);
@@ -369,7 +369,7 @@ class UserService extends BaseService
                         //修改企业用户名单状态
                         $companyuser = $this->setCompanyUser($companyuserlist->id,$user->user_id);
                         if(!$companyuser){
-                            $transaction->rollback($this->msgList['companyuser_status_error']);
+                            $transaction->rollback($this->msgList['companyuser_update_fail']);
                         }
                         //生成token
                         $tokeninfo = $this->getToken($user->user_id);
@@ -404,7 +404,7 @@ class UserService extends BaseService
         }
         $userinfo->last_update_time = date("Y-m-d H:i:s");
         if ($userinfo->update() === false) {
-            $return['msg']  = $this->msgList['update_userinfo_error'];
+            $return['msg']  = $this->msgList['update_userinfo_fail'];
         }else {
             $this->getUserInfo($user_id.'*',0);
             $return = ['result' => 1, 'msg' => $this->msgList['update_userinfo_success'], 'code' => 200, 'data' => []];
@@ -442,7 +442,7 @@ class UserService extends BaseService
             $posts->setTransaction($transaction);
             $posts->kudos = intval($posts->kudos+1);
             if ($posts->update() === false) {
-                $transaction->rollback($this->msgList['posts_error']);
+                $transaction->rollback($this->msgList['kudos_fail']);
             }
             (new PostsService())->getPosts($post_id,'*',0);
             $current_time = time();
@@ -463,7 +463,7 @@ class UserService extends BaseService
             $postskudos->date = date("Y-m-d",$current_time);
             $postskudos->create_time = date("Y-m-d H:i:s",$current_time);
             if($postskudos->save() === false){
-                $transaction->rollback($this->msgList['posts_kudos_error']);
+                $transaction->rollback($this->msgList['posts_kudos_fail']);
             }
 
 
@@ -511,13 +511,13 @@ class UserService extends BaseService
             $posts->setTransaction($transaction);
             $posts->kudos = intval($posts->kudos-1);
             if ($posts->update() === false) {
-                $transaction->rollback($this->msgList['posts_remove_error']);
+                $transaction->rollback($this->msgList['posts_remove_fail']);
             }
             //删除点赞记录
             $postskudos->setTransaction($transaction);
             $postskudos->is_del = 1;
             if($postskudos->update() === false){
-                $transaction->rollback($this->msgList['posts_kudos_update_error']);
+                $transaction->rollback($this->msgList['posts_kudos_update_fail']);
             }
             $return  = ['result'=>1, 'msg'=>$this->msgList['posts_remove_success'], 'code'=>200, 'data'=>['kudos'=>intval($posts->kudos)]];
             $transaction->commit($return);
@@ -548,7 +548,7 @@ class UserService extends BaseService
             $posts->setTransaction($transaction);
             $posts->visible = 2;
             if ($posts->update() === false) {
-                $transaction->rollback($this->msgList['posts_del_error']);
+                $transaction->rollback($this->msgList['posts_delete_fail']);
             }
             $return  = ['result'=>1, 'msg'=>$this->msgList['posts_del_success'], 'code'=>200, 'data'=>[]];
             $transaction->commit($return);
@@ -629,7 +629,7 @@ class UserService extends BaseService
     //用户token解密
     public function getDecrypt()
     {
-        $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
+        $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_fail'], 'code'=>403, 'data'=>[]];
         $user_token = $this->request->get("UserToken")??$this->request->getHeader('UserToken');
         $user_token = $user_token?preg_replace('# #','',$user_token):"";
         $oJwt = new ThirdJwt();
@@ -657,7 +657,7 @@ class UserService extends BaseService
         if(!isset($user_info) || (isset($user_info) && json_decode($user_info)->expire_time<time())){
             $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
             if(isset($page_info['need_login']) && $page_info['need_login']==1){
-                $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_error'], 'code'=>403, 'data'=>[]];
+                $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_fail'], 'code'=>403, 'data'=>[]];
             }
         }
         else
