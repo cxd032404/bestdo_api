@@ -402,7 +402,7 @@ class ActivityService extends BaseService
         if($cache == 0)
         {
             //获取活动列表
-            $activityList = \HJ\Activity::find($params);
+            $activityList = \HJ\Activity::find($params)->toArray();
             if($activityList)
             {
                 $this->redis->set($cacheName,json_encode($activityList));
