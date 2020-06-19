@@ -16,6 +16,8 @@ class ActivityService extends BaseService
         "activity_log_not_found"=>"没有找到报名记录",
         "activity_update_success"=>"活动更新成功",
         "activity_update_fail"=>"活动更新失败",
+        "activity_member_limit"=>"活动人数已满",
+        "activity_club_limit"=>"活动仅限俱乐部成员参加",
     ];
 
     public function createActivity($activityParams = [],$user_info)
@@ -348,6 +350,7 @@ class ActivityService extends BaseService
         }else{
             //查询活动数据
             $activityInfo = $this->getActivityInfo($activity_id,'*');
+            $member_count = (new ActivityService())->getActivityMemberCount($activity_id);
             if(!isset($activityInfo->activity_id)){
                 $return['msg']  = $this->msgList['activity_empty'];
             }else if(time()<strtotime($activityInfo->apply_start_time)){
@@ -356,6 +359,15 @@ class ActivityService extends BaseService
                 $return['msg']  = $this->msgList['activity_ended'];
             }else if(time()<strtotime($activityInfo->apply_start_time) || time()>strtotime($activityInfo->apply_end_time)){
                 $return['msg']  = $this->msgList['activity_expire'];
+            }else if($member_count>=$activityInfo->member_limit){
+                $return['msg']  = $this->msgList['activity_member_limit'];
+            }else if($activityInfo->club_member_only){
+                $is_member = (new ClubService())->checkUserIsClubMember($user_id,$activityInfo->club_id);
+                if(!$is_member)
+                {
+                    $return['msg']  = $this->msgList['activity_club_limit'];
+                    return $return;
+                }
             }else{
                 $activityLog = $this->getActivityLogByUser($user_id,$activity_id);
                 if(isset($activityLog->id)){

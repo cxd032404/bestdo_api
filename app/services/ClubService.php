@@ -815,6 +815,23 @@ class ClubService extends BaseService
         return ($userClubList);
     }
 
+    /*
+     * 查询用户是否是俱乐部成员
+     */
+    public function checkUserIsClubMember($user_id,$club_id){
+        $params = [
+            'user_id ='.$user_id.'club_id ='.$club_id,
+            'columns'=>'member_id'
+        ];
+        $member_info = (new \HJ\ClubMember())->findFirst($params);
+        if($member_info)
+        {
+            return 1;
+        }
+        return 0;
+
+    }
+
 
 
 }
