@@ -362,7 +362,9 @@ class ActivityService extends BaseService
                     $useractivitylog->user_name = $userInfo->true_name;
                     $useractivitylog->mobile = $userInfo->mobile??"";
                     $useractivitylog->department = "";
+                    $useractivitylog->checkin_status = 0;
                     $useractivitylog->create_time = date("Y-m-d H:i:s");
+                    $useractivitylog->update_time = date("Y-m-d H:i:s");
                     if ($useractivitylog->create() === false) {
                         $return['msg']  = $this->msgList['activity_apply_error'];
                     }else{

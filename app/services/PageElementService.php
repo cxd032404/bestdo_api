@@ -3,6 +3,8 @@
 
 class PageElementService extends BaseService
 {
+    private $weekarray=array("日","一","二","三","四","五","六");
+
     /*
      * 列表
      * userinfo 用户信息
@@ -10,7 +12,6 @@ class PageElementService extends BaseService
      * data 用户包含的element信息
      * params 页面标识和company_id
      */
-
     public function getElementPage_list($data,$params,$user_info,$company_id){
         //指定数据
         if(isset($data['detail']['list_id']))
@@ -532,9 +533,21 @@ class PageElementService extends BaseService
         $data['detail']['activity_info'] = $activity_info;
         $detail = json_decode($activity_info->detail);
         $data['detail']['activity_info']->checkin = $detail->checkin??[];
+        $chinese_start_date = date('m月d日',strtotime($activity_info->start_time)).date('h:i',strtotime($activity_info->start_time));
+        $chinese_end_date = date('m月d日',strtotime($activity_info->end_time)).date('h:i',strtotime($activity_info->end_time));
+        $activity_info->chinese_start_time = $chinese_start_date;
+        $activity_info->chinese_end_time = $chinese_end_date;
         //$data['detail']['address'] = isset($detail['checkin']['address'])?$detail['checkin']['address']:'';
         $data['detail']['userCount'] = (new ActivityService())->getActivityMemberCount($activity_id);
-
+        $club_info = (new ClubService())->getClubInfo($activity_info->club_id,"club_id,detail");
+        $detail = json_decode($club_info->detail);
+        if(isset($detail->banner))
+        {
+            $data['detail']['club_info'] = $detail->banner;
+        }else
+        {
+            $data['detail']['club_info'] = [];
+        }
         $member_list = (new ActivityService())->getActivityMemberList($activity_id);
         $activity_member_list = [];
         foreach ($member_list as $value)
@@ -543,7 +556,6 @@ class PageElementService extends BaseService
             $activity_member_list[] = $userInfo;
         }
         $data['detail']['activity_member_list'] = $activity_member_list;
-        return $data;
 
 
 
@@ -722,7 +734,7 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
-        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,club_id,activity_name,apply_start_time,apply_end_time');
+        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,club_id,activity_name,apply_start_time,apply_end_time,start_time,end_time');
         $currentTime = time();
         $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
@@ -731,6 +743,10 @@ class PageElementService extends BaseService
             {
                 $clubInfo = $clubService->getClubInfo($activity_info->club_id,"club_id,club_name,icon");
                 $activity_list[$key] = (object)array_merge((array)$activity_info,(array)$clubInfo);
+                $chinese_start_date = date('m月d日',strtotime($activity_info->start_time))." 周".$this->weekarray[date('w',strtotime($activity_info->start_time))];
+                $chinese_end_date = date('m月d日',strtotime($activity_info->end_time))." 周".$this->weekarray[date('w',strtotime($activity_info->end_time))];
+                $activity_list[$key]->chinese_start_date = $chinese_start_date;
+                $activity_list[$key]->chinese_end_date = $chinese_end_date;
             }
             else
             {
