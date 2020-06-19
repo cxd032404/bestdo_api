@@ -537,69 +537,85 @@ class ActivityService extends BaseService
     public function checkPostitionForCheckin($activity_id,$user_id,$position = [])
     {
         $activityInfo = $this->getActivityInfo($activity_id,"*");
-        $detail = json_decode($activityInfo->detail,true);
-        $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
-        if($distance <= $this->config->checkin_max_distance)
+        if(isset($activityInfo->activity_id))
         {
-            $return  = ['result'=>1,"msg"=>"可以签到",'data'=>$distance,'code'=>200];
+            $detail = json_decode($activityInfo->detail,true);
+            $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
+            if($distance <= $this->config->checkin_max_distance)
+            {
+                $return  = ['result'=>1,"msg"=>"可以签到",'data'=>$distance,'code'=>200];
+            }
+            else
+            {
+                $return  = ['result'=>0,"msg"=>$this->msgList["checkin_over_distance"],'code'=>400];
+            }
         }
         else
         {
-            $return  = ['result'=>0,"msg"=>$this->msgList["checkin_over_distance"],'code'=>400];
+            $return  = ['result'=>0,"msg"=>$this->msgList["activity_empty"],'code'=>400];
         }
+
         return $return;
     }
     //活动签到
     public function activityCheckin($activity_id,$user_id,$position = [])
     {
         $activityInfo = $this->getActivityInfo($activity_id,"*");
-        $currentTime = time();
-        if((strtotime($activityInfo->apply_start_time)<=$currentTime) && (strtotime($activityInfo->apply_end_time)>=$currentTime))
+        if(isset($activityInfo->activity_id))
         {
-
-        }
-        else
-        {
-            $return  = ['result'=>0,"msg"=>$this->msgList['activity_expire'],'code'=>400];
-        }
-        $detail = json_decode($activityInfo->detail,true);
-        $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
-        //校验距离
-        if($distance <= $this->config->checkin_max_distance)
-        {
-            //获取报名记录
-            $activityLog = $this->getActivityLogByUser($user_id,$activity_id);
-            //如果找到
-            if(isset($activityLog->id))
+            $currentTime = time();
+            if((strtotime($activityInfo->apply_start_time)<=$currentTime) && (strtotime($activityInfo->apply_end_time)>=$currentTime))
             {
-                //已经签到过了
-                if($activityLog->checkin_status==1)
+                $detail = json_decode($activityInfo->detail,true);
+                $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
+                //校验距离
+                if($distance <= $this->config->checkin_max_distance)
                 {
-                    $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
-                }
-                else
-                {
-                    $data = ["checkin_status"=>1];
-                    $update = $this->updateActivityLog($activityLog->id,$data);
-                    if($update)
+                    //获取报名记录
+                    $activityLog = $this->getActivityLogByUser($user_id,$activity_id);
+                    //如果找到
+                    if(isset($activityLog->id))
                     {
-                        $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
+                        //已经签到过了
+                        if($activityLog->checkin_status==1)
+                        {
+                            $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
+                        }
+                        else
+                        {
+                            $data = ["checkin_status"=>1];
+                            $update = $this->updateActivityLog($activityLog->id,$data);
+                            if($update)
+                            {
+                                $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
+                            }
+                            else
+                            {
+                                $return  = ['result'=>0,"msg"=>$this->msgList['activity_checkin_fail'],'data'=>[],'code'=>200];
+                            }
+                        }
                     }
                     else
                     {
-                        $return  = ['result'=>0,"msg"=>$this->msgList['activity_checkin_fail'],'data'=>[],'code'=>200];
+                        $return  = ['result'=>0,"msg"=>$this->msgList["activity_log_not_found"],'code'=>400];
                     }
+                }
+                else
+                {
+                    $return  = ['result'=>0,"msg"=>$this->msgList["checkin_over_distance"],'code'=>400];
                 }
             }
             else
             {
-                $return  = ['result'=>0,"msg"=>$this->msgList["activity_log_not_found"],'code'=>400];
+                $return  = ['result'=>0,"msg"=>$this->msgList['activity_expire'],'code'=>400];
             }
         }
         else
         {
-            $return  = ['result'=>0,"msg"=>$this->msgList["checkin_over_distance"],'code'=>400];
+            $return  = ['result'=>0,"msg"=>$this->msgList["activity_empty"],'code'=>400];
         }
+
+
         return $return;
     }
 
@@ -628,11 +644,7 @@ class ActivityService extends BaseService
      * 查询用户活动权限
      */
     public function getUserActivityPermission($user_id,$activity_id){
-        $params = [
-            'user_id ='.$user_id,
-            'columns'=>'user_id,manager_id'
-        ];
-        $user_info = (new UserInfo())->findFirst($params);
+        $user_info = (new UserService())->getUserInfo($user_id);
         if(isset($user_info->manager_id)&&$user_info->manager_id>0)
         {
           return 1;
@@ -655,7 +667,7 @@ class ActivityService extends BaseService
     /*
      * 取消活动
      */
-    public function cancelActivity($user_id,$activity_id){
+    public function activityCancel($user_id,$activity_id){
         //查询用户权限
         $permission = $this->getUserActivityPermission($user_id,$activity_id);
 
