@@ -90,7 +90,76 @@ class ListService extends BaseService
                 }
             }
         }
-
         return $return;
+    }
+    //检查用户对特定列表是否有提交权限
+    public function checkUserListPermission($user_id,$list_id)
+    {
+        //获取列表信息
+        $listInfo = $this->getListInfo($list_id,"list_id,activity_id,company_id,detail");
+        $listInfo->detail = json_decode($listInfo->detail);
+        $userInfo  = (new UserService())->getUserInfo($user_id,"user_id,company_id,manager_id");
+        $listInfo->detail->manager_only = $listInfo->detail->manager_only??0;
+        if($listInfo->company_id == $userInfo->company_id)
+        {
+            //如果关联活动
+            if($listInfo->activity_id>0)
+            {
+                //管理员不限定
+                if($userInfo->manager_id>0)
+                {
+
+                }
+                else
+                {
+                    //检查报名报名记录
+                    $activityLog = (new ActivityService())->getActivityLogByUser($user_id,$listInfo->activity_id);
+                    //已报名
+                    if(!$activityLog)
+                    {
+
+                    }
+                    else
+                    {
+                        $return = ['result' => 0, "msg" => "需要报名活动才能提交", 'code' => 403];
+                    }
+                }
+            }
+            if(!isset($return))
+            {
+                //只有管理员可以提交
+                if($listInfo->detail->manager_only==1)
+                {
+                    if($userInfo->manager_id>0)
+                    {
+                        $return = ['result'=>1,'code'=>200];
+                    }
+                    else
+                    {
+                        $return = ['result' => 0, "msg" => "只有管理员可以提交", 'code' => 403];
+                    }
+                }
+                else
+                {
+                    $postExists = (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1);
+                    //已经提交过
+                    if(count($postExists['data'])>0)
+                    {
+                        $return = ['result' => 0, "msg" => "列表只能提交一次", 'code' => 403];
+                    }
+                    else
+                    {
+                        $return = ['result'=>1,'code'=>200];
+                    }
+                }
+            }
+        }
+        else
+        {
+            $return = ['result' => 0, "msg" => "您没有执行对该列表的权限", 'code' => 403];
+        }
+        return $return;
+
+
     }
 }
