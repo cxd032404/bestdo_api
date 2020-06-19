@@ -750,4 +750,79 @@ class PageElementService extends BaseService
         return $data;
     }
 
+    /*
+     * 精品课列表
+     */
+
+    public function getElementPage_boutique($data,$params,$user_info,$company_id){
+        $company_info = (new PostsService())->getCompanyInfo($user_info['data']['user_id']);
+        $detail = json_decode($company_info->detail);
+        $boutique = $detail->boutique;
+        foreach ($boutique as $key=>$value)
+        {
+              $list_info = (new PostsService())->getPostsList($value,[],'list_id,list_name,content,source');
+              if(!empty($list_info['data']))
+              {
+                 $list_artical =  $list_info['data'][0];
+              }
+              $source = json_decode($list_artical->source,true);
+              $source = reset($source);
+              $list_artical->source = $source;
+              $data['detail'][] = $list_artical;
+        }
+        return $data;
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

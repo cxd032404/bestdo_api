@@ -395,5 +395,15 @@ class PostsService extends BaseService
         }
 
     }
+    /*
+     * 获取公司信息
+     */
+    public function getCompanyInfo($user_id){
+        $user_info = (new UserService())->getUserInfo($user_id,'user_id,company_id');
+        $company_id = $user_info->company_id;
+        $company_info = (new \HJ\Company())->findFirst(['company_id ='.$company_id]);
+        return $company_info;
+    }
+
 
 }

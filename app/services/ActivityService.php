@@ -351,6 +351,8 @@ class ActivityService extends BaseService
             //查询活动数据
             $activityInfo = $this->getActivityInfo($activity_id,'*');
             $member_count = (new ActivityService())->getActivityMemberCount($activity_id);
+            //检测是否是俱乐部成员
+            $is_member = (new ClubService())->checkUserIsClubMember($user_id,$activityInfo->club_id);
             if(!isset($activityInfo->activity_id)){
                 $return['msg']  = $this->msgList['activity_empty'];
             }else if(time()<strtotime($activityInfo->apply_start_time)){
@@ -362,15 +364,10 @@ class ActivityService extends BaseService
             }else if($member_count>=$activityInfo->member_limit){
                 $return['msg']  = $this->msgList['activity_member_limit'];
                 $rerurn['code'] = $this->config->special_code['activity_member_full'];
-            }else if($activityInfo->club_member_only){
-                $is_member = (new ClubService())->checkUserIsClubMember($user_id,$activityInfo->club_id);
-                if(!$is_member)
-                {
+            }else if($activityInfo->club_member_only&&$is_member == 0){
                     $club_info = (new ClubService())->getClubInfo($activityInfo->club_id,'club_id,club_name');
                     $return['msg']  = $this->msgList['activity_club_limit'].$club_info->club_name;
-                    $rerurn['code'] = $this->config->special_code['need_club_membership'];
-                    return $return;
-                }
+                    $return['code'] = $this->config->special_code['need_club_membership'];
             }else{
                 $activityLog = $this->getActivityLogByUser($user_id,$activity_id);
                 if(isset($activityLog->id)){

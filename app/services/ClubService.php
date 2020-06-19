@@ -820,7 +820,7 @@ class ClubService extends BaseService
      */
     public function checkUserIsClubMember($user_id,$club_id){
         $params = [
-            'user_id ='.$user_id.'club_id ='.$club_id.'status = 1',
+            'user_id ='.$user_id.' and club_id ='.$club_id.' and status = 1',
             'columns'=>'member_id'
         ];
         $member_info = (new \HJ\ClubMember())->findFirst($params);
