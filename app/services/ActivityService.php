@@ -485,6 +485,14 @@ class ActivityService extends BaseService
         $activityInfo = $this->getActivityInfo($activity_id,"*");
         $detail = json_decode($activityInfo->detail,true);
         $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
-        return $distance;
+        if($distance <= $this->config->checkin_max_distance)
+        {
+            $return  = ['result'=>1,"msg"=>"可以签到",'data'=>$distance,'code'=>200];
+        }
+        else
+        {
+            $return  = ['result'=>0,"msg"=>"距离过远",'code'=>400];
+        }
+        return $return;
     }
 }
