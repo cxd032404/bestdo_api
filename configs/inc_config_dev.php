@@ -132,8 +132,8 @@ $config = [
         'activity_info'=>['name'=>'activity_info_','expire'=>3600],//活动
     ],
     'special_code'=>[
-        "need_club_membership"=>999,
-        "activity_member_full"=>998,
+        "need_club_membership"=>999, //需要加入俱乐部
+        "activity_member_full"=>998, //活动成员已满
     ],
 
 

@@ -17,7 +17,7 @@ class ActivityService extends BaseService
         "activity_update_success"=>"活动更新成功",
         "activity_update_fail"=>"活动更新失败",
         "activity_member_limit"=>"活动人数已满",
-        "activity_club_limit"=>"活动仅限俱乐部成员参加",
+        "activity_club_limit"=>"申请加入 ",
     ];
 
     public function createActivity($activityParams = [],$user_info)
@@ -366,7 +366,8 @@ class ActivityService extends BaseService
                 $is_member = (new ClubService())->checkUserIsClubMember($user_id,$activityInfo->club_id);
                 if(!$is_member)
                 {
-                    $return['msg']  = $this->msgList['activity_club_limit'];
+                    $club_info = (new ClubService())->getClubInfo($activityInfo->club_id,'club_id,club_name');
+                    $return['msg']  = $this->msgList['activity_club_limit'].$club_info->club_name;
                     $rerurn['code'] = $this->config->special_code['need_club_membership'];
                     return $return;
                 }

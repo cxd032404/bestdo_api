@@ -754,8 +754,19 @@ class PageElementService extends BaseService
             }
         }
         $activity_list = array_values($activity_list);
-
-        $data['detail']['activity_list'] = array_values($activity_list);
+        $page = $this->getFromParams($params,'page',1);
+        $pageSize = $this->getFromParams($params,'pageSize',5);
+        $offset = ($page-1)*$pageSize;
+        if($offset+$pageSize >= count($activity_list))
+        {
+            $residuals = 0;
+        }else
+        {
+            $residuals = 1;
+        }
+        $activity_list = array_slice($activity_list,$offset,$pageSize);
+        $data['detail']['activity_list'] = $activity_list;
+        $data['detail']['residuals'] = $residuals;
         return $data;
     }
 
