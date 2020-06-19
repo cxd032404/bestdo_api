@@ -162,40 +162,20 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_post($data,$params,$user_info,$company_id){
-        $data['detail']['available'] = 1;
-
+        $listService = new ListService();
         if(isset($data['detail']['list_id']))
         {
             $list_id = $data['detail']['list_id'];
         }
         else
         {
-            $list_id = $this->getFromParams($params,$dat['detail']['from_params'],0);
+            $list_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
-        $data['detail']['available'] = 1;
         //获取列表信息
-        $listInfo = (new ListService())->getListInfo($list_id,"list_id,activity_id,detail");
-        if($listInfo->activity_id>0)
-        {
-            $activityLog = (new ActivityService())->getActivityLogByUser($user_info['data']['user_id'],$listInfo->activity_id);
-            if(!$activityLog)
-            {
-                $data['detail']['available'] = 0;
-            }
-        }
-        if($data['detail']['available'] == 1)
-        {
-            //数据解包
-            $listInfo->detail = json_decode($listInfo->detail,true);
-            $user_id = isset($user_info['data']['user_id'])?[$user_info['data']['user_id']]:[];
-            $postExists = (new PostsService())->getPostsList($list_id,$user_id??0,"post_id","post_id DESC",0,1,1);
-            //已经提交过
-            if(count($postExists['data'])>0)
-            {
-                $data['detail']['available'] = 0;
-            }
-        }
-        $afterActions = (new ListService())->processAfterPostAction($listInfo->list_id,$user_info['data']['user_id']??0,$listInfo->detail);
+        $listInfo = $listService->getListInfo($list_id,"list_id,activity_id,detail");
+        $listInfo->detail = json_decode($listInfo->detail,true);
+        $data['detail']['available'] = $listService->checkUserListPermission($user_info['data']['user_id'],$list_id);
+        $afterActions = $listService->processAfterPostAction($listInfo->list_id,$user_info['data']['user_id']??0,$listInfo->detail);
         $data['detail']['after_action'] = $afterActions;
         return $data;
     }
