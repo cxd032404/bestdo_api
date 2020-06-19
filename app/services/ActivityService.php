@@ -9,7 +9,13 @@ class ActivityService extends BaseService
         "activity_ended"=>"活动已结束，不可报名！",
         "activity_expire"=>"当前时间不在报名时间内！",
         "activity_apply_success"=>"报名成功！",
-        "activity_apply_error"=>"报名失败！",
+        "activity_apply_fail"=>"报名失败！",
+        "activity_checkin_success"=>"签到成功！",
+        "activity_checkin_fail"=>"签到失败！",
+        "checkin_over_distance"=>"距离过远",
+        "activity_log_not_found"=>"没有找到报名记录",
+        "activity_update_success"=>"活动更新成功",
+        "activity_update_fail"=>"活动更新失败",
     ];
 
     public function createActivity($activityParams = [],$user_info)
@@ -171,12 +177,12 @@ class ActivityService extends BaseService
                     $update = $activity->save();
                     if ($update === false)
                     {
-                        $return  = ['result'=>0,"msg"=>"活动更新失败，请稍后再试",'code'=>400];
+                        $return  = ['result'=>0,"msg"=>$this->msgList['activity_update_fail'],'code'=>400];
                     }
                     else
                     {
                         $this->getActivityInfo($activityId,'*',0);
-                        $return  = ['result'=>1,"msg"=>"活动更新成功！",'data'=>$this->getActivityInfo($activity->activity_id),'code'=>200];
+                        $return  = ['result'=>1,"msg"=>$this->msgList["activity_update_success"],'data'=>$this->getActivityInfo($activity->activity_id),'code'=>200];
                     }
                 }
             }
@@ -366,7 +372,7 @@ class ActivityService extends BaseService
                     $useractivitylog->create_time = date("Y-m-d H:i:s");
                     $useractivitylog->update_time = date("Y-m-d H:i:s");
                     if ($useractivitylog->create() === false) {
-                        $return['msg']  = $this->msgList['activity_apply_error'];
+                        $return['msg']  = $this->msgList['activity_apply_fail'];
                     }else{
                         $return  = ['result'=>1, 'msg'=>$this->msgList['activity_apply_success'], 'code'=>200, 'data'=>$useractivitylog];
                     }
@@ -538,7 +544,7 @@ class ActivityService extends BaseService
         }
         else
         {
-            $return  = ['result'=>0,"msg"=>"距离过远",'code'=>400];
+            $return  = ['result'=>0,"msg"=>$this->msgList["checkin_over_distance"],'code'=>400];
         }
         return $return;
     }
@@ -546,6 +552,15 @@ class ActivityService extends BaseService
     public function activityCheckin($activity_id,$user_id,$position = [])
     {
         $activityInfo = $this->getActivityInfo($activity_id,"*");
+        $currentTime = time();
+        if((strtotime($activityInfo->apply_start_time)<=$currentTime) && (strtotime($activityInfo->apply_end_time)>=$currentTime))
+        {
+
+        }
+        else
+        {
+            $return  = ['result'=>0,"msg"=>$this->msgList['activity_expire'],'code'=>400];
+        }
         $detail = json_decode($activityInfo->detail,true);
         $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
         //校验距离
@@ -559,7 +574,7 @@ class ActivityService extends BaseService
                 //已经签到过了
                 if($activityLog->checkin_status==1)
                 {
-                    $return  = ['result'=>1,"msg"=>"签到成功",'data'=>[],'code'=>200];
+                    $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
                 }
                 else
                 {
@@ -567,22 +582,22 @@ class ActivityService extends BaseService
                     $update = $this->updateActivityLog($activityLog->id,$data);
                     if($update)
                     {
-                        $return  = ['result'=>1,"msg"=>"签到成功",'data'=>[],'code'=>200];
+                        $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
                     }
                     else
                     {
-                        $return  = ['result'=>0,"msg"=>"签到失败",'data'=>[],'code'=>200];
+                        $return  = ['result'=>0,"msg"=>$this->msgList['activity_checkin_fail'],'data'=>[],'code'=>200];
                     }
                 }
             }
             else
             {
-                $return  = ['result'=>0,"msg"=>"报名记录有误",'code'=>400];
+                $return  = ['result'=>0,"msg"=>$this->msgList["activity_log_not_found"],'code'=>400];
             }
         }
         else
         {
-            $return  = ['result'=>0,"msg"=>"距离过远",'code'=>400];
+            $return  = ['result'=>0,"msg"=>$this->msgList["checkin_over_distance"],'code'=>400];
         }
         return $return;
     }
@@ -626,8 +641,8 @@ class ActivityService extends BaseService
                 'activity_id ='.$activity_id,
                 'columns'=>'activity_id,create_user_id'
             ];
-            $activity_info = (new Activity())->findFirst($params);
-            if(isset($activity_info->create_user_id) && $activity_info->create_user_id == $user_id)
+            $activityInfo = (new Activity())->findFirst($params);
+            if(isset($activityInfo->create_user_id) && $activityInfo->create_user_id == $user_id)
             {
                 return 1;
             }
@@ -647,13 +662,13 @@ class ActivityService extends BaseService
             $return = ['result' => 0, "msg" => "您没有此活动的权限", 'code' => 400];
             return $return;
         }
-            $activity_info = (new Activity())->findFirst(['activity_id ='.$activity_id]);
-            $activity_info->status = 0;
-            $detail = json_decode($activity_info->detail,true);
+            $activityInfo = (new Activity())->findFirst(['activity_id ='.$activity_id]);
+            $activityInfo->status = 0;
+            $detail = json_decode($activityInfo->detail,true);
             $detail['cancel_info']['cancel_user_id'] = $user_id;
             $detail['cancel_info']['cancel_time'] = date('Y-m-d h:i',time());
-            $activity_info->detail = json_encode($detail);
-            $update_res = $activity_info->save();
+            $activityInfo->detail = json_encode($detail);
+            $update_res = $activityInfo->save();
             if($update_res)
             {
                 $return  = ['result'=>1,"msg"=>"取消成功",'code'=>400];
