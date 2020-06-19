@@ -753,6 +753,8 @@ class PageElementService extends BaseService
                 unset($activity_list[$key]);
             }
         }
+        $activity_list = array_values($activity_list);
+
         $data['detail']['activity_list'] = array_values($activity_list);
         return $data;
     }
