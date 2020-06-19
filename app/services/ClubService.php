@@ -565,7 +565,7 @@ class ClubService extends BaseService
         }
         if($start)
         {
-            $conditions.= ' and log_id <'.$start;
+            $conditions.= ' and log_id >'.$start;
         }
         $params = [
             $conditions,
@@ -782,14 +782,21 @@ class ClubService extends BaseService
      */
     public function getUserClubListWithPermission($user_id)
     {
-        $userClubList = $this->getUserClubList($user_id,"member_id,club_id,permission");
+        $userClubList = $this->getUserClubList($user_id,"member_id,club_id,permission",1,0);
+
         foreach ($userClubList as $key=>$club_info)
         {
             if($club_info->permission==0)
             {
                 unset($userClubList[$key]);
             }
+            else
+            {
+                $userClubList[$key] = (object)array_merge((array)$club_info,(array)$club_info->clubInfo);
+                unset($userClubList[$key]->clubInfo);
+            }
         }
+
         $userInfo = (new UserService())->getUserInfo($user_id,"user_id,company_id,manager_id");
         if($userInfo->manager_id > 0)
         {
@@ -799,7 +806,8 @@ class ClubService extends BaseService
             {
                 if(!in_array($clubInfo->club_id,$currentClubList))
                 {
-                    $userClubList[] = ["member_id"=>0,"club_id"=>$clubInfo->club_id,"permission"=>99,'clubInfo'=>$this->getClubInfo($clubInfo->club_id)];
+                    $club_info = $this->getClubInfo($clubInfo->club_id);
+                    $userClubList[] = array_merge((array)($club_info),(array)$club_info);
                 }
             }
         }

@@ -19,6 +19,12 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
+        $data = (new ActivityService())->getActivityMemberList(4)->toArray();
+        print_r($data);die();
+        die();
+        print_r(mb_strlen('史说政'));
+        print_r(strlen('史说政'));
+        die();
         $data = (new ActivityService())->getActivityInfo(4)->toArray();
         print_r($data);die();
 
@@ -28,6 +34,9 @@ class ApiController extends BaseController
 
             return $this->success($return);
         }
+
+
+
 
 
 

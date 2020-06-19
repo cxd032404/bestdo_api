@@ -20,6 +20,15 @@ class ActivityService extends BaseService
         {
             $return  = ['result'=>0,"msg"=>"活动时间有误，请重新输入",'code'=>400];
         }
+        //活动名称长度校验
+        elseif(strlen($activityParams['activity_name'])>=32)
+        {
+            $return  = ['result'=>0,"msg"=>"活动名称超长，请重新输入",'code'=>400];
+        }//说明长度
+        elseif(strlen($activityParams['comment'])>=2000)
+        {
+            $return  = ['result'=>0,"msg"=>"活动说明超长，请重新输入",'code'=>400];
+        }
         //报名时间校验
         elseif($activityParams['apply_start_time']=="" || $activityParams['apply_end_time']=="")
         {
@@ -55,6 +64,7 @@ class ActivityService extends BaseService
                     //写入数据
                     $activity = new Activity();
                     $activity->activity_name = $activityParams['activity_name'];
+                    $activity->comment = $activityParams['comment'];
                     $activity->club_id = $activityParams['club_id'];
                     $activity->company_id = $user_info->company_id;
                     $activity->create_user_id = $user_info->user_id;
@@ -118,9 +128,9 @@ class ActivityService extends BaseService
         }
         else
         {
-            //检查对当前俱乐部的权限
-            $permission = (new ClubService())->getUserClubPermission($user_info->user_id,$activityParams['club_id'],1);
-            if(intval($permission) == 0)
+            //检查对当前活动的权限
+            $permission = (new ClubService())->getUserActivityPermission($user_info->user_id,$activityId);
+            if($permission)
             {
                 $return  = ['result'=>0,"msg"=>"您没有执行此操作的权限哦",'code'=>403];
             }
@@ -165,6 +175,7 @@ class ActivityService extends BaseService
                     }
                     else
                     {
+                        $this->getActivityInfo($activityId,'*',0);
                         $return  = ['result'=>1,"msg"=>"活动更新成功！",'data'=>$this->getActivityInfo($activity->activity_id),'code'=>200];
                     }
                 }
@@ -246,7 +257,7 @@ class ActivityService extends BaseService
         $conditions = 'user_id ='.$user_id;
         if($start>0)
         {
-            $conditions .= 'id >'.$start;
+            $conditions .= 'and id >'.$start;
         }
         $params = [
             $conditions,
@@ -260,41 +271,64 @@ class ActivityService extends BaseService
     /*
      * 获取用户管理的活动列表
      */
-    public function getUserActivityListWithPermission($user_id){
+    public function getUserActivityListWithPermission($user_id,$club_id,$start = 0,$page=1,$pageSize =4){
         //查询用户是否有超级管理员权限
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
         {
-            $activity_list = $this->getActivityListByCompany($user_info->company_id,"activity_id,activity_name",0);
+
+            $activity_list = $this->getActivityListByCompany($user_info->company_id,"activity_id,activity_name",$club_id,0);
         }
         else
         {
             $activity_list = [];
         }
-        $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name",0);
+        $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time",$club_id,0);
+      //  print_r($activity_list);die();
+       // print_r($created_activity_list);
         foreach($created_activity_list as $key => $created)
         {
+            $flag = 0;
             foreach($activity_list as $key2 => $manager)
             {
                 if($created->activity_id == $manager->activity_id)
                 {
-                    unset($activity_list[$key]);
+                    $flag = 1;
                     break;
                 }
             }
-            $activity_list[] = $created;
+            if($flag == 1)
+            {
+                 continue;
+            }
+                $activity_list[] = $created;
         }
-        return $activity_list;
+        if($start>0)
+        {
+            $residuals = 1;
+            if(($start+$pageSize)>=count($activity_list))
+            { //分页结束
+                $residuals = 0;
+            }
+            $activity_list = array_slice($activity_list,$start,$pageSize,true);
+            $return = ['residuals'=>$residuals,'activity_list'=>$activity_list];
+        }else
+        {
+
+            $offset = ($page - 1)*$pageSize;
+            $residuals = 1;
+            if(($offset+$pageSize)>=count($activity_list))
+            {
+                $residuals = 0;
+            }
+            $activity_list = array_slice($activity_list,$offset,$pageSize,true);
+            $return = ['residuals'=>$residuals,'activity_list'=>$activity_list];
+
+        }
+        return $return;
 
     }
 
-    /*
-     * 获取活动参加人数
-     */
-    public function getActivityMemberCount($activity_id){
-        $count =  (new \HJ\UserActivityLog())->query()->where('activity_id ='.$activity_id)->execute()->count();
-        return $count;
-}
 
 
     //活动报名方法
@@ -328,7 +362,9 @@ class ActivityService extends BaseService
                     $useractivitylog->user_name = $userInfo->true_name;
                     $useractivitylog->mobile = $userInfo->mobile??"";
                     $useractivitylog->department = "";
+                    $useractivitylog->checkin_status = 0;
                     $useractivitylog->create_time = date("Y-m-d H:i:s");
+                    $useractivitylog->update_time = date("Y-m-d H:i:s");
                     if ($useractivitylog->create() === false) {
                         $return['msg']  = $this->msgList['activity_apply_error'];
                     }else{
@@ -348,12 +384,18 @@ class ActivityService extends BaseService
         ]);
     }
     //获取企业下的所有活动列表
-    public function getActivityListByCompany($company_id,$columns = 'activity_id,activity_name',$cache = 1)
+    public function getActivityListByCompany($company_id,$columns = 'activity_id,activity_name',$club_id = '',$cache = 1)
     {
+        $conditions = "company_id='".$company_id."'";
+
+        if(strlen($club_id)!=0)
+        {
+            $conditions .= "and 'club_id' = ".$club_id;
+        }
         $cacheSetting = $this->config->cache_settings->activity_list_by_company;
         $cacheName = $cacheSetting->name.$company_id;
-        $params =             [
-            "company_id='".$company_id."'",
+        $params = [
+            $conditions,
             'columns'=>'activity_id',
             'order' => 'activity_id DESC'
         ];
@@ -404,12 +446,17 @@ class ActivityService extends BaseService
         return $activityList;
     }
     //获取企业下的特定用户创建的所有活动列表
-    public function getActivityListByCreater($company_id,$create_user_id,$columns = 'activity_id,activity_name',$cache = 1)
+    public function getActivityListByCreater($company_id,$create_user_id,$columns = 'activity_id,activity_name',$club_id='',$cache = 1)
     {
         $cacheSetting = $this->config->cache_settings->activity_list_by_company;
         $cacheName = $cacheSetting->name.$company_id;
+        $conditions = "company_id='".$company_id."' and create_user_id = '".$create_user_id."'";
+        if(strlen($club_id)!=0)
+        {
+            $conditions .= "and club_id = ".$club_id;
+        }
         $params =             [
-            "company_id='".$company_id."' and create_user_id = '".$create_user_id."'",
+            $conditions,
             'columns'=>'activity_id',
             'order' => 'activity_id DESC'
         ];
@@ -495,4 +542,85 @@ class ActivityService extends BaseService
         }
         return $return;
     }
+
+    /*
+     * 活动人数
+     */
+    public function getActivityMemberCount($activity_id){
+        $count = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id,'columns'=>'count(activity_id)']);
+        $count = $count['0']??0;
+        return $count;
+    }
+
+    /*
+     * 活动成员列表
+     */
+    public function getActivityMemberList($activity_log){
+        $params = [
+            'activity_id ='.$activity_log,
+            'columns'=>'user_id'
+        ];
+        $member_list = (new \HJ\UserActivityLog())->find($params);
+        return $member_list;
+    }
+
+    /*
+     * 查询用户活动权限
+     */
+    public function getUserActivityPermission($user_id,$activity_id){
+        $params = [
+            'user_id ='.$user_id,
+            'columns'=>'user_id,manager_id'
+        ];
+        $user_info = (new UserInfo())->findFirst($params);
+        if(isset($user_info->manager_id)&&$user_info->manager_id>0)
+        {
+          return 1;
+        }else
+        {
+            $params = [
+                'activity_id ='.$activity_id,
+                'columns'=>'activity_id,create_user_id'
+            ];
+            $activity_info = (new Activity())->findFirst($params);
+            if(isset($activity_info->create_user_id) && $activity_info->create_user_id == $user_id)
+            {
+                return 1;
+            }
+        }
+         return 0;
+    }
+
+
+    /*
+     * 取消活动
+     */
+    public function cancelActivity($user_id,$activity_id){
+        //查询用户权限
+        $permission = $this->getUserActivityPermission($user_id,$activity_id);
+
+        if(!$permission) {
+            $return = ['result' => 0, "msg" => "您没有此活动的权限", 'code' => 400];
+            return $return;
+        }
+            $activity_info = (new Activity())->findFirst(['activity_id ='.$activity_id]);
+            $activity_info->status = 0;
+            $detail = json_decode($activity_info->detail,true);
+            $detail['cancel_info']['cancel_user_id'] = $user_id;
+            $detail['cancel_info']['cancel_time'] = date('Y-m-d h:i',time());
+            $activity_info->detail = json_encode($detail);
+            $update_res = $activity_info->save();
+            if($update_res)
+            {
+                $return  = ['result'=>1,"msg"=>"取消成功",'code'=>400];
+            }else
+            {
+                $return  = ['result'=>0,"msg"=>"取消失败",'code'=>400];
+            }
+            return $return;
+    }
+
+
+
+
 }
