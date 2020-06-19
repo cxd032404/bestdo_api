@@ -576,7 +576,7 @@ class ClubService extends BaseService
         $memberList = (new \HJ\ClubMemberLog())->find($params);
         return $memberList;
     }
-    public function getClubInfo($club_id,$columns = 'club_id,club_name,icon',$cache = 1)
+    public function getClubInfo($club_id,$columns = 'club_id,club_name,icon',$cache = 0)
     {
         $cacheSetting = $this->config->cache_settings->club_info;
         $cacheName = $cacheSetting->name.$club_id;

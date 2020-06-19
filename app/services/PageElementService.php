@@ -533,10 +533,10 @@ class PageElementService extends BaseService
         $data['detail']['activity_info'] = $activity_info;
         $detail = json_decode($activity_info->detail);
         $data['detail']['activity_info']->checkin = $detail->checkin??[];
-        $chinese_start_date = date('m月d日',strtotime($activity_info->start_time)).date('h:i',strtotime($activity_info->start_time));
-        $chinese_end_date = date('m月d日',strtotime($activity_info->end_time)).date('h:i',strtotime($activity_info->end_time));
-        $activity_info->chinese_start_time = $chinese_start_date;
-        $activity_info->chinese_end_time = $chinese_end_date;
+        $chinese_apply_start_date = date('m月d日',strtotime($activity_info->apply_start_time)).date('h:i',strtotime($activity_info->apply_start_time));
+        $chinese_apply_end_date = date('m月d日',strtotime($activity_info->apply_end_time)).date('h:i',strtotime($activity_info->apply_end_time));
+        $activity_info->chinese_apply_start_time = $chinese_apply_start_date;
+        $activity_info->chinese_apply_end_time = $chinese_apply_end_date;
         //$data['detail']['address'] = isset($detail['checkin']['address'])?$detail['checkin']['address']:'';
         $data['detail']['userCount'] = (new ActivityService())->getActivityMemberCount($activity_id);
         $club_info = (new ClubService())->getClubInfo($activity_info->club_id,"club_id,detail");
