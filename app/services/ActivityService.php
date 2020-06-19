@@ -135,8 +135,8 @@ class ActivityService extends BaseService
         else
         {
             //检查对当前活动的权限
-            $permission = (new ClubService())->getUserActivityPermission($user_info->user_id,$activityId);
-            if($permission)
+            $permission = (new ActivityService())->getUserActivityPermission($user_info->user_id,$activityId);
+            if(!$permission)
             {
                 $return  = ['result'=>0,"msg"=>"您没有执行此操作的权限哦",'code'=>403];
             }
@@ -155,6 +155,7 @@ class ActivityService extends BaseService
                     //写入数据
                     $activity = (new Activity())::findFirst(['activity_id='.$activityId]);
                     $activity->activity_name = $activityParams['activity_name'];
+                    $activity->comment = $activityParams['comment'];
                     $activity->club_id = $activityParams['club_id'];
                     $activity->company_id = $user_info->company_id;
                     $activity->create_user_id = $user_info->user_id;
