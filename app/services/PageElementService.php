@@ -571,11 +571,6 @@ class PageElementService extends BaseService
             $activity_member_list[] = $userInfo;
         }
         $data['detail']['activity_member_list'] = $activity_member_list;
-
-
-
-
-
         unset($data['detail']['activity_info']->detail);
         return $data;
     }
@@ -864,7 +859,6 @@ class PageElementService extends BaseService
         $data['detail']['activity_list'] = $activity_list;
         $data['detail']['residuals'] = $residuals;
         return $data;
-
     }
 
 
