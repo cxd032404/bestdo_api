@@ -160,6 +160,11 @@ class ListService extends BaseService
         }
         return $return;
 
+    }
+    //根据company_id获取列表
+    public function getListByCompany($company_id,$columns = 'list_id,list_name,list_type'){
+        $list = (new Hj\ListModel())->find(['company_id ='.$company_id,'columns'=>$columns]);
+        return $list ;
 
     }
 }

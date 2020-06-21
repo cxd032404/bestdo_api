@@ -790,7 +790,7 @@ class PageElementService extends BaseService
         $boutique = $detail->boutique;
         foreach ($boutique as $key=>$value)
         {
-              $list_info = (new PostsService())->getPostsList($value,[],'list_id,list_name,content,source');
+              $list_info = (new PostsService())->getPostsList($value,[],'list_id,source');
               if(!empty($list_info['data']))
               {
                  $list_artical =  $list_info['data'][0];
@@ -858,6 +858,40 @@ class PageElementService extends BaseService
 
         $data['detail']['activity_list'] = $activity_list;
         $data['detail']['residuals'] = $residuals;
+        return $data;
+    }
+
+
+    /*
+     * 精品课列表
+     */
+    public function getElementPage_boutiqueList($data,$params,$user_info,$company_id){
+
+        $list = (new ListService())->getListByCompany($company_id)->toArray();
+        $boutique_list = [];
+        foreach ($list as $key =>$value)
+        {
+            $list_info = (new PostsService())->getPostsList($value['list_id'],[],'list_id,list_name,source,views',"post_id DESC",0,1,3);
+            if(empty($list_info['data']))
+            {
+               continue;
+            }else
+            {
+                foreach ($list_info['data'] as $k =>$v)
+                {
+                    if($v->source)
+                    {
+                        $list_info['data'][$k]->source = json_decode($v->source,true);
+                    }else
+                    {
+                        $list_info['data'][$k]->source = '';
+                    }
+                }
+                $boutique_list[$key]['post_list'] =$list_info['data'];
+                $boutique_list[$key]['list_name'] = $value['list_name'];
+            }
+        }
+           $data['detail']['boutique_list'] = array_values($boutique_list);
         return $data;
     }
 
