@@ -262,16 +262,11 @@ class ActivityService extends BaseService
     /*
      *获取用户参加的活动列表
      */
-    public function getActivityList($user_id,$start = 0,$page = 1,$pageSize = 3,$order = 'id DESC'){
+    public function getActivityList($user_id,$order = 'id DESC'){
         $conditions = 'user_id ='.$user_id;
-        if($start>0)
-        {
-            $conditions .= 'and id >'.$start;
-        }
         $params = [
             $conditions,
             "order" => $order,
-            "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
         ];
         $activityList = (new \HJ\UserActivityLog())->find($params);
         return $activityList;
@@ -636,7 +631,7 @@ class ActivityService extends BaseService
      */
     public function getActivityMemberCount($activity_id){
         $count = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id,'columns'=>'count(activity_id)']);
-        $count = $count['0']??0;
+        $count = $count->{0};
         return $count;
     }
 
@@ -724,8 +719,6 @@ class ActivityService extends BaseService
         }
         return $return;
     }
-
-
 
 
 }

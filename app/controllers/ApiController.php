@@ -19,8 +19,10 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
-        $data = (new ActivityService())->getActivityInfo(34,'*',0);
-        print_r($data);die();
+
+        $count = (new \HJ\UserActivityLog())->findFirst(['activity_id = 5','columns'=>'count(activity_id)']);
+        print_r($count->{0} );die();
+        return $count;
         die();
         print_r(mb_strlen('史说政'));
         print_r(strlen('史说政'));
@@ -34,10 +36,5 @@ class ApiController extends BaseController
 
             return $this->success($return);
         }
-
-
-
-
-
 
 }

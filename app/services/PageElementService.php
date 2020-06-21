@@ -362,32 +362,67 @@ class PageElementService extends BaseService
      * params 页面标识和company_id
      */
      public function getElementPage_attendActivityList($data,$params,$user_info,$company_id){
-           $activity = (new ActivityService())->getActivityList($user_info['data']['user_id'],$this->getFromParams($params,'start'),$this->getFromParams($params,'page'),$this->getFromParams($params,'pageSize'))->toArray();
+           $activity = (new ActivityService())->getActivityList($user_info['data']['user_id'])->toArray();
            foreach ($activity as $key=>$value)
            {
                $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
+               if($activity_info->status == 0)
+               {
+                   continue;
+               }
                $activity_member_count = (new ActivityService())->getActivityMemberCount($value['activity_id']);
+
                //活动人数
-               $activity_list[$key]['count'] = $activity_member_count;
+               $activity_list[$key]['Usercount'] = $activity_member_count;
+               $activity_list[$key]['activity_id'] = $value['activity_id'];
                $activity_list[$key]['activity_name'] = $activity_info->activity_name;
                $activity_list[$key]['club_id'] = $activity_info->club_id;
                $activity_list[$key]['icon'] = $activity_info->icon;
                $activity_list[$key]['start_time'] = $activity_info->start_time;
                $activity_list[$key]['end_time'] = $activity_info->end_time;
-               if(time()<$activity_info->start_time)
+               $detail = json_decode($activity_info->detail,true);
+               if(isset($detail['checkin'])&&$detail['checkin'])
                {
-                   $status = 0;
-               }elseif(time()>$activity_info->end_time)
-               {
-                   $status = 2;
+                   $activity_list[$key]['position'] = $detail['checkin']['address'];
                }else
                {
-                   $status = 1;
+                   $activity_list[$key]['position'] = [];
+               }
+               if($activity_info->club_id==0)
+               {
+                   $activity_list[$key]['club_name'] = '';
+               }else
+               {
+                   $club_info = (new ClubService())->getClubInfo($activity_info->club_id);
+                   $activity_list[$key]['club_name'] = $club_info->club_name;
+               }
+               if(time()<$activity_info->start_time)
+               {
+                   $status = 0; //未开始的活动
+               }elseif(time()>$activity_info->end_time)
+               {
+                   $status = 2;//已结束
+               }else
+               {
+                   $status = 1; //正在进行中
                }
                $activity_list[$key]['status'] = $status;
            }
+           $page = $this->getFromParams($params,'page',1);
+           $pageSize = $this->getFromParams($params,'pageSize',4);
+           $offset = ($page-1)*$pageSize;
+             if($offset+$pageSize >= count($activity_list))
+             {
+                 $residuals = 0;
+             }else
+             {
+                 $residuals = 1;
+             }
+             $activity_list = array_slice($activity_list,$offset,$pageSize);
+
            $data['detail']['activity_list'] = $activity_list;
-           return $data;
+           $data['detail']['residuals'] = $residuals;
+         return $data;
      }
 
 
@@ -766,12 +801,69 @@ class PageElementService extends BaseService
                  $list_artical =  $list_info['data'][0];
               }
               $source = json_decode($list_artical->source,true);
-              $source = reset($source);
+              $source = current($source);
               $list_artical->source = $source;
               $data['detail'][] = $list_artical;
         }
         return $data;
 
+    }
+
+    /*
+     * 活动签到列表页
+     */
+
+    public function getElementPage_attendActivityListToCheckin($data,$params,$user_info,$company_id){
+        $activity = (new ActivityService())->getActivityList($user_info['data']['user_id'])->toArray();
+        foreach ($activity as $key=>$value)
+        {
+            if($value['checkin_status'] == 1)
+            {
+                //筛选掉已签到活动
+                continue;
+            }
+            $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
+            if($activity_info->status == 0)
+            { //筛选掉无效活动
+                continue;
+            }
+            $activity_member_count = (new ActivityService())->getActivityMemberCount($value['activity_id']);
+            //活动人数
+            $activity_list[$key]['count'] = $activity_member_count;
+            $activity_list[$key]['activity_id'] = $value['activity_id'];
+            $activity_list[$key]['activity_name'] = $activity_info->activity_name;
+            $activity_list[$key]['club_id'] = $activity_info->club_id;
+            $activity_list[$key]['icon'] = $activity_info->icon;
+            $activity_list[$key]['start_time'] = $activity_info->start_time;
+            $activity_list[$key]['end_time'] = $activity_info->end_time;
+            $activity_list[$key]['checkin_status'] = $value['checkin_status'];
+            if(time()<$activity_info->start_time)
+            {
+                $status = 0; //未开始的活动
+            }elseif(time()>$activity_info->end_time)
+            {
+                $status = 2;//已结束
+            }else
+            {
+                $status = 1; //正在进行中
+            }
+            $activity_list[$key]['status'] = $status;
+        }
+        $page = $this->getFromParams($params,'page',1);
+        $pageSize = $this->getFromParams($params,'pageSize',4);
+        $offset = ($page-1)*$pageSize;
+        if($offset+$pageSize >= count($activity_list))
+        {
+            $residuals = 0;
+        }else
+        {
+            $residuals = 1;
+        }
+        $activity_list = array_slice($activity_list,$offset,$pageSize);
+
+        $data['detail']['activity_list'] = $activity_list;
+        $data['detail']['residuals'] = $residuals;
+        return $data;
 
     }
 
