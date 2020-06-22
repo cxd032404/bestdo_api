@@ -12,9 +12,6 @@
 use Robots as robotModel;
 use Phalcon\Mvc\Model\Query;
 use Phalcon\Mvc\User\Component;
-use Elasticsearch\ClientBuilder;
-use Phalcon\Mvc\Model\Transaction\Failed as TxFailed;
-use Phalcon\Mvc\Model\Transaction\Manager as TxManager;
 
 class WechatService extends BaseService
 {
@@ -406,15 +403,49 @@ class WechatService extends BaseService
         return $result;
     }
 
-    //获取网页授权access_token
+    //根据code获取小程序的用户身份信息
     public function getUserInfoByToken_mini_program($wechat = [],$code="")
     {
         $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
-        $oauth_access_token = $this->getJson($url_get);
-        print_R($oauth_access_token);
-        die();
+        $user_info = $this->getJson($url_get);
+        return $user_info;
+    }
+    /**
+     * 检验数据的真实性，并且获取解密后的明文.
+     * @param $encryptedData string 加密的用户数据
+     * @param $iv string 与用户数据一同返回的初始向量
+     * @param $data string 解密后的原文
+     *
+     * @return int 成功0，失败返回对应的错误码
+     */
+    public function decryptData( $encryptedData, $iv, $wechat, $sessionKey )
+    {
+        if (strlen($sessionKey) != 24) {
+            return ErrorCode::$IllegalAesKey;
+        }
+        $aesKey=base64_decode($sessionKey);
 
-        return $oauth_access_token;
+
+        if (strlen($iv) != 24) {
+            return ErrorCode::$IllegalIv;
+        }
+        $aesIV=base64_decode($iv);
+
+        $aesCipher=base64_decode($encryptedData);
+
+        $result=openssl_decrypt( $aesCipher, "AES-128-CBC", $aesKey, 1, $aesIV);
+
+        $dataObj=json_decode( $result );
+        if( $dataObj  == NULL )
+        {
+            return ErrorCode::$IllegalBuffer;
+        }
+        if( $dataObj->watermark->appid != $wechat['appid'] )
+        {
+            return ErrorCode::$IllegalBuffer;
+        }
+        $data = $result;
+        return $data;
     }
 
 }

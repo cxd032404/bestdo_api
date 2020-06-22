@@ -44,7 +44,7 @@ class WechatController extends BaseController
     }
 
     /*
-     * 微信code登录
+     * 小程序code登录
      * 参数
      * code
      * （必填）：微信授权code
@@ -58,21 +58,25 @@ class WechatController extends BaseController
         //echo "code:".$code;
         //调用手机号验证码登录方法
         $openId = (new WechatService)->getUserInfoByToken_mini_program($this->key_config->wechat_mini_program,$code);
-        print_R($openId);
-        die();
-        //调用手机号验证码登录方法
-        //$openId = 'oPCk01aWREJXeJK0IjOjDQfUWsmA';
-        $return  = (new UserService)->wechatLogin($openId);
-        //日志记录
-        $this->logger->info(json_encode($openId));
-        //返回值判断
-        if($return['result']!=1){
-            return $this->failure([],$return['msg'],$return['code']);
-        }
-        $cacheSetting = $this->config->cache_settings->user_token;
-        $cacheName = $cacheSetting->name.$return['data']['user_info']['user_id'];
-        $this->redis->set($cacheName,$return['data']['user_token']);
-        $this->redis->expire($cacheName,$cacheSetting->expire);//设置过期时间,不设置过去时间时，默认为永久保持
-        return $this->success($return['data']);
+        return $this->success($openId);
+    }
+    /*
+     * 小程序数据解码
+     * 参数
+     * session_key
+     * data：密文
+     * iv：偏移量
+     * */
+    public function wechatDecryptAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $this->logger->info(json_encode($data));
+        $session_key = trim($data['session_key']??"");
+        $iv = trim($data['iv']??"");
+        $data = trim($data['data']??"");
+        //解码
+        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
+        return $this->success($decrypt);
     }
 }
