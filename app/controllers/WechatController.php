@@ -44,27 +44,26 @@ class WechatController extends BaseController
     }
 
     /*
-     * 小程序code登录
+     * 小程序通过code获取sessionKey
      * 参数
      * code
      * （必填）：微信授权code
      * */
-    public function wechatMiniProgramLoginAction()
+    public function getSessionKeyForMiniProgramAction()
     {
         //接收参数并格式化
         $data = $this->request->get();
         $this->logger->info(json_encode($data));
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
-        //echo "code:".$code;
         //调用手机号验证码登录方法
-        $openId = (new WechatService)->getUserInfoByToken_mini_program($this->key_config->wechat_mini_program,$code);
-        return $this->success($openId);
+        $sessionKey = (new WechatService)->getUserInfoByToken_mini_program($this->key_config->wechat_mini_program,$code);
+        return $this->success($sessionKey);
     }
     /*
      * 小程序数据解码
      * 参数
      * session_key
-     * data：密文
+     * encryptedData：密文
      * iv：偏移量
      * */
     public function wechatDecryptAction()
@@ -84,6 +83,40 @@ class WechatController extends BaseController
         else
         {
             $this->failure([],$decrypt['msg'],$decrypt['code']);
+        }
+    }
+    /*
+     * 小程序code登录
+     * 参数
+     * session_key
+     * encryptedData：密文
+     * iv：偏移量
+     * */
+    public function miniProgramLoginAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $this->logger->info(json_encode($data));
+        $session_key = trim($data['session_key']??"");
+        $iv = trim($data['iv']??"");
+        $data = trim($data['encryptedData']??"");
+        //解码
+        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
+        if($decrypt['unionId'])
+        {
+            $return  = (new UserService)->miniProgramLogin($decrypt['unionId']);
+            if($return['result'])
+            {
+                return $this->success($return['data']);
+            }
+            else
+            {
+                $this->failure([],$decrypt['msg'],$decrypt['code']);
+            }
+        }
+        else
+        {
+            return $this->failure([],"用户身份获取失败",403);
         }
     }
 }
