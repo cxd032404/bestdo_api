@@ -19,22 +19,18 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
+        $res = (new MessageService())->sendMessage();
+        print_r($res);die();
 
-        $count = (new \HJ\UserActivityLog())->findFirst(['activity_id = 5','columns'=>'count(activity_id)']);
-        print_r($count->{0} );die();
-        return $count;
-        die();
-        print_r(mb_strlen('史说政'));
-        print_r(strlen('史说政'));
-        die();
-        $data = (new ActivityService())->getActivityInfo(4)->toArray();
-        print_r($data);die();
-
+         $return = (new WechatService())->sendMessage(['club_id'=>1,'user_id'=>11907],'join');
+         print_r($return);die();
             $return = (new TestService)->test();
             //$return = $oService->test();
             $this->logger->info(json_encode($return));
 
             return $this->success($return);
         }
+
+
 
 }

@@ -31,15 +31,5 @@ class WechatController extends BaseController
         die();
     }
 
-    /*
-     * 微信公众号推送消息接口
-     * touser 接收者openid
-     * template_id 模板id
-     * data 需要发送的信息
-     */
-    public function sendMessage($touser,$template_id,$data){
-        $accessToken = (new WechatService())->checkWechatAccessToken();
-        $result = (new WechatService())->sendWechatMessage($accessToken,$touser,$template_id,$data);
-        return $result;
-    }
+
 }

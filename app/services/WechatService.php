@@ -19,6 +19,14 @@ use Phalcon\Mvc\Model\Transaction\Manager as TxManager;
 class WechatService extends BaseService
 {
 
+
+    private $templete = [
+        'join'=>'申请加入',
+        'pass'=>'通过了您的申请',
+        'leave'=>'离开了',
+        'reject'=>'拒绝了您的申请'
+    ];
+
     /*更新用户微信信息*/
     public function getOpenIdByCode($wechat = [],$code="")
     {
@@ -155,14 +163,6 @@ class WechatService extends BaseService
             header("Location:" . $redirect_url);
         }
     }
-
-
-
-
-
-
-
-
 
 
     //查询是否在微信浏览器打开
@@ -352,32 +352,32 @@ class WechatService extends BaseService
     /*
      * 推送微信公众号信息
      */
-    public function sendWechatMessage($accessToken,$touser,$template_id,$data)
+    public function sendWechatMessage($accessToken,$touser_openid,$template_id,$content)
     {
        $sendUrl = "http://api.weixin.qq.com/cgi-bin/message/template/send?access_token=$accessToken";
         $sendData = [
-           'touser'=>$touser,
+           'touser'=>$touser_openid, //接收方
            'template_id'=>$template_id,
             'appid'=>$this->key_config->wechat->appid,
             'data'=>[
                 "cardNumber"=>[
-                     'value'=>$data,
+                     'value'=>$content,
                      'color'=>'#173177'
                 ],
                 "type"=>[
-                    'value'=>$data,
+                    'value'=>$content,
                     'color'=>'#173177'
                 ],
                 "VIPName"=>[
-                    'value'=>$data,
+                    'value'=>$content,
                     'color'=>'#173177'
                 ],
                 "VIPPhone"=>[
-                    'value'=>$data,
+                    'value'=>$content,
                     'color'=>'#173177'
                 ],
                 "expDate"=>[
-                    'value'=>$data,
+                    'value'=>$content,
                     'color'=>'#173177'
                 ]
             ]
@@ -389,20 +389,145 @@ class WechatService extends BaseService
            return false;
 
     }
+    /*
+     *发送微信公众号消息接口
+     */
+    public function  sendMessage($info,$type)
+    {
+        $userListSend = $this->generateUserListSend($info,$type);
+        if(!$userListSend['result'])
+        {
+            return $userListSend;
+        }
+        $contentSend = $this->generateContentSend($info,$type);
+        if(!$contentSend['result'])
+        {
+            return $contentSend;
+        }
+        return $this->send($userListSend['user_list_info'],$contentSend['content']);
+    }
+
+    /*info  包含club_id user_id
+     * user_id始终是被操作方user_id
+     * 获取接收人信息
+     */
+    public function generateUserListSend($info,$type)
+    {
+        if(!isset($info['club_id'])||!$info['club_id'])
+        {
+            return ['result'=>0,'msg'=>'club_id错误'];
+        }
+        if(!isset($info['user_id'])||!$info['user_id'])
+        {
+            return ['result'=>0,'msg'=>'user_id错误'];
+        }
+
+        //加入俱乐部
+        $user_list_info= [];
+        //接收人为俱乐部管理员
+        if($type == "join" || $type == 'leave')
+        {
+            $club_id = $info['club_id'];
+            //获取管理员列表 超级管理员
+            $user_list = (new ClubService())->getClubManagerList($club_id);
+        }
+        //接收人为单个用户
+        else if($type == 'pass' || $type == 'reject')
+        {
+            $user_list[] = $info['user_id'];
+        }
+        else
+        {
+            return ['result'=>0,'msg'=>'类型有误'];
+        }
+        //获取用户openid
+        foreach ($user_list as $key=>$value)
+        {
+            $user_info = (new UserService())->getUserInfo($value,'user_id,wechatid');
+            $user_list_info[$key]['user_id'] = $value;
+            $user_list_info[$key]['openid'] = $user_info->wechatid;
+        }
+        return ['result'=>1,'msg'=>'','user_list_info'=>$user_list_info];
+
+        return $user_list_info; //[0=>['user_id'=>1907,'openid'=>'oyqdfadfasdfadsf']
+    }
 
     /*
-     *curl 请求
+     * 获取模板
      */
-    public function curlRequest($url,$data){
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,            $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
-        curl_setopt($ch, CURLOPT_POST,           1 );
-        curl_setopt($ch, CURLOPT_POSTFIELDS,     $data );
-        $result=curl_exec ($ch);
-        print_r($result);
-        curl_close($ch);
-        die();
-        return $result;
+    public function generateContentSend($info,$type){
+        if(!isset($info['user_id'])||!$info['user_id'])
+        {
+            return ['result'=>0,'msg'=>'operate_id错误'];
+        }
+        if(!isset($info['club_id'])||!$info['club_id'])
+        {
+            return ['result'=>0,'msg'=>'club_id错误'];
+        }
+
+        $club_id = $info['club_id'];
+        $user_id = $info['user_id'];
+
+        $user_info = (new UserService())->getUserInfo($user_id,'true_name,nick_name');
+        if(!$user_info->true_name)
+        {
+            $user_name = $user_info->nick_name;
+        }else
+        {
+            $user_name = $user_info->true_name;
+        }
+
+        $club_info = (new ClubService())->getClubInfo($club_id,'club_name');
+        $club_name = $club_info->club_name;
+
+        $content = '';
+        if($type == 'join')
+        {
+            //史说政申请加入足球俱乐部
+           $content = $user_name.$this->templete['join'].$club_name;
+        }else if($type == 'pass')
+        {  //足球俱乐部通过了你的申请
+           $content = $club_name.$this->templete['pass'];
+        }else if($type == 'reject')
+        {
+            //足球俱乐部拒绝了你的申请
+            $content = $club_name.$this->templete['reject'];
+        }elseif($type == 'leave')
+        {
+            $content = $user_name.$this->templete['leave'].$club_name;
+        }else
+        {
+            return ['result'=>0,'msg'=>'类型有误'];
+        }
+        return ['result'=>1,'msg'=>'','content'=>$content];
     }
+     //消息存入redis队列
+     public function send($userList,$contentSend)
+     {
+         $redisKey = $this->config->redisQueue->wechatMessageQueue;
+         foreach ($userList as $key=>$value)
+         { 1
+             $message = [];
+             $message['user_id'] = $value['user_id'];
+             $message['openid'] = '';//$value['openid'];
+             $message['content'] = $contentSend;
+             print_r($message);
+             $res = $this->redis->rpush($redisKey,json_encode($message));
+             if(!$res)
+             {
+                 $error_data[] = $message;
+             }
+         }
+         if(!isset($error_data))
+         {
+             return ['result'=>1,'msg'=>'发送成功'];
+         }else
+         {
+             return ['result'=>0,'msg'=>'发送失败','error_data'=>$error_data];
+         }
+
+     }
+
+
+
 }

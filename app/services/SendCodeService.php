@@ -64,10 +64,10 @@ class SendCodeService extends BaseService
                 if ($sendcode->create() === false) {
                     $return['msg']  = $this->msgList['sms_insert_error'];
                 }else{
-                    $return  = ['result'=>1,'msg'=>$return_sms['Message'],"data"=>$data["jsonTemplateParam"],'code'=>200];
+                    $return  = ['result'=>1,'msg'=>$return_sms['MessageService'],"data"=>$data["jsonTemplateParam"],'code'=>200];
                 }
             }else{
-                $return['msg']  = $return_sms['Message'];
+                $return['msg']  = $return_sms['MessageService'];
             }
         }
         return $return;
@@ -107,10 +107,10 @@ class SendCodeService extends BaseService
                     //短信验证码存入redis缓存中
                     $this->redis->set($code_name.$mobile,$data['jsonTemplateParam']);
                     $this->redis->expire($code_name.$mobile,60*5);
-                    $return  = ['result'=>1,'msg'=>$return_sms['Message'],'data'=>$data['jsonTemplateParam'],'code'=>200];
+                    $return  = ['result'=>1,'msg'=>$return_sms['MessageService'],'data'=>$data['jsonTemplateParam'],'code'=>200];
                 }
             }else{
-                $return['msg']  = $return_sms['Message'];
+                $return['msg']  = $return_sms['MessageService'];
             }
         }
         return $return;
@@ -146,10 +146,10 @@ class SendCodeService extends BaseService
                 if ($sendcode->create() === false) {
                     $return['msg']  = $this->msgList['sms_insert_error'];
                 }else{
-                    $return  = ['result'=>1,'msg'=>$return_sms['Message'],'data'=>$data['jsonTemplateParam'],'code'=>200];
+                    $return  = ['result'=>1,'msg'=>$return_sms['MessageService'],'data'=>$data['jsonTemplateParam'],'code'=>200];
                 }
             }else{
-                $return['msg']  = $return_sms['Message'];
+                $return['msg']  = $return_sms['MessageService'];
             }
         }
         return $return;

@@ -744,7 +744,7 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
-        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,club_id,activity_name,apply_start_time,apply_end_time,start_time,end_time',$club_id ='',0);
+        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,club_id,activity_name,comment,apply_start_time,apply_end_time,start_time,end_time',$club_id ='',0);
         $currentTime = time();
         $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
@@ -757,6 +757,8 @@ class PageElementService extends BaseService
                 $chinese_end_date = date('m月d日',strtotime($activity_info->end_time))." 周".$this->weekarray[date('w',strtotime($activity_info->end_time))];
                 $activity_list[$key]->chinese_start_date = $chinese_start_date;
                 $activity_list[$key]->chinese_end_date = $chinese_end_date;
+                $activity_list[$key]->activity_name = mb_substr( $activity_info->activity_name, 0, 12, 'utf-8' );
+                $activity_list[$key]->comment = mb_substr( $activity_info->comment, 0, 12, 'utf-8' );
             }
             else
             {
@@ -790,14 +792,18 @@ class PageElementService extends BaseService
         $boutique = $detail->boutique;
         foreach ($boutique as $key=>$value)
         {
-              $list_info = (new PostsService())->getPostsList($value,[],'list_id,source');
-              if(!empty($list_info['data']))
+              $list_info = (new ListService())->getListInfo($value,'list_id,list_name');
+              $post_list = (new PostsService())->getPostsList($value,[],'list_id,views,title,source');
+              if(!empty($post_list['data']))
               {
-                 $list_artical =  $list_info['data'][0];
+                 $list_artical =  $post_list['data'][0];
+                 $list_artical->title =  mb_substr($post_list['data'][0]->title,0,12,'utf-8');
               }
               $source = json_decode($list_artical->source,true);
-              $source = current($source);
+              $result = (new UploadService())->parthSource($source);
+              $source = current($result);
               $list_artical->source = $source;
+              $list_artical->list_name = mb_substr($list_info->list_name,0,2,'utf-8');
               $data['detail'][] = $list_artical;
         }
         return $data;
@@ -861,39 +867,6 @@ class PageElementService extends BaseService
         return $data;
     }
 
-
-    /*
-     * 精品课列表
-     */
-    public function getElementPage_boutiqueList($data,$params,$user_info,$company_id){
-
-        $list = (new ListService())->getListByCompany($company_id)->toArray();
-        $boutique_list = [];
-        foreach ($list as $key =>$value)
-        {
-            $list_info = (new PostsService())->getPostsList($value['list_id'],[],'list_id,list_name,source,views',"post_id DESC",0,1,3);
-            if(empty($list_info['data']))
-            {
-               continue;
-            }else
-            {
-                foreach ($list_info['data'] as $k =>$v)
-                {
-                    if($v->source)
-                    {
-                        $list_info['data'][$k]->source = json_decode($v->source,true);
-                    }else
-                    {
-                        $list_info['data'][$k]->source = '';
-                    }
-                }
-                $boutique_list[$key]['post_list'] =$list_info['data'];
-                $boutique_list[$key]['list_name'] = $value['list_name'];
-            }
-        }
-           $data['detail']['boutique_list'] = array_values($boutique_list);
-        return $data;
-    }
 
 
 

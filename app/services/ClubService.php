@@ -829,8 +829,42 @@ class ClubService extends BaseService
             return 1;
         }
         return 0;
-
     }
+
+    /*
+     * 获取俱乐部管理员列表
+     */
+    public function getClubManagerList($club_id){
+        $conditions = 'club_id ='.$club_id.' and permission >0 and status = 1';
+        $club_info = $this->getClubInfo($club_id,'club_id,company_id');
+        //查询出超级管理员
+        $manager_conditions = 'company_id ='.$club_info->company_id.' and manager_id>0';
+        $manager_params = [
+            $manager_conditions,
+            'columns' =>'user_id'
+        ];
+        $manager_list =(new \HJ\UserInfo())->find($manager_params)->toArray();
+        $params = [
+            $conditions,
+            "columns" => 'member_id,user_id'
+        ];
+        $user_list_info = (new \HJ\ClubMember())->find($params)->toArray();
+        $user_list = [];
+        foreach ($manager_list as $value)
+        {
+            $user_list []= $value['user_id'];
+        }
+        foreach ($user_list_info as $value)
+        {
+            if(in_array($value['user_id'],$user_list))
+            {
+                continue;
+            }
+            $user_list []= $value['user_id'];
+        }
+        return $user_list;
+    }
+
 
 
 
