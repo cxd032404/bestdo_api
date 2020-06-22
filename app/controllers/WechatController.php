@@ -77,6 +77,13 @@ class WechatController extends BaseController
         $data = trim($data['encryptedData']??"");
         //解码
         $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
-        return $this->success($decrypt);
+        if($decrypt['result'])
+        {
+            $this->success($decrypt['data'],"",$decrypt['code']);
+        }
+        else
+        {
+            $this->failure([],$decrypt['msg'],$decrypt['code']);
+        }
     }
 }

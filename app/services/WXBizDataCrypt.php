@@ -37,10 +37,6 @@ class WXBizDataCrypt
 	 */
 	public function decryptData( $encryptedData, $iv, &$data )
 	{
-		echo $this->appid."\n";
-	    echo $encryptedData."\n";
-		echo $iv."\n";
-		echo $this->sessionKey."\n";
 	    if (strlen($this->sessionKey) != 24) {
 			return ErrorCode::$IllegalAesKey;
 		}
