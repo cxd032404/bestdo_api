@@ -405,4 +405,16 @@ class WechatService extends BaseService
         die();
         return $result;
     }
+
+    //获取网页授权access_token
+    public function getUserInfoByToken_mini_program($wechat = [],$code="")
+    {
+        $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
+        $oauth_access_token = $this->getJson($url_get);
+        print_R($oauth_access_token);
+        die();
+
+        return $oauth_access_token;
+    }
+
 }
