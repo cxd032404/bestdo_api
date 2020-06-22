@@ -74,7 +74,7 @@ class WechatController extends BaseController
         $this->logger->info(json_encode($data));
         $session_key = trim($data['session_key']??"");
         $iv = trim($data['iv']??"");
-        $data = trim($data['data']??"");
+        $data = trim($data['encryptedData']??"");
         //解码
         $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
         return $this->success($decrypt);

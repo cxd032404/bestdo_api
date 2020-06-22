@@ -420,6 +420,7 @@ class WechatService extends BaseService
      */
     public function decryptData( $encryptedData, $iv, $wechat, $sessionKey )
     {
+        /*
         $appid = 'wx4f4bc4dec97d474b';
         $sessionKey = 'tiihtNczf5v6AKRyjwEUhQ==';
 
@@ -443,8 +444,9 @@ class WechatService extends BaseService
 
         $iv = 'r7BXXKkLb8qrSNn05n0qiA==';
         $decryptClass = new WXBizDataCrypt($appid,$sessionKey);
+        */
 
-        //$decryptClass = new WXBizDataCrypt($wechat['appid'],$sessionKey);
+        $decryptClass = new WXBizDataCrypt($wechat['appid'],$sessionKey);
         $errCode = $decryptClass->decryptData($encryptedData, $iv, $data );
 
         if ($errCode == 0) {
