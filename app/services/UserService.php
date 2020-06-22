@@ -221,7 +221,7 @@ class UserService extends BaseService
                     }
                     $currentTime = time();
                     //创建用户
-                    $user = new UserInfo();
+                    $user = new \HJ\UserInfo();
                     $user->setTransaction($transaction);
                     $user->username = $mobile;
                     $user->mobile = $mobile;
@@ -355,7 +355,7 @@ class UserService extends BaseService
                         // Request a transaction
                         $transaction = $manager->get();
                         //添加用户
-                        $user = new UserInfo();
+                        $user = new \HJ\UserInfo();
                         $user->setTransaction($transaction);
                         $user->username = $mobile;
                         $user->password = md5($password);
