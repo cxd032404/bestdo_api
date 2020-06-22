@@ -420,31 +420,8 @@ class WechatService extends BaseService
      */
     public function decryptData( $encryptedData, $iv, $wechat, $sessionKey )
     {
-        if (strlen($sessionKey) != 24) {
-            return ErrorCode::$IllegalAesKey;
-        }
-        $aesKey=base64_decode($sessionKey);
-
-
-        if (strlen($iv) != 24) {
-            return ErrorCode::$IllegalIv;
-        }
-        $aesIV=base64_decode($iv);
-
-        $aesCipher=base64_decode($encryptedData);
-
-        $result=openssl_decrypt( $aesCipher, "AES-128-CBC", $aesKey, 1, $aesIV);
-
-        $dataObj=json_decode( $result );
-        if( $dataObj  == NULL )
-        {
-            return ErrorCode::$IllegalBuffer;
-        }
-        if( $dataObj->watermark->appid != $wechat['appid'] )
-        {
-            return ErrorCode::$IllegalBuffer;
-        }
-        $data = $result;
+        $decryptClass = new WXBizDataCrypt(['sessionKey'=>$sessionKey,'appId'=>$wechat['appid']]);
+        $data = $decryptClass->decryptData($encryptedData,$iv,$data);
         return $data;
     }
 
