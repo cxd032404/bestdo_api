@@ -910,6 +910,7 @@ class UserService extends BaseService
             $return = [];
             $return['result'] = 0;
             $return['msg']  = $this->msgList['user_unionid_valid'];
+            $return['code']  = 403;
         }else {
             $currentTime = time();
             //修改用户登录时间
