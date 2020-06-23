@@ -63,6 +63,10 @@ class PageElementService extends BaseService
                 $data['data']['data'][$k]->is_kudos = 1;
             }
         }
+        if(empty($data['data']['data']))
+        {
+            unset($data);
+        }
         return $data;
 
     }
