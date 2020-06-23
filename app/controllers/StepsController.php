@@ -42,19 +42,24 @@ class StepsController extends BaseController
         }
         $userInfo = $return['data']['user_info'];
         $currentTime  = time();
+        /*
         $startDate = date("Y-m-01",$currentTime);
         $date = [];
         for($i = 0;$i<date("t",$currentTime);$i++)
         {
             $date[date("Y-m-d",strtotime($startDate)+$i*86400)] = rand(1000,9000);
         }
-	    //接收参数并格式化
-		$data = $this->request->get();
-        $data['steps'] = json_encode($date);
-        $StepsData = trim($data['steps']??"");
-        $StepsData = json_decode($StepsData,true);
-        //创建活动
-        $update = (new StepsService())->updateStepsForUser($userInfo, $StepsData);
+        */
+        //接收参数并格式化
+        $data = $this->request->get();
+        $this->logger->info(json_encode($data));
+        $session_key = trim($data['session_key']??"");
+        $iv = trim($data['iv']??"");
+        $data = trim($data['encryptedData']??"");
+        //解码
+        $stepsData = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
+        //更新步数
+        $update = (new StepsService())->updateStepsForUser($userInfo, $stepsData);
         return $this->success($update);
 
 

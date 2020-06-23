@@ -49,15 +49,30 @@ class WechatController extends BaseController
      * code
      * （必填）：微信授权code
      * */
-    public function getSessionKeyForMiniProgramAction()
+    public function miniProgramLoginAction()
     {
         //接收参数并格式化
         $data = $this->request->get();
         $this->logger->info(json_encode($data));
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
-        //调用手机号验证码登录方法
-        $sessionKey = (new WechatService)->getUserInfoByToken_mini_program($this->key_config->wechat_mini_program,$code);
-        return $this->success($sessionKey);
+        //通过code获取sessionKey,openid,Unionid
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        if($wechatUserInfo['unionId'])
+        {
+            $return  = (new UserService)->miniProgramLogin($wechatUserInfo['unionId']);
+            if($return['result'])
+            {
+                return $this->success($return['data']);
+            }
+            else
+            {
+                $this->failure([],$return['msg'],$return['code']);
+            }
+        }
+        else
+        {
+            return $this->failure([],"用户身份获取失败",403);
+        }
     }
     /*
      * 小程序数据解码
@@ -92,7 +107,7 @@ class WechatController extends BaseController
      * encryptedData：密文
      * iv：偏移量
      * */
-    public function miniProgramLoginAction()
+    public function miniProgramLoginAction_old()
     {
         //接收参数并格式化
         $data = $this->request->get();
