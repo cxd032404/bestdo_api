@@ -800,18 +800,19 @@ class PageElementService extends BaseService
         foreach ($boutique as $key=>$value)
         {
               $list_info = (new ListService())->getListInfo($value,'list_id,list_name');
+              $list_artical = new stdClass();
               $post_list = (new PostsService())->getPostsList($value,[],'list_id,views,title,source');
               if(!empty($post_list['data']))
               {
                  $list_artical =  $post_list['data'][0];
                  $list_artical->title =  mb_substr($post_list['data'][0]->title,0,12,'utf-8');
+                 $source = json_decode($list_artical->source,true);
+                 $result = (new UploadService())->parthSource($source);
+                 $source = current($result);
+                 $list_artical->source = $source;
               }
-              $source = json_decode($list_artical->source,true);
-              $result = (new UploadService())->parthSource($source);
-              $source = current($result);
-              $list_artical->source = $source;
-              $list_artical->list_name = mb_substr($list_info->list_name,0,2,'utf-8');
-              $data['detail'][] = $list_artical;
+            $list_artical->list_name = mb_substr($list_info->list_name,0,2,'utf-8');
+            $data['detail'][] = $list_artical;
         }
         return $data;
 
