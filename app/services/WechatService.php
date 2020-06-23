@@ -24,7 +24,8 @@ class WechatService extends BaseService
         'join'=>'申请加入',
         'pass'=>'通过了您的申请',
         'leave'=>'离开了',
-        'reject'=>'拒绝了您的申请'
+        'reject'=>'拒绝了您的申请',
+        'activity'=>'加入了'
     ];
 
     /*更新用户微信信息*/
@@ -395,6 +396,7 @@ class WechatService extends BaseService
     public function  sendMessage($info,$type)
     {
         $userListSend = $this->generateUserListSend($info,$type);
+        echo 1;die();
         if(!$userListSend['result'])
         {
             return $userListSend;
@@ -404,6 +406,7 @@ class WechatService extends BaseService
         {
             return $contentSend;
         }
+        echo 1;die();
         return $this->send($userListSend['user_list_info'],$contentSend['content']);
     }
 
@@ -413,10 +416,7 @@ class WechatService extends BaseService
      */
     public function generateUserListSend($info,$type)
     {
-        if(!isset($info['club_id'])||!$info['club_id'])
-        {
-            return ['result'=>0,'msg'=>'club_id错误'];
-        }
+
         if(!isset($info['user_id'])||!$info['user_id'])
         {
             return ['result'=>0,'msg'=>'user_id错误'];
@@ -427,6 +427,10 @@ class WechatService extends BaseService
         //接收人为俱乐部管理员
         if($type == "join" || $type == 'leave')
         {
+            if(!isset($info['club_id'])||!$info['club_id'])
+            {
+                return ['result'=>0,'msg'=>'club_id错误'];
+            }
             $club_id = $info['club_id'];
             //获取管理员列表 超级管理员
             $user_list = (new ClubService())->getClubManagerList($club_id);
@@ -434,7 +438,20 @@ class WechatService extends BaseService
         //接收人为单个用户
         else if($type == 'pass' || $type == 'reject')
         {
+            if(!isset($info['club_id'])||!$info['club_id'])
+            {
+                return ['result'=>0,'msg'=>'club_id错误'];
+            }
             $user_list[] = $info['user_id'];
+        }else if($type == 'activity')
+        {
+            if(!isset($info['activity_id'])||!$info['activity_id'])
+            {
+                return ['result'=>0,'msg'=>'activity_id错误'];
+            }
+            //获取创建者user_id
+            $create_user_id = (new \HJ\Activity())->findFirst(['activity_id ='.$info['activity_id'],'columns'=>'create_user_id']);
+            $user_list[] = $create_user_id->create_user_id;
         }
         else
         {
@@ -447,6 +464,7 @@ class WechatService extends BaseService
             $user_list_info[$key]['user_id'] = $value;
             $user_list_info[$key]['openid'] = $user_info->wechatid;
         }
+        echo 3;die();
         return ['result'=>1,'msg'=>'','user_list_info'=>$user_list_info];
 
         return $user_list_info; //[0=>['user_id'=>1907,'openid'=>'oyqdfadfasdfadsf']
@@ -460,14 +478,7 @@ class WechatService extends BaseService
         {
             return ['result'=>0,'msg'=>'operate_id错误'];
         }
-        if(!isset($info['club_id'])||!$info['club_id'])
-        {
-            return ['result'=>0,'msg'=>'club_id错误'];
-        }
-
-        $club_id = $info['club_id'];
         $user_id = $info['user_id'];
-
         $user_info = (new UserService())->getUserInfo($user_id,'true_name,nick_name');
         if(!$user_info->true_name)
         {
@@ -476,42 +487,58 @@ class WechatService extends BaseService
         {
             $user_name = $user_info->true_name;
         }
-
-        $club_info = (new ClubService())->getClubInfo($club_id,'club_name');
-        $club_name = $club_info->club_name;
-
-        $content = '';
-        if($type == 'join')
+        //俱乐部类型
+        if($type == 'join'|| $type =='pass' || $type =='reject' || $type == 'leave')
         {
-            //史说政申请加入足球俱乐部
-           $content = $user_name.$this->templete['join'].$club_name;
-        }else if($type == 'pass')
-        {  //足球俱乐部通过了你的申请
-           $content = $club_name.$this->templete['pass'];
-        }else if($type == 'reject')
+            if(!isset($info['club_id'])||!$info['club_id'])
+            {
+                return ['result'=>0,'msg'=>'club_id错误'];
+            }
+            $club_info = (new ClubService())->getClubInfo($info['club_id'],'club_id,club_name');
+            $club_name = $club_info->club_name;
+        }
+        //活动签到类型
+        else if($type == 'activity' || $type == 'checkin')
         {
-            //足球俱乐部拒绝了你的申请
-            $content = $club_name.$this->templete['reject'];
-        }elseif($type == 'leave')
-        {
-            $content = $user_name.$this->templete['leave'].$club_name;
+            if(!isset($info['activity_id'])||!$info['activity_id'])
+            {
+                return ['result'=>0,'msg'=>'activity_id错误'];
+            }
+            //获取创建者user_id
+            $activity_info = (new ActivityService())->getActivityInfo($info['activity_id'],'activity_id,activity_name');
+            $activity_name = $activity_info->activity_name;
         }else
         {
-            return ['result'=>0,'msg'=>'类型有误'];
+            return ['result'=>0,'msg'=>'未知类型'];
+        }
+        $content = '';
+
+        switch ($type){
+            case 'join':$content = $user_name.$this->templete['join'].$club_name;break;//史说政申请加入足球俱乐部
+            case 'pass': $content = $club_name.$this->templete['pass']; break; //足球俱乐部通过了你的申请
+            case 'reject':$content = $club_name.$this->templete['reject'];break;//足球俱乐部拒绝了你的申请
+            case 'leave':$content = $user_name.$this->templete['leave'].$club_name;break;
+            case 'activity':$content = $user_name.$this->templete['activity'].$activity_name;
+            defalt:  return ['result'=>0,'msg'=>'类型有误'];
         }
         return ['result'=>1,'msg'=>'','content'=>$content];
-    }
+
+
+
+        }
+
+
      //消息存入redis队列
      public function send($userList,$contentSend)
      {
          $redisKey = $this->config->redisQueue->wechatMessageQueue;
          foreach ($userList as $key=>$value)
-         { 1
+         {
              $message = [];
              $message['user_id'] = $value['user_id'];
              $message['openid'] = '';//$value['openid'];
              $message['content'] = $contentSend;
-             print_r($message);
+             print_r($message);die();
              $res = $this->redis->rpush($redisKey,json_encode($message));
              if(!$res)
              {

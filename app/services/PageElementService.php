@@ -23,7 +23,14 @@ class PageElementService extends BaseService
             $list_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
         //获取列表
-        $listInfo = (new ListService())->getListInfo($list_id,"list_id,list_type");
+        $listInfo = (new ListService())->getListInfo($list_id,"list_id,list_type,detail,list_name");
+        $listInfo_detali = json_decode($listInfo->detail,true);
+        if(isset($listInfo_detali['header_url']))
+        {
+            $data['detail']['header_url'] = $listInfo_detali['header_url'];
+        }
+        $data['detail']['list_id'] = $listInfo->list_id;
+        $data['detail']['list_name'] = $listInfo->list_name;
         //获取符合查询条件用户
         $search_content = $this->getFromParams($params,"search_content","");
         $userList = [];

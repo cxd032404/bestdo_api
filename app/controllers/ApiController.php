@@ -19,10 +19,8 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
-        $res = (new MessageService())->sendMessage();
-        print_r($res);die();
-
-         $return = (new WechatService())->sendMessage(['club_id'=>1,'user_id'=>11907],'join');
+         $return = (new WechatService())->sendMessage(['activity_id'=>35,'user_id'=>11907],'activity');
+         echo 1;
          print_r($return);die();
             $return = (new TestService)->test();
             //$return = $oService->test();

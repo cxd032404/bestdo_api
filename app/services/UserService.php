@@ -813,6 +813,7 @@ class UserService extends BaseService
         else
         {
             $cache = $this->redis->get($cacheName);
+            echo 11;die();
             $cache = json_decode($cache);
             if(isset($cache->user_id))
             {
