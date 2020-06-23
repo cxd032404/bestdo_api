@@ -22,9 +22,10 @@ class StepsService extends BaseService
     public function updateStepsForUser($user_info,$steps = [])
     {
         $create = $update = 0;
+        $steps = json_decode($steps['data'],true);
         foreach($steps['stepInfoList'] as $date => $step)
         {
-            $date = date("Y-m-d",$date);
+            $date = date("Y-m-d",$step['timestamp']);
             //查找记录
             $stepsInfo = $this->getUserSteps($user_info->user_id,$date);
             if(isset($stepsInfo->log_id))
@@ -35,7 +36,7 @@ class StepsService extends BaseService
                 }
                 else
                 {
-                    $updateLog = $this->updateUserSteps($stepsInfo->log_id,$step);
+                    $updateLog = $this->updateUserSteps($stepsInfo->log_id,$step['step']);
                     if($updateLog)
                     {
                         $update ++;
@@ -45,7 +46,7 @@ class StepsService extends BaseService
             }
             else
             {
-                $createLog = $this->createUserSteps($user_info,$date,$step);
+                $createLog = $this->createUserSteps($user_info,$date,$step['step']);
                 if($createLog)
                 {
                     $create ++;
