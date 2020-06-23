@@ -31,5 +31,134 @@ class WechatController extends BaseController
         die();
     }
 
+<<<<<<< HEAD
 
+=======
+    /*
+     * 微信公众号推送消息接口
+     * touser 接收者openid
+     * template_id 模板id
+     * data 需要发送的信息
+     */
+    public function sendMessage($touser,$template_id,$data){
+        $accessToken = (new WechatService())->checkWechatAccessToken();
+        $result = (new WechatService())->sendWechatMessage($accessToken,$touser,$template_id,$data);
+        return $result;
+    }
+
+    /*
+     * 小程序通过code获取sessionKey
+     * 参数
+     * code
+     * （必填）：微信授权code
+     * */
+    public function miniProgramLoginAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $this->logger->info(json_encode($data));
+        $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        //通过code获取sessionKey,openid,Unionid
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        if($wechatUserInfo['unionid'])
+        {
+            $return  = (new UserService)->miniProgramLogin($wechatUserInfo['unionid']);
+            if($return['result'])
+            {
+                return $this->success($return['data']);
+            }
+            else
+            {
+                $this->failure([],$return['msg'],$return['code']);
+            }
+        }
+        else
+        {
+            return $this->failure([],"用户身份获取失败",403);
+        }
+    }
+    /*
+ * 小程序通过code获取sessionKey
+ * 参数
+ * code
+ * （必填）：微信授权code
+ * */
+    public function getSessionKeyAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $this->logger->info(json_encode($data));
+        $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        //通过code获取sessionKey,openid,Unionid
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        if($wechatUserInfo['unionid'])
+        {
+            return $this->success($wechatUserInfo);
+        }
+        else
+        {
+            return $this->failure([],"用户身份获取失败",403);
+        }
+    }
+    /*
+     * 小程序数据解码
+     * 参数
+     * session_key
+     * encryptedData：密文
+     * iv：偏移量
+     * */
+    public function wechatDecryptAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $this->logger->info(json_encode($data));
+        $session_key = trim($data['session_key']??"");
+        $iv = trim($data['iv']??"");
+        $data = trim($data['encryptedData']??"");
+        //解码
+        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
+        if($decrypt['result'])
+        {
+            $this->success($decrypt['data'],"",$decrypt['code']);
+        }
+        else
+        {
+            $this->failure([],$decrypt['msg'],$decrypt['code']);
+        }
+    }
+    /*
+     * 小程序code登录
+     * 参数
+     * session_key
+     * encryptedData：密文
+     * iv：偏移量
+     * */
+    public function miniProgramLoginAction_old()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $this->logger->info(json_encode($data));
+        $session_key = trim($data['session_key']??"");
+        $iv = trim($data['iv']??"");
+        $data = trim($data['encryptedData']??"");
+        //解码
+        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
+        if($decrypt['unionId'])
+        {
+            $return  = (new UserService)->miniProgramLogin($decrypt['unionId']);
+            if($return['result'])
+            {
+                return $this->success($return['data']);
+            }
+            else
+            {
+                $this->failure([],$decrypt['msg'],$decrypt['code']);
+            }
+        }
+        else
+        {
+            return $this->failure([],"用户身份获取失败",403);
+        }
+    }
+>>>>>>> 8aabc4d0d6525056d58fe89cfa8ede14b9aaebbc
 }
