@@ -41,15 +41,6 @@ class StepsController extends BaseController
             return $this->failure([],$return['msg'],$return['code']);
         }
         $userInfo = $return['data']['user_info'];
-        $currentTime  = time();
-        /*
-        $startDate = date("Y-m-01",$currentTime);
-        $date = [];
-        for($i = 0;$i<date("t",$currentTime);$i++)
-        {
-            $date[date("Y-m-d",strtotime($startDate)+$i*86400)] = rand(1000,9000);
-        }
-        */
         //接收参数并格式化
         $data = $this->request->get();
         $this->logger->info(json_encode($data));

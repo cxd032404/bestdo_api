@@ -22,8 +22,9 @@ class StepsService extends BaseService
     public function updateStepsForUser($user_info,$steps = [])
     {
         $create = $update = 0;
-        foreach($steps as $date => $step)
+        foreach($steps['stepInfoList'] as $date => $step)
         {
+            $date = date("Y-m-d",$date);
             //查找记录
             $stepsInfo = $this->getUserSteps($user_info->user_id,$date);
             if(isset($stepsInfo->log_id))
