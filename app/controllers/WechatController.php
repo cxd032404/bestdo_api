@@ -30,22 +30,7 @@ class WechatController extends BaseController
         (new WechatService())->getCodeForManager();
         die();
     }
-
-<<<<<<< HEAD
-
-=======
-    /*
-     * 微信公众号推送消息接口
-     * touser 接收者openid
-     * template_id 模板id
-     * data 需要发送的信息
-     */
-    public function sendMessage($touser,$template_id,$data){
-        $accessToken = (new WechatService())->checkWechatAccessToken();
-        $result = (new WechatService())->sendWechatMessage($accessToken,$touser,$template_id,$data);
-        return $result;
-    }
-
+    
     /*
      * 小程序通过code获取sessionKey
      * 参数
@@ -160,5 +145,4 @@ class WechatController extends BaseController
             return $this->failure([],"用户身份获取失败",403);
         }
     }
->>>>>>> 8aabc4d0d6525056d58fe89cfa8ede14b9aaebbc
 }
