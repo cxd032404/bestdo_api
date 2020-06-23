@@ -19,7 +19,7 @@ class WechatService extends BaseService
     /*更新用户微信信息*/
     public function getOpenIdByCode($wechat = [],$code="")
     {
-        $wechat_cache = $this->config->cache_setting->wechat;
+        $wechat_cache = $this->config->cache_settings->wechat;
         $redis_key = $wechat_cache->name.$code;
         $appid = $wechat['appid'];
         $cache = $this->redis->get($redis_key);
@@ -51,7 +51,7 @@ class WechatService extends BaseService
     /*更新用户微信信息*/
     public function getWechatUserAction($wechat=[],$user_id=0,$code="")
     {
-        $wechat_cache = $this->config->cache_setting->wechat;
+        $wechat_cache = $this->config->cache_settings->wechat;
         $redis_key = $wechat_cache->name.$code;
         $cache = $this->redis->get($redis_key);
         if($cache!= "")
@@ -406,8 +406,38 @@ class WechatService extends BaseService
     //根据code获取小程序的用户身份信息
     public function getUserInfoByCode_mini_program($wechat = [],$code="")
     {
-        $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
-        $user_info = $this->getJson($url_get);
+        $wechat_cache = $this->config->cache_settings->mini_program_code;
+        $redis_key = $wechat_cache->name.$code;
+        $cache = $this->redis->get($redis_key);
+        if($cache!= "")
+        {
+            $user_info = json_decode($cache,true);
+            if(isset($user_info['unionid']))
+            {
+            }
+            else
+            {
+                $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
+                $user_info = $this->getJson($url_get);
+                if(isset($user_info['unionid']))
+                {
+                    //用户token存入redis缓存中
+                    $this->redis->set($redis_key,json_encode($user_info));
+                    $this->redis->expire($redis_key,$wechat_cache->expire);//设置过期时间,不设置过去时间时，默认为永久保持
+                }
+            }
+        }
+        else
+        {
+            $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
+            $user_info = $this->getJson($url_get);
+            if(isset($user_info['unionid']))
+            {
+                //用户token存入redis缓存中
+                $this->redis->set($redis_key,json_encode($user_info));
+                $this->redis->expire($redis_key,$wechat_cache->expire);//设置过期时间,不设置过去时间时，默认为永久保持
+            }
+        }
         return $user_info;
     }
     /**
