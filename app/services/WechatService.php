@@ -404,7 +404,7 @@ class WechatService extends BaseService
     }
 
     //根据code获取小程序的用户身份信息
-    public function getUserInfoByToken_mini_program($wechat = [],$code="")
+    public function getUserInfoByCode_mini_program($wechat = [],$code="")
     {
         $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
         $user_info = $this->getJson($url_get);
