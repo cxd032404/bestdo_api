@@ -9,7 +9,7 @@
 // | Author:   huzhichao@laoyuegou.com
 // | Created:  2017-xx-xx
 // +----------------------------------------------------------------------
-class MainTask extends \Phalcon\Cli\Task
+class StepTask extends \Phalcon\Cli\Task
 {
 	/**
 	* test
@@ -19,7 +19,7 @@ class MainTask extends \Phalcon\Cli\Task
 	* @link   
 	* @date   
 	*/
-	public function mainAction(array $params)
+	public function refreshAction(array $params)
 	{
 		try{
 			echo 'Welcome to you '.$params['0']."-".$params['1'];
@@ -30,20 +30,4 @@ class MainTask extends \Phalcon\Cli\Task
 		    $this->logger->error($e->getMessage());
 		}
 	}
-    public function testAction(array $params)
-    {
-        print_R($params);
-        try{
-            echo 'Welcome to you2';
-
-            $this->logger->info('Welcome to you');
-
-        }catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-        }
-    }
-
-
-
-
 }

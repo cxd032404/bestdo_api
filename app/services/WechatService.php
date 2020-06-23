@@ -49,7 +49,7 @@ class WechatService extends BaseService
     }
 
     /*更新用户微信信息*/
-    public function getWechatUserAction($wechat=[],$user_id=0,$code="")
+    public function updateUserWithWechat($wechat=[],$user_id=0,$code="")
     {
         $wechat_cache = $this->config->cache_settings->wechat;
         $redis_key = $wechat_cache->name.$code;
@@ -85,6 +85,24 @@ class WechatService extends BaseService
                 $userinfo->wechatinfo = json_encode($oauth_userinfo);
                 $userinfo->update();
             }
+        }
+        return true;
+    }
+    /*更新用户微信信息*/
+    public function updateUserWithMiniProgram($user_id=0,$miniProgramUserInfo="")
+    {
+        $miniProgramUserInfo = json_decode($miniProgramUserInfo,true);
+        //修改用户信息
+        $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
+        //var_dump($userinfo);
+        if($userinfo){
+            $userinfo->wechatid = $miniProgramUserInfo['openid']??"";
+            $userinfo->unionid = $miniProgramUserInfo['unionid']??"";
+            $userinfo->nick_name = $miniProgramUserInfo['nickname']??"";
+            $userinfo->sex = $miniProgramUserInfo['sex'];
+            $userinfo->user_img = $miniProgramUserInfo['headimgurl'];
+            $userinfo->wechatinfo = json_encode($miniProgramUserInfo);
+            $userinfo->update();
         }
         return true;
     }
