@@ -27,6 +27,18 @@ class WechatService extends BaseService
         'reject'=>'拒绝了您的申请',
         'activity'=>'加入了'
     ];
+    //俱乐部消息类型
+    private  $clubTypeList = [
+        'joinClub',
+        'leaveClub',
+        'applicationPass',
+        'applicationReject'
+    ];
+    private $activityTypeList = [
+        'joinActivity',
+        'ActivityJoin',
+    ];
+
 
     /*更新用户微信信息*/
     public function getOpenIdByCode($wechat = [],$code="")
@@ -396,7 +408,6 @@ class WechatService extends BaseService
     public function  sendMessage($info,$type)
     {
         $userListSend = $this->generateUserListSend($info,$type);
-        echo 1;die();
         if(!$userListSend['result'])
         {
             return $userListSend;
@@ -406,7 +417,6 @@ class WechatService extends BaseService
         {
             return $contentSend;
         }
-        echo 1;die();
         return $this->send($userListSend['user_list_info'],$contentSend['content']);
     }
 
@@ -421,53 +431,41 @@ class WechatService extends BaseService
         {
             return ['result'=>0,'msg'=>'user_id错误'];
         }
-
-        //加入俱乐部
-        $user_list_info= [];
-        //接收人为俱乐部管理员
-        if($type == "join" || $type == 'leave')
+        if(in_array($type,$this->clubTypeList))
         {
             if(!isset($info['club_id'])||!$info['club_id'])
             {
                 return ['result'=>0,'msg'=>'club_id错误'];
             }
-            $club_id = $info['club_id'];
-            //获取管理员列表 超级管理员
-            $user_list = (new ClubService())->getClubManagerList($club_id);
         }
-        //接收人为单个用户
-        else if($type == 'pass' || $type == 'reject')
-        {
-            if(!isset($info['club_id'])||!$info['club_id'])
-            {
-                return ['result'=>0,'msg'=>'club_id错误'];
-            }
-            $user_list[] = $info['user_id'];
-        }else if($type == 'activity')
+        //活动签到类型
+        else if($type == 'joinActivity' || $type == 'checkin')
         {
             if(!isset($info['activity_id'])||!$info['activity_id'])
             {
                 return ['result'=>0,'msg'=>'activity_id错误'];
             }
-            //获取创建者user_id
-            $create_user_id = (new \HJ\Activity())->findFirst(['activity_id ='.$info['activity_id'],'columns'=>'create_user_id']);
-            $user_list[] = $create_user_id->create_user_id;
-        }
-        else
+        }else
         {
-            return ['result'=>0,'msg'=>'类型有误'];
+            return ['result'=>0,'msg'=>'未知类型'];
         }
-        //获取用户openid
-        foreach ($user_list as $key=>$value)
+
+        $user_list_info= [];
+        switch ($type)
         {
-            $user_info = (new UserService())->getUserInfo($value,'user_id,wechatid');
-            $user_list_info[$key]['user_id'] = $value;
-            $user_list_info[$key]['openid'] = $user_info->wechatid;
+            case 'join' :
+            case 'leave':$club_id = $info['club_id'];
+                                 $user_list = (new ClubService())->getClubManagerList($club_id);break;
+            case 'pass':
+            case 'reject':$user_list[] = $info['user_id'];break;
+            case 'activity':$create_user_id = (new \HJ\Activity())->findFirst(['activity_id ='.$info['activity_id'],'columns'=>'create_user_id']);
+                          $user_list[] = $create_user_id->create_user_id;break;
+            default:return ['result'=>0,'msg'=>'未知类型'];
         }
-        echo 3;die();
+
+
         return ['result'=>1,'msg'=>'','user_list_info'=>$user_list_info];
 
-        return $user_list_info; //[0=>['user_id'=>1907,'openid'=>'oyqdfadfasdfadsf']
     }
 
     /*
@@ -511,6 +509,7 @@ class WechatService extends BaseService
         {
             return ['result'=>0,'msg'=>'未知类型'];
         }
+
         $content = '';
 
         switch ($type){
@@ -536,7 +535,7 @@ class WechatService extends BaseService
          {
              $message = [];
              $message['user_id'] = $value['user_id'];
-             $message['openid'] = '';//$value['openid'];
+             $message['openid'] = $value['openid'];
              $message['content'] = $contentSend;
              print_r($message);die();
              $res = $this->redis->rpush($redisKey,json_encode($message));
