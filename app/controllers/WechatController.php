@@ -75,6 +75,29 @@ class WechatController extends BaseController
         }
     }
     /*
+ * 小程序通过code获取sessionKey
+ * 参数
+ * code
+ * （必填）：微信授权code
+ * */
+    public function getSessionKeyAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $this->logger->info(json_encode($data));
+        $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        //通过code获取sessionKey,openid,Unionid
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        if($wechatUserInfo['unionid'])
+        {
+            return $this->success($wechatUserInfo);
+        }
+        else
+        {
+            return $this->failure([],"用户身份获取失败",403);
+        }
+    }
+    /*
      * 小程序数据解码
      * 参数
      * session_key
