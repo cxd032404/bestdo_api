@@ -400,32 +400,6 @@ class WechatService extends BaseService
 
 
 
-     //消息存入redis队列
-     public function send($userList,$contentSend)
-     {
-         $redisKey = $this->config->redisQueue->wechatMessageQueue;
-         foreach ($userList as $key=>$value)
-         {
-             $message = [];
-             $message['user_id'] = $value['user_id'];
-             $message['openid'] = $value['openid'];
-             $message['content'] = $contentSend;
-             print_r($message);die();
-             $res = $this->redis->rpush($redisKey,json_encode($message));
-             if(!$res)
-             {
-                 $error_data[] = $message;
-             }
-         }
-         if(!isset($error_data))
-         {
-             return ['result'=>1,'msg'=>'发送成功'];
-         }else
-         {
-             return ['result'=>0,'msg'=>'发送失败','error_data'=>$error_data];
-         }
-
-     }
 
 
     //根据code获取小程序的用户身份信息

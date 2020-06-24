@@ -4,27 +4,23 @@
 class WechatMessageService extends BaseService
 {
     //对应模板
-    private   $sendData = [
-        'template_id'=>'写死先'
+    private   $sendDataTemplete = [
+        'apply_result'=> '俱乐部申请结果',
+        'application_pass'=> '俱乐部申请结果',
+        'checkin'=> '俱乐部申请结果',
         ];
 
 
-    private $templete = [
-        'join'=>'申请加入',
-        'pass'=>'通过了您的申请',
-        'leave'=>'离开了',
-        'reject'=>'拒绝了您的申请',
-        'activity'=>'加入了'
-    ];
+
     //俱乐部消息类型
     private  $clubTypeList = [
-        'joinClub',
-        'leaveClub',
+        'clubJoin',
+        'club_leave',
         'applicationPass',
         'applicationReject'
     ];
     private $activityTypeList = [
-        'joinActivity',
+        'checkin',
         'ActivityJoin',
     ];
 
@@ -58,6 +54,7 @@ class WechatMessageService extends BaseService
         {
             return ['result'=>0,'msg'=>'user_id错误'];
         }
+        //俱乐部类
         if(in_array($type,$this->clubTypeList))
         {
             if(!isset($info['club_id'])||!$info['club_id'])
@@ -65,8 +62,8 @@ class WechatMessageService extends BaseService
                 return ['result'=>0,'msg'=>'club_id错误'];
             }
         }
-        //活动签到类型
-        else if($type == 'joinActivity' || $type == 'checkin')
+        //活动类
+        else if(in_array($this->activityTypeList))
         {
             if(!isset($info['activity_id'])||!$info['activity_id'])
             {
@@ -80,12 +77,12 @@ class WechatMessageService extends BaseService
         $user_list_info= [];
         switch ($type)
         {
-            case 'join' :
-            case 'leave':$club_id = $info['club_id'];
+            case 'clubJoin' :
+            case 'clubLeave':$club_id = $info['club_id'];
                 $user_list = (new ClubService())->getClubManagerList($club_id);break;
-            case 'pass':
+            case 'applicationPass':
             case 'reject':$user_list[] = $info['user_id'];break;
-            case 'activity':$create_user_id = (new \HJ\Activity())->findFirst(['activity_id ='.$info['activity_id'],'columns'=>'create_user_id']);
+            case 'applicationReject':$create_user_id = (new \HJ\Activity())->findFirst(['activity_id ='.$info['activity_id'],'columns'=>'create_user_id']);
                 $user_list[] = $create_user_id->create_user_id;break;
             default:return ['result'=>0,'msg'=>'未知类型'];
         }
@@ -113,7 +110,7 @@ class WechatMessageService extends BaseService
             $user_name = $user_info->true_name;
         }
         //俱乐部类型
-        if($type == 'join'|| $type =='pass' || $type =='reject' || $type == 'leave')
+        if(in_array($type,$this->clubTypeList))
         {
             if(!isset($info['club_id'])||!$info['club_id'])
             {
@@ -123,7 +120,7 @@ class WechatMessageService extends BaseService
             $club_name = $club_info->club_name;
         }
         //活动签到类型
-        else if($type == 'activity' || $type == 'checkin')
+        else if(in_array($type,$this->activityTypeList))
         {
             if(!isset($info['activity_id'])||!$info['activity_id'])
             {
@@ -149,6 +146,34 @@ class WechatMessageService extends BaseService
         }
         return ['result'=>1,'msg'=>'','content'=>$content];
     }
+
+    //消息存入redis队列
+    public function send($userList,$contentSend)
+    {
+        $redisKey = $this->config->redisQueue->wechatMessageQueue;
+        foreach ($userList as $key=>$value)
+        {
+            $message = [];
+            $message['user_id'] = $value['user_id'];
+            $message['openid'] = $value['openid'];
+            $message['content'] = $contentSend;
+            print_r($message);die();
+            $res = $this->redis->rpush($redisKey,json_encode($message));
+            if(!$res)
+            {
+                $error_data[] = $message;
+            }
+        }
+        if(!isset($error_data))
+        {
+            return ['result'=>1,'msg'=>'发送成功'];
+        }else
+        {
+            return ['result'=>0,'msg'=>'发送失败','error_data'=>$error_data];
+        }
+
+    }
+
 
 
 

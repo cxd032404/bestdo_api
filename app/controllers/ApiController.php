@@ -19,21 +19,7 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
-        (new StepsService())->refreshStepsCache();
-        die();
-        $file = file_get_contents('csv.txt','r');
-        $arr=explode("\n",$file);
-        foreach($arr as $key=>$v)
-        {
-            $value = explode(',',$v);
-            foreach ($value as $k=>$item)
-            {
-                $value[$k] = trim($value[$k],'"');
-            }
-            $arr[$key] = $value;
 
-        }
-        file_put_contents('filename.txt', print_r($arr, true));        die();
          $return = (new WechatService())->sendMessage(['activity_id'=>35,'user_id'=>11907],'activity');
          echo 1;
          print_r($return);die();
