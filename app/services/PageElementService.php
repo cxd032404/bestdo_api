@@ -201,7 +201,7 @@ class PageElementService extends BaseService
         $listService = new ListService();
         $post_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         $postsService->updatePostView($post_id);
-        $postsInfo = $postsService->getPosts($post_id,"post_id,list_id,user_id,title,content,source,views,kudos,create_time,update_time");
+        $postsInfo = $postsService->getPosts($post_id,"post_id,list_id,user_id,title,content,source,views,kudos,create_time,update_time",0);
         if($postsInfo)
         {
             $postsInfo->source = json_decode($postsInfo->source,true);
