@@ -89,6 +89,17 @@ class StepsService extends BaseService
         return $steps->save();
     }
 
+    public function refreshStepsCache($company_id = 1,$hours = 3)
+    {
+        $userInfo = (new \HJ\UserInfo())::find(["company_id = ".$company_id,"limit"=>3]);
+        print_R($userInfo->toArray());
+        $allDepartment = (new \HJ\Department())::find(["company_id = ".$company_id]);
+        print_R($allDepartment->toArray());
+        die();
+        $departmentStructure = (new DepartmentService())->getDepartmentStructure($company_id);
+        print_R($departmentStructure);
+    }
+
 
 
 }
