@@ -1,5 +1,5 @@
 <?php   //2016-10-18 17:11:39
- return Common::merge(include("universal.php"), array( '消息'=> 'MessageService',
+ return Common::merge(include("universal.php"), array( '消息'=> 'WechatMessageService',
  '搜索人、群、圈子'=> 'Search for people, Groups, Circles',
  '添加好友'=> 'Add Friends',
  '创建群'=> 'Create a Group',
@@ -142,7 +142,7 @@
  '魔兽世界服务器分类'=> 'World of Warcraft Realm Classification',
  '魔兽世界综合讨论群'=> 'World of Warcraft Misc. Forum',
  '加入'=> 'Join',
- '发消息'=> 'Send MessageService',
+ '发消息'=> 'Send WechatMessageService',
  '创建群'=> 'Create a Group',
  '常见问题'=> 'FAQ',
  '意见反馈'=> 'Feedback',
