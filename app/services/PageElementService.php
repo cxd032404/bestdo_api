@@ -65,8 +65,7 @@ class PageElementService extends BaseService
         }
 
             return $data;
-
-
+        
     }
     /*
         * 报名记录
@@ -753,7 +752,7 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
-        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,club_id,activity_name,comment,apply_start_time,apply_end_time,start_time,end_time',$club_id ='',0);
+        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,club_id,activity_name,comment,icon,apply_start_time,apply_end_time,start_time,end_time',$club_id ='',0);
         $currentTime = time();
         $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
@@ -795,34 +794,51 @@ class PageElementService extends BaseService
      * 精品课列表
      */
 
-    public function getElementPage_boutique($data,$params,$user_info,$company_id){
+    public function getElementPage_boutique($data,$params,$user_info,$company_id)
+    {
         $company_info = (new PostsService())->getCompanyInfo($user_info['data']['user_id']);
         $detail = json_decode($company_info->detail);
         $boutique = $detail->boutique;
-        foreach ($boutique as $key=>$value)
-        {
-              $list_info = (new ListService())->getListInfo($value,'list_id,list_name');
-              $list_artical = new stdClass();
-              $post_list = (new PostsService())->getPostsList($value,[],'list_id,views,title,source');
-              if(!empty($post_list['data']))
-              {
-                 $list_artical =  $post_list['data'][0];
-                 $list_artical->title =  mb_substr($post_list['data'][0]->title,0,12,'utf-8');
-                 $source = json_decode($list_artical->source,true);
-                 $result = (new UploadService())->parthSource($source);
-                 $source = current($result);
-                 $list_artical->source = $source;
-                 $list_artical->list_name = mb_substr($list_info->list_name,0,2,'utf-8');
-                 $data['detail'][] = $list_artical;
-              }else
-              {
-                  continue;
-              }
+        foreach ($boutique as $key => $value) {
+            $list_info = (new ListService())->getListInfo($value, 'list_id,list_name');
+            $list_artical = new stdClass();
+            $post_list = (new PostsService())->getPostsList($value, [], 'post_id,views,title,source');
+            if (!empty($post_list['data'])) {
+                $list_artical = $post_list['data'][0];
+                $list_artical->title = mb_substr($post_list['data'][0]->title, 0, 12, 'utf-8');
+                $source = json_decode($list_artical->source, true);
+                $result = (new UploadService())->parthSource($source);
+                $result = (new UploadService())->sortSource($result);
+                foreach ($result as $key => $source_detail) {
+                    if (!isset($header_img)) {
+                        if ($source_detail['type'] == "pic") {
+                            $header_img = $source_detail['path'];
+                        }
+                    }
+                    if (!isset($header_video_img)) {
+                        if ($source_detail['type'] == "video") {
+                            $header_video_img = $source_detail['path'] . $source_detail['suffix'];
+                        }
+                    }
+                }
+                $list_artical->header_img = isset($header_img) ? $header_img : '';
+                $list_artical->header_video_img = isset($header_video_img) ? $header_video_img : '';
+                unset($header_img);
+                unset($header_video_img);
+                $list_artical->source = array_values($result);
+                $list_artical->list_name = mb_substr($list_info->list_name, 0, 2, 'utf-8');
+                $data['detail'][] = $list_artical;
+            }
+            else
+                {
+                    continue;
+                }
+
+            }
+            return $data;
 
         }
-        return $data;
 
-    }
 
     /*
      * 活动签到列表页

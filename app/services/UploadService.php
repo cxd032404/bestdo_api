@@ -162,6 +162,22 @@ class UploadService extends BaseService
         }
         return $return;
     }
+    public function sortSource($source = [],$sort = ["pic","video"])
+    {
+        $return = [];
+        foreach($sort as $sort_name)
+        {
+            foreach($source as $key => $source_detail)
+            {
+                if($sort_name == $source_detail['type'])
+                {
+                    $return[$key] = $source_detail;
+                }
+            }
+        }
+        return $return;
+
+    }
     public function getAvailableSourceCount($current,$limit)
     {
         $return = [];
