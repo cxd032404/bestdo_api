@@ -230,7 +230,8 @@ class ActivityController extends BaseController
     {
         $data = $this->request->get();
         $activity_id = isset($data['activity_id'])?intval($data['activity_id']):0;
-        $this->success((new ActivityService())->getActivityInfo($activity_id,"*",0));
+        $activity_info = (new ActivityService())->getActivityInfo($activity_id,"*",0);
+        $this->success($activity_info);
     }
 
 }
