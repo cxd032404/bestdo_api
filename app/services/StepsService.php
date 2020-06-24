@@ -64,10 +64,14 @@ class StepsService extends BaseService
 
     public function createUserSteps($user_info,$date,$step)
     {
+        $company_info = (new CompanyService())->getCompanyInfo($user_info->company_id,"company_id,detail");
+        $company_info->detail = json_decode($company_info->detail);
         $currentTime = time();
         $steps = new \HJ\Steps();
         $steps->user_id = $user_info->user_id;
         $steps->company_id = $user_info->company_id;
+        $steps->department_id = $user_info->department_id;
+        $steps->deily_step = $company_info->detail->daily_step??5000;
         $steps->step = $step;
         $steps->date = $date;
         $steps->create_time = date("Y-m-d H:i:s",$currentTime);

@@ -238,6 +238,7 @@ class UserService extends BaseService
                     $user->username = $mobile;
                     $user->mobile = $mobile;
                     $user->company_id = $companyuserlist->company_id;
+                    $user->department_id = $companyuserlist->department_id;
                     $user->worker_id = $companyuserlist->worker_id;
                     $user->true_name = $companyuserlist->name;
                     $user->nick_name = $companyuserlist->name;
