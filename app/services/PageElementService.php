@@ -227,6 +227,11 @@ class PageElementService extends BaseService
                 $connectedList = $postsService->getPostsList($listInfo->detail['connect'],[],'post_id,title,source,views');
                 foreach($connectedList['data'] as $pid => $pdetail)
                 {
+                    if($post_id == $pdetail->post_id)
+                    {
+                        unset($connectedList['data'][$pid]);
+                        continue;
+                    }
                     $connectedList['data'][$pid]->source = json_decode($pdetail->source,true);
                     $connectedList['data'][$pid]->source = (new UploadService())->parthSource($connectedList['data'][$pid]->source);
                     $new = [];

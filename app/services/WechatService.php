@@ -17,26 +17,6 @@ class WechatService extends BaseService
 {
 
 
-    private $templete = [
-        'join'=>'申请加入',
-        'pass'=>'通过了您的申请',
-        'leave'=>'离开了',
-        'reject'=>'拒绝了您的申请',
-        'activity'=>'加入了'
-    ];
-    //俱乐部消息类型
-    private  $clubTypeList = [
-        'joinClub',
-        'leaveClub',
-        'applicationPass',
-        'applicationReject'
-    ];
-    private $activityTypeList = [
-        'joinActivity',
-        'ActivityJoin',
-    ];
-
-
     /*更新用户微信信息*/
     public function getOpenIdByCode($wechat = [],$code="")
     {

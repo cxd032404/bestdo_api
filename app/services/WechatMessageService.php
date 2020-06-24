@@ -3,39 +3,36 @@
 
 class WechatMessageService extends BaseService
 {
-  public function sendMessage(){
-      $redisKey = $this->config->redisQueue->wechatMessageQueue;
+    //对应模板
+    private   $sendData = [
+        'template_id'=>'写死先'
+        ];
 
-      for($i=50;$i<50;$i++) {
-          $message_info = $send_message_info = $this->getMessage();
-          if(!$message_info)
-          {
-              break;
-          }
-          $accessToken = (new WechatService())->checkWechatAccessToken();
-          $res = (new WechatService())->sendWechatMessage($accessToken, $message_info['openid'], '-Qq05dZSlDIf7LyuSWf0V3tJ9AuXjypdempKDTSGUio', $message_info['content']);
-          $this->logger->info(json_encode($res));
-          //发送失败 塞回队列
-          if (!isset($res['errcode']) || $res['errcode']) {
-              $this->redis->rpush($redisKey, json_encode($message_info));
-          }
-      }
 
-  }
-
-    //从队列获取信息
-    private function getMessage(){
-        $redisKey = $this->config->redisQueue->wechatMessageQueue;
-        $res = $this->redis->lpop($redisKey);
-        return json_decode($res);
-    }
-
+    private $templete = [
+        'join'=>'申请加入',
+        'pass'=>'通过了您的申请',
+        'leave'=>'离开了',
+        'reject'=>'拒绝了您的申请',
+        'activity'=>'加入了'
+    ];
+    //俱乐部消息类型
+    private  $clubTypeList = [
+        'joinClub',
+        'leaveClub',
+        'applicationPass',
+        'applicationReject'
+    ];
+    private $activityTypeList = [
+        'joinActivity',
+        'ActivityJoin',
+    ];
 
 
     /*
    *发送微信公众号消息接口
    */
-    public function  sen32dMessage($info,$type)
+    public function  sendMessage($info,$type)
     {
         $userListSend = $this->generateUserListSend($info,$type);
         if(!$userListSend['result'])
@@ -151,6 +148,38 @@ class WechatMessageService extends BaseService
                 defalt:  return ['result'=>0,'msg'=>'类型有误'];
         }
         return ['result'=>1,'msg'=>'','content'=>$content];
+    }
+
+
+
+
+
+
+    public function sendMe11ssage(){
+        $redisKey = $this->config->redisQueue->wechatMessageQueue;
+
+        for($i=50;$i<50;$i++) {
+            $message_info = $send_message_info = $this->getMessage();
+            if(!$message_info)
+            {
+                break;
+            }
+            $accessToken = (new WechatService())->checkWechatAccessToken();
+            $res = (new WechatService())->sendWechatMessage($accessToken, $message_info['openid'], '-Qq05dZSlDIf7LyuSWf0V3tJ9AuXjypdempKDTSGUio', $message_info['content']);
+            $this->logger->info(json_encode($res));
+            //发送失败 塞回队列
+            if (!isset($res['errcode']) || $res['errcode']) {
+                $this->redis->rpush($redisKey, json_encode($message_info));
+            }
+        }
+
+    }
+
+    //从队列获取信息
+    private function getMessage(){
+        $redisKey = $this->config->redisQueue->wechatMessageQueue;
+        $res = $this->redis->lpop($redisKey);
+        return json_decode($res);
     }
 
 }
