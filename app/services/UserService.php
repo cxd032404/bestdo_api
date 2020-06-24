@@ -474,7 +474,7 @@ class UserService extends BaseService
                 $sender_wechatid = $userInfo->wechatid;
             }
             //新增点赞记录
-            $postskudos = new PostsKudos();
+            $postskudos = new \HJ\PostsKudos();
             $postskudos->setTransaction($transaction);
             $postskudos->sender_id = $sender_id;
             $postskudos->receiver_id = $posts->user_id;
