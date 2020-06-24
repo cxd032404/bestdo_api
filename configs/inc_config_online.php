@@ -71,9 +71,10 @@ $config = [
         'lifttime'      => 86400
     ],
     'autoload'=>[
-       'path_tasks'     => ROOT_PATH . '/app/tasks/',
-       'path_librarys'  => ROOT_PATH . '/app/librarys/',
-       'path_services'  => ROOT_PATH . '/app/services/'
+        'path_tasks'     => ROOT_PATH . '/app/tasks/',
+        'path_librarys'  => ROOT_PATH . '/app/librarys/',
+        'path_services'  => ROOT_PATH . '/app/services/',
+        'path_model'     => ROOT_PATH . '/app/models/'
     ],
     'logger' => [
         'adapter' =>'logger',

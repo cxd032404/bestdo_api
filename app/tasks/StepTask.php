@@ -22,9 +22,11 @@ class StepTask extends \Phalcon\Cli\Task
 	public function refreshAction(array $params)
 	{
 		try{
-			echo 'Welcome to you '.$params['0']."-".$params['1'];
-			
-			$this->logger->info('Welcome to you');
+            $hours = $params['0']??3;
+		    $company_id = $params['1']??1;
+		    echo "666";
+            (new StepsService())->refreshStepsCache($company_id,$hours);
+
 		
 		}catch (\Exception $e) {
 		    $this->logger->error($e->getMessage());

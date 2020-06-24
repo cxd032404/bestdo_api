@@ -1,4 +1,5 @@
 <?php
+use Predis\Client;
 /*
 |--------------------------------------------------------------------------
 | Task
@@ -26,6 +27,7 @@ $di = new CliDI();
 
 //加载配置文件////////////////////////////////////////////////////////////////////////////////////////////////////////
 $data = require_once (ROOT_PATH . '/configs/inc_config.php');
+require_once ROOT_PATH . "/vendor/autoload.php";
 $config = new PhConfig($data);
 $di -> set('config', $config);
 
@@ -33,7 +35,7 @@ $di -> set('config', $config);
 $loader = new \Phalcon\Loader();
 $loader->registerDirs($data['autoload']);
 $loader->register();
-
+/*
 //数据库服务///////////////////////////////////////////////////////////////////////////////////////////////
 $di->set('db', function () use ( $config ) {
     return new Phalcon\Db\Adapter\Pdo\Mysql([
@@ -45,25 +47,32 @@ $di->set('db', function () use ( $config ) {
     ]);
 });
 
-$di->set('db1', function () use ( $config ) {
+$di->set('hj_user', function () use ( $config ) {
     return new Phalcon\Db\Adapter\Pdo\Mysql([
-        'host'     => $config->database_1->host,
-        'username' => $config->database_1->username,
-        'password' => $config->database_1->password,
+        'host'     => $config->hj_user->host,
+        'username' => $config->hj_user->username,
+        'password' => $config->hj_user->password,
         'charset'  => 'UTF8',
-        'dbname'   => $config->database_1->dbname
+        'dbname'   => $config->hj_user->dbname
     ]);
 });
+*/
+
+initRedis($di,$config);
+initDatabase($di,$config);
+initRequestLogger($di,$config);
 
 // 公共的函数库 Common 服务///////////////////////////////////////////////////////////////////////////////////////////////
 $di->set('util', function () use ( $config ) {
     return new Utilitys();
 });
 
+/*
 // Redis 服务///////////////////////////////////////////////////////////////////////////////////////////////
 $di->set('redis', function () use ( $config ) {
     return new WebRedis();
 });
+*/
 
 //日志服务///////////////////////////////////////////////////////////////////////////////////////////////
 $di -> set('logger', function($filename='') use ($config) {
@@ -106,3 +115,66 @@ try {
 	 echo "错误：[{$dt}] {$e->getMessage()}\n\n";
      exit(255);
 }
+function initRedis( $di,$config )
+{
+    foreach($config as $k => $c)
+    {
+        if($c['adapter'] == "Redis")
+        {
+            $di->set($k,  function() use ( $c )
+            {
+                $r =  new Client([
+                    'host'       => $c->host,
+                    //'port'       => $c->port,
+                ],['cluster'=>'redis',
+                    'parameters' => [
+                        'password' => $c->auth_password]
+                ]);
+                return $r;
+            }
+            );
+        }
+    }
+    return $di;
+}
+function initRequestLogger( $di,$config )
+{
+    foreach($config as $k => $c) {
+        if($c['adapter'] == 'logger') {
+            $di->set($k,
+                function ($filename = null, $format = null) use ($c) {
+                    $format = $format ?: $c->format;
+                    $filename = trim($filename ?: $c->filename, '\\/');
+                    $path = rtrim($c->path, '\\/') . DIRECTORY_SEPARATOR;
+                    $formatter = new PhFormatterLine($format, $c->date);
+                    $request_logger = new PhFileLogger($path . $filename);
+                    $request_logger->setFormatter($formatter);
+                    $request_logger->setLogLevel($c->logLevel);
+                    return $request_logger;
+                });
+        }
+    }
+    return $di;
+}
+function initDatabase( $di,$config )
+{
+    foreach($config as $k => $c)
+    {
+        if($c['adapter'] == "Mysql")
+        {
+            $di->set($k,  function() use ( $c )
+            {
+                    return new \Phalcon\Db\Adapter\Pdo\Mysql([
+                    'host'       => $c->host,
+                    'username'   => $c->username,
+                    'password'   => $c->password,
+                    'charset'    => 'UTF8',
+                    'dbname'     => $c->dbname,
+                    'persistent' => true
+                ]);
+            });
+        }
+    }
+    return $di;
+}
+

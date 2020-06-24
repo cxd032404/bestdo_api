@@ -91,8 +91,17 @@ class StepsService extends BaseService
 
     public function refreshStepsCache($company_id = 1,$hours = 3)
     {
+        /*
+        $cache = "test";
+        $this->redis->set($cache,json_encode(rand(1,100)));
+        $this->redis->expire($cache,3600);
+        echo $this->redis->get($cache);
+        die();
+        */
+        $userInfo = (new UserService())->getUserInfo(11914);
         $userInfo = (new \HJ\UserInfo())::find(["company_id = ".$company_id,"limit"=>3]);
-        print_R($userInfo->toArray());
+        var_dump($userInfo->toArray());
+        echo "666";
         $allDepartment = (new \HJ\Department())::find(["company_id = ".$company_id]);
         print_R($allDepartment->toArray());
         die();
