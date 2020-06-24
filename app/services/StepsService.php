@@ -91,22 +91,22 @@ class StepsService extends BaseService
 
     public function refreshStepsCache($company_id = 1,$hours = 3)
     {
-        /*
-        $cache = "test";
-        $this->redis->set($cache,json_encode(rand(1,100)));
-        $this->redis->expire($cache,3600);
-        echo $this->redis->get($cache);
-        die();
-        */
-        $userInfo = (new UserService())->getUserInfo(11914);
-        $userInfo = (new \HJ\UserInfo())::find(["company_id = ".$company_id,"limit"=>3]);
-        var_dump($userInfo->toArray());
-        echo "666";
-        $allDepartment = (new \HJ\Department())::find(["company_id = ".$company_id]);
-        print_R($allDepartment->toArray());
-        die();
         $departmentStructure = (new DepartmentService())->getDepartmentStructure($company_id);
-        print_R($departmentStructure);
+        $steps_to_update = $this->getStepsData($company_id,"");
+        foreach($steps_to_update as $step)
+        {
+            $userInfo = (new UserService())->getUserInfo($step['user_id'],"user_id,department_id");
+            if(isset($userInfo->department_id))
+            {
+                //foreach()
+            }
+        }
+    }
+
+    public function getStepsData($company_id,$date)
+    {
+        $steps = (new \HJ\Steps())::find(["company_id=".$company_id,"columns"=>"sum(step) as step,user_id,count(1) as count","group"=>"user_id"]);
+        return $steps->toArray();
     }
 
 
