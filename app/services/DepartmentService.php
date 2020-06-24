@@ -27,26 +27,26 @@ class DepartmentService extends BaseService
         {
             if($parent == 0)
             {
-                $allDepartment[$department_id] = ["count"=>0,"total"=>0,"list"=>[]];
-                //unset($map[$department_id]);
+                $allDepartment[$department_id] = ["count"=>0,"total"=>0,"list_total"=>0,"list"=>[]];
+                unset($map[$department_id]);
             }
         }
         foreach($map as $department_id => $parent)
         {
             if(isset($allDepartment[$parent]))
             {
-                $allDepartment[$parent]["list"][$department_id] = ["count"=>0,"total"=>0,"list"=>[]];
+                $allDepartment[$parent]["list"][$department_id] = ["count"=>0,"total"=>0,"list_total"=>0,"list"=>[]];
                 //unset($map[$department_id]);
             }
         }
         foreach($map as $department_id => $parent)
         {
-            if(isset($map[$parent]))
+            if(isset($map[$parent]) && $map[$parent] > 0)
             {
                 $allDepartment[$map[$parent]]["list"][$parent]["list"][$department_id] = 0;
-                //unset($map[$department_id]);
+                unset($map[$department_id]);
             }
         }
-        return ["all"=>$allDepartment,"map"=>$map];
+        return ["all"=>$allDepartment,"map"=>array_combine(array_column($departmentList,"department_id"),array_column($departmentList,"parent_id"))];
     }
 }

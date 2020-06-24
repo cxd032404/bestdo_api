@@ -96,11 +96,55 @@ class StepsService extends BaseService
         foreach($steps_to_update as $step)
         {
             $userInfo = (new UserService())->getUserInfo($step['user_id'],"user_id,department_id");
+            echo $userInfo->user_id."-".$userInfo->department_id."-".$step["step"]."\n";
             if(isset($userInfo->department_id))
             {
-                //foreach()
+                $parent = $departmentStructure["map"][$userInfo->department_id];
+                if($parent==0)
+                {
+                    //echo "level_1:".$userInfo->department_id."\n";
+                    $departmentStructure["all"][$userInfo->department_id]["count"]+=$step['step'];
+                }
+                elseif($departmentStructure["map"][$parent]==0)
+                {
+                    //echo "level_2:".$userInfo->department_id."\n";
+                    $departmentStructure["all"][$parent]['list'][$userInfo->department_id]["count"]+=$step['step'];
+                }
+                else
+                {
+                    $parent_2 = $departmentStructure["map"][$parent];
+                    //echo "level_3:".$userInfo->department_id."\n";
+                    $departmentStructure["all"][$parent_2]['list'][$parent]['list'][$userInfo->department_id]+=$step['step'];
+                }
+
             }
         }
+        foreach($departmentStructure["all"] as $key_1 => $list_1)
+        {
+            foreach($list_1['list'] as $key_2 => $list_2)
+            {
+                $count = array_sum($list_2['list']);
+                $departmentStructure["all"][$key_1]['list'][$key_2]['list_total'] = $count;
+                $departmentStructure["all"][$key_1]['list'][$key_2]['total'] = $count+$list_2['count'];
+
+            }
+        }
+        foreach($departmentStructure["all"] as $key_1 => $list_1)
+        {
+            $count = array_sum(array_column($list_1['list'],"total"))."\n";
+            //echo "count:".$count."\n";
+            //print_R($list_1);
+            $departmentStructure["all"][$key_1]["list_total"] = $count;
+            $departmentStructure["all"][$key_1]["total"] = $list_1["count"];
+            /*
+            foreach($list_1['list'] as $key_2 => $list_2)
+            {
+                $departmentStructure["all"][$key_1]['list'][$key_2]['list_total'] = array_sum($list_2['list']);
+            }
+            */
+        }
+        print_R($departmentStructure["all"]);
+
     }
 
     public function getStepsData($company_id,$date)

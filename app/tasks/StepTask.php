@@ -24,7 +24,6 @@ class StepTask extends \Phalcon\Cli\Task
 		try{
             $hours = $params['0']??3;
 		    $company_id = $params['1']??1;
-		    echo "666";
             (new StepsService())->refreshStepsCache($company_id,$hours);
 
 		
