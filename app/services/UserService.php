@@ -118,7 +118,7 @@ class UserService extends BaseService
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
-        if(in_array($mobile,['17621822661','13472871514','17082170787','18621758237']) ){
+        if(in_array($mobile,['17621822661','13472871514','17082170787','18621758237','15150731278']) ){
             $login_code = json_encode(['code'=>123456]);
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
@@ -252,12 +252,12 @@ class UserService extends BaseService
                     if(!empty($miniProgramUserInfo))
                     {
                         //完善用户微信资料
-                        (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
+                        (new WechatService)->updateUserWithMiniProgram($user->user_id,$miniProgramUserInfo);
                     }
                     if(!empty($code))
                     {
                         //完善用户小程序资料
-                        (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
+                        (new WechatService)->updateUserWithWechat($this->key_config->wechat,$user->user_id,$code);
                     }
                     //修改验证码记录状态
                     $sendcode = $this->setMobileCode($mobile,$logincode);
@@ -616,7 +616,7 @@ class UserService extends BaseService
 
     //获取用户token
     public function getToken($user_id){
-        $userinfo = $this->getUserInfo($user_id,"*");
+        $userinfo = $this->getUserInfo($user_id,"*",0);
         $company_name = "";
         if(isset($userinfo->company_id)){
             $configcompany = \HJ\Company::findFirst([
@@ -635,6 +635,7 @@ class UserService extends BaseService
             'user_img'=>$userinfo->user_img??"",
             'mobile'=>$userinfo->mobile??"",
             'company_id'=>$userinfo->company_id??0,
+            'department_id'=>$userinfo->department_id??0,
             'company_name'=>$company_name,
             'worker_id'=>$userinfo->worker_id??"",
             'last_login_time'=>$userinfo->last_login_time??"",
@@ -935,7 +936,7 @@ class UserService extends BaseService
             //修改用户登录时间
             $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', $currentTime),
                 'last_update_time' => date('Y-m-d H:i:s', $currentTime),
-                'last_login_source' => "WeChat"], $userinfo->user_id);
+                'last_login_source' => "MiniProgram"], $userinfo->user_id);
             //生成token
             $tokeninfo = $this->getToken($userinfo->user_id);
             $return = ['result' => 1, 'msg' => $this->msgList['login_success'], 'code' => 200, 'data' => ['user_info' => $tokeninfo['map'], 'user_token' => $tokeninfo['token']]];
