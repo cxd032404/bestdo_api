@@ -6,8 +6,8 @@ class WechatMessageService extends BaseService
     //对应模板
     private   $sendDataTemplete = [
         'apply_result'=> '俱乐部申请结果',
-        'application_pass'=> '俱乐部申请结果',
-        'checkin'=> '俱乐部申请结果',
+        'application_note'=> '俱乐部申请通知',
+        'toCheckin'=> '活动签到',
         ];
 
 
@@ -15,15 +15,14 @@ class WechatMessageService extends BaseService
     //俱乐部消息类型
     private  $clubTypeList = [
         'clubJoin',
-        'club_leave',
+        'clubLeave',
         'applicationPass',
-        'applicationReject'
+        'applicationReject',
     ];
     private $activityTypeList = [
-        'checkin',
-        'ActivityJoin',
+        'toCheckin',
+        'activityJoin'
     ];
-
 
     /*
    *发送微信公众号消息接口
@@ -63,7 +62,7 @@ class WechatMessageService extends BaseService
             }
         }
         //活动类
-        else if(in_array($this->activityTypeList))
+        else if(in_array($type,$this->activityTypeList))
         {
             if(!isset($info['activity_id'])||!$info['activity_id'])
             {
@@ -78,16 +77,24 @@ class WechatMessageService extends BaseService
         switch ($type)
         {
             case 'clubJoin' :
+
             case 'clubLeave':$club_id = $info['club_id'];
                 $user_list = (new ClubService())->getClubManagerList($club_id);break;
+
             case 'applicationPass':
-            case 'reject':$user_list[] = $info['user_id'];break;
-            case 'applicationReject':$create_user_id = (new \HJ\Activity())->findFirst(['activity_id ='.$info['activity_id'],'columns'=>'create_user_id']);
-                $user_list[] = $create_user_id->create_user_id;break;
+
+            case 'applicationReject':$user_list[] = $info['user_id'];break;
+
+            case 'activityJoin':$user_list[] = $info['user_id'];break;
+            case 'toCheckin':$user_list[] = $info['user_id'];break;
+
             default:return ['result'=>0,'msg'=>'未知类型'];
         }
-
-
+        foreach ($user_list as $key =>$value) {
+            $user_list_info[$key]['user_id'] = $value;
+            $user_info = (new UserService())->getUserInfo($value, 'user_id,openid');
+            $user_list_info[$key]['openid'] = isset($user_info->openid)?$user_info->openid:'';
+        }
         return ['result'=>1,'msg'=>'','user_list_info'=>$user_list_info];
 
     }
@@ -127,8 +134,11 @@ class WechatMessageService extends BaseService
                 return ['result'=>0,'msg'=>'activity_id错误'];
             }
             //获取创建者user_id
-            $activity_info = (new ActivityService())->getActivityInfo($info['activity_id'],'activity_id,activity_name');
+            $activity_info = (new ActivityService())->getActivityInfo($info['activity_id'],'activity_id,start_time,activity_name,detail');
             $activity_name = $activity_info->activity_name;
+            $detail = json_decode($activity_info->detail,true);
+            $address = $detail['checkin']['address'];
+            $start_time = $activity_info->start_time;
         }else
         {
             return ['result'=>0,'msg'=>'未知类型'];
@@ -137,13 +147,63 @@ class WechatMessageService extends BaseService
         $content = '';
 
         switch ($type){
-            case 'join':$content = $user_name.$this->templete['join'].$club_name;break;//史说政申请加入足球俱乐部
-            case 'pass': $content = $club_name.$this->templete['pass']; break; //足球俱乐部通过了你的申请
-            case 'reject':$content = $club_name.$this->templete['reject'];break;//足球俱乐部拒绝了你的申请
-            case 'leave':$content = $user_name.$this->templete['leave'].$club_name;break;
-            case 'activity':$content = $user_name.$this->templete['activity'].$activity_name;
-                defalt:  return ['result'=>0,'msg'=>'类型有误'];
+            //提醒去审核
+            case 'clubJoin': $first = '有新的成员申请加入俱乐部';
+                             $second = $club_name;
+                             $third = $user_name;
+                             $four = date('Y-m-d h:i',time());
+                             $five = '请前往审批';
+                             $templete_id = $this->sendDataTemplete['application_note'] ;break;
+            //告知用户审核通过结果
+            case 'applicationPass':
+                            $first = '您的俱乐部加入申请已有结果';
+                            $second = $club_name;
+                            $third =  '审核通过';
+                            $four  =  date('Y-m-d h:i',time());
+                            $five = '快去参加活动吧';
+                            $templete_id = $this->sendDataTemplete['apply_result'];break;
+            //告知用户审核失败
+            case 'applicationReject':
+                            $first = '您的俱乐部加入申请已有结果';
+                            $second = $club_name;
+                            $third =  '申请被拒绝';
+                            $four  =  date('Y-m-d h:i',time());
+                            $five = '看看其他俱乐部';
+                            $templete_id = $this->sendDataTemplete['apply_result'];break;
+            //通知管理员成员离开
+            case 'clubLeave':
+                            $first = '有成员离开俱乐部';
+                            $second = $club_name;
+                            $third = $user_name;
+                            $four = date('Y-m-d h:i',time());
+                            $five = '请知晓';
+                            $templete_id = $this->sendDataTemplete['application_note'];break;
+
+            case 'activityJoin':
+                            $first = '有成员参加活动';
+                            $second = $activity_name;
+                            $third = $address;
+                            $four = date('Y-m-d h:i',time());
+                            $five = '活动愉快';break;
+            //活动签到提醒
+            case 'toCheckin':
+                            $first = '有活动待签到';
+                            $second = $activity_name;
+                            $third = $address;
+                            $four = $start_time;
+                            $five = '活动愉快';
+                            $templete_id = $this->sendDataTemplete['toCheckin'];break;
+
+            default:return ['result'=>0,'msg'=>'未知类型'];
         }
+        $content = [
+            'first'=>$first,
+            'second'=>$second,
+            'third'=>$third,
+            'four'=>$four,
+            'five'=>$five,
+            'templete_id'=>$templete_id
+        ];
         return ['result'=>1,'msg'=>'','content'=>$content];
     }
 
@@ -151,17 +211,40 @@ class WechatMessageService extends BaseService
     public function send($userList,$contentSend)
     {
         $redisKey = $this->config->redisQueue->wechatMessageQueue;
+
         foreach ($userList as $key=>$value)
         {
-            $message = [];
-            $message['user_id'] = $value['user_id'];
-            $message['openid'] = $value['openid'];
-            $message['content'] = $contentSend;
-            print_r($message);die();
-            $res = $this->redis->rpush($redisKey,json_encode($message));
+            $WechatMessage['touser'] = $value['openid'];
+            $WechatMessage['template_id'] = $contentSend['templete_id'];
+            $WechatMessage['appid'] = $this->key_config->wechat->appid;
+            $WechatMessage['data'] = [
+                'data'=>[
+                    "first"=>[
+                        'value'=>$contentSend['first'],
+                        'color'=>'#173177'
+                    ],
+                    "second"=>[
+                        'value'=>$contentSend['second'],
+                        'color'=>'#173177'
+                    ],
+                    "third"=>[
+                        'value'=>$contentSend['third'],
+                        'color'=>'#173177'
+                    ],
+                    "four"=>[
+                        'value'=>$contentSend['four'],
+                        'color'=>'#173177'
+                    ],
+                    "five"=>[
+                        'value'=>$contentSend['five'],
+                        'color'=>'#173177'
+                    ]
+                ]
+            ];
+            $res = $this->redis->rpush($redisKey,json_encode($WechatMessage));
             if(!$res)
             {
-                $error_data[] = $message;
+                $error_data[] = $WechatMessage;
             }
         }
         if(!isset($error_data))
@@ -180,23 +263,15 @@ class WechatMessageService extends BaseService
 
 
 
-    public function sendMe11ssage(){
+    public function sendMessage1(){
         $redisKey = $this->config->redisQueue->wechatMessageQueue;
 
-        for($i=50;$i<50;$i++) {
-            $message_info = $send_message_info = $this->getMessage();
-            if(!$message_info)
-            {
-                break;
-            }
-            $accessToken = (new WechatService())->checkWechatAccessToken();
-            $res = (new WechatService())->sendWechatMessage($accessToken, $message_info['openid'], '-Qq05dZSlDIf7LyuSWf0V3tJ9AuXjypdempKDTSGUio', $message_info['content']);
-            $this->logger->info(json_encode($res));
-            //发送失败 塞回队列
-            if (!isset($res['errcode']) || $res['errcode']) {
-                $this->redis->rpush($redisKey, json_encode($message_info));
-            }
+        for($i=0;$i<50;$i++) {
+
+                $message [] = $this->getMessage();
+
         }
+        print_r($message);die();
 
     }
 
@@ -204,7 +279,7 @@ class WechatMessageService extends BaseService
     private function getMessage(){
         $redisKey = $this->config->redisQueue->wechatMessageQueue;
         $res = $this->redis->lpop($redisKey);
-        return json_decode($res);
+        return $res;
     }
 
 }
