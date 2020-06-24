@@ -1,7 +1,7 @@
 <?php
 
 
-class MessageService extends BaseService
+class WechatMessageService extends BaseService
 {
   public function sendMessage(){
       $redisKey = $this->config->redisQueue->wechatMessageQueue;
