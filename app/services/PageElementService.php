@@ -127,14 +127,16 @@ class PageElementService extends BaseService
             //滑动导航数据转化
             $navList = [];
             foreach ($data['detail']['jump_urls'] as $navkey=>$nacvalue) {
+                $data['detail']['jump_urls'] = array_values($data['detail']['jump_urls']);
                 $data['name'] = $navkey;
                 $nav_type = explode('#',str_replace('"', '', $nacvalue));
                 $data['url'] = reset($nav_type);
                 $data['type'] = explode('.',str_replace('"', '', end($nav_type)));
                 $navList[] = $data;
             }
-            $data['detail']['jump_urls'] = $navList;
+            $data['detail']['jump_urls'] = json_decode(json_encode($navList),true);
         }
+
         return $data;
 
     }
@@ -227,6 +229,11 @@ class PageElementService extends BaseService
                 $connectedList = $postsService->getPostsList($listInfo->detail['connect'],[],'post_id,title,source,views');
                 foreach($connectedList['data'] as $pid => $pdetail)
                 {
+                    if($post_id == $pdetail->post_id)
+                    {
+                        unset($connectedList['data'][$pid]);
+                        continue;
+                    }
                     $connectedList['data'][$pid]->source = json_decode($pdetail->source,true);
                     $connectedList['data'][$pid]->source = (new UploadService())->parthSource($connectedList['data'][$pid]->source);
                     $new = [];

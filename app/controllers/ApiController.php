@@ -22,21 +22,12 @@ class ApiController extends BaseController
         (new StepsService())->generateTestSteps(6);
         die();
         (new StepsService())->refreshStepsCache();
-        die();
-        $file = file_get_contents('csv.txt','r');
-        $arr=explode("\n",$file);
-        foreach($arr as $key=>$v)
-        {
-            $value = explode(',',$v);
-            foreach ($value as $k=>$item)
-            {
-                $value[$k] = trim($value[$k],'"');
-            }
-            $arr[$key] = $value;
 
-        }
-        file_put_contents('filename.txt', print_r($arr, true));        die();
-         $return = (new WechatService())->sendMessage(['activity_id'=>35,'user_id'=>11907],'activity');
+        $return = (new WechatMessageService())->sendMessage1();
+
+        die();
+
+         $return = (new WechatMessageService())->sendMessage(['club_id'=>1,'user_id'=>11907],'clubJoin');
          echo 1;
          print_r($return);die();
             $return = (new TestService)->test();

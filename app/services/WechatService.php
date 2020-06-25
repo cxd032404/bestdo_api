@@ -17,26 +17,6 @@ class WechatService extends BaseService
 {
 
 
-    private $templete = [
-        'join'=>'申请加入',
-        'pass'=>'通过了您的申请',
-        'leave'=>'离开了',
-        'reject'=>'拒绝了您的申请',
-        'activity'=>'加入了'
-    ];
-    //俱乐部消息类型
-    private  $clubTypeList = [
-        'joinClub',
-        'leaveClub',
-        'applicationPass',
-        'applicationReject'
-    ];
-    private $activityTypeList = [
-        'joinActivity',
-        'ActivityJoin',
-    ];
-
-
     /*更新用户微信信息*/
     public function getOpenIdByCode($wechat = [],$code="")
     {
@@ -420,32 +400,6 @@ class WechatService extends BaseService
 
 
 
-     //消息存入redis队列
-     public function send($userList,$contentSend)
-     {
-         $redisKey = $this->config->redisQueue->wechatMessageQueue;
-         foreach ($userList as $key=>$value)
-         {
-             $message = [];
-             $message['user_id'] = $value['user_id'];
-             $message['openid'] = $value['openid'];
-             $message['content'] = $contentSend;
-             print_r($message);die();
-             $res = $this->redis->rpush($redisKey,json_encode($message));
-             if(!$res)
-             {
-                 $error_data[] = $message;
-             }
-         }
-         if(!isset($error_data))
-         {
-             return ['result'=>1,'msg'=>'发送成功'];
-         }else
-         {
-             return ['result'=>0,'msg'=>'发送失败','error_data'=>$error_data];
-         }
-
-     }
 
 
     //根据code获取小程序的用户身份信息
