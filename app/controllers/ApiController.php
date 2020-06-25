@@ -19,6 +19,8 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
+        (new StepsService())->generateTestSteps(6);
+        die();
         (new StepsService())->refreshStepsCache();
         die();
         $file = file_get_contents('csv.txt','r');

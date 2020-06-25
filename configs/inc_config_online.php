@@ -130,8 +130,8 @@ $config = [
         'club_list_by_company'=>['name'=>'club_list_by_company_','expire'=>3600],//单个企业下的俱乐部列表
         'activity_list_by_company'=>['name'=>'activity_list_by_company_','expire'=>3600],//单个企业下的活动列表
         'activity_list_by_creater'=>['name'=>'activity_list_by_creater_','expire'=>3600],//单个企业下特定用户创建的活动列表
-
         'activity_info'=>['name'=>'activity_info_','expire'=>3600],//活动
+        'department_info'=>['name'=>'department_info_','expire'=>3600],//部门信息
     ],
     'special_code'=>[
         "need_club_membership"=>999,

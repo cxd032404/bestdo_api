@@ -23,6 +23,7 @@ class StepsService extends BaseService
     {
         $create = $update = 0;
         $steps = json_decode($steps['data'],true);
+        $department = (new DepartmentService())->getDepartment($user_info->department_id);
         foreach($steps['stepInfoList'] as $date => $step)
         {
             $date = date("Y-m-d",$step['timestamp']);
@@ -36,7 +37,7 @@ class StepsService extends BaseService
                 }
                 else
                 {
-                    $updateLog = $this->updateUserSteps($stepsInfo->log_id,$step['step']);
+                    $updateLog = $this->updateUserSteps($stepsInfo->log_id,$step['step'],$department);
                     if($updateLog)
                     {
                         $update ++;
@@ -46,7 +47,7 @@ class StepsService extends BaseService
             }
             else
             {
-                $createLog = $this->createUserSteps($user_info,$date,$step['step']);
+                $createLog = $this->createUserSteps($user_info,$date,$step['step'],$department);
                 if($createLog)
                 {
                     $create ++;
@@ -62,7 +63,7 @@ class StepsService extends BaseService
         return $steps;
     }
 
-    public function createUserSteps($user_info,$date,$step)
+    public function createUserSteps($user_info,$date,$step,$department)
     {
         $company_info = (new CompanyService())->getCompanyInfo($user_info->company_id,"company_id,detail");
         $company_info->detail = json_decode($company_info->detail);
@@ -76,23 +77,41 @@ class StepsService extends BaseService
         $steps->date = $date;
         $steps->create_time = date("Y-m-d H:i:s",$currentTime);
         $steps->update_time = date("Y-m-d H:i:s",$currentTime);
+        foreach($department as $key => $value)
+        {
+            $steps->$key = $value;
+        }
         $create = $steps->save();
         return $create;
     }
 
-    public function updateUserSteps($log_id,$step)
+    public function updateUserSteps($log_id,$step,$department)
     {
         $currentTime = time();
         $steps = (new \HJ\Steps())::findFirst("log_id = ".$log_id);
+        foreach($department as $key => $value)
+        {
+            $steps->$key = $value;
+        }
         $steps->step = $step;
         $steps->update_time = date("Y-m-d H:i:s",$currentTime);
         return $steps->save();
     }
 
-    public function refreshStepsCache($company_id = 1,$hours = 3)
+    public function refreshStepsCache($company_id = 1,$hours = 1)
     {
+        $startTime = date("Y-m-d H:00:00",time()-$hours*3600);
+        $dateList = (new \HJ\Steps())::find(["update_time >= '".$startTime."'","columns"=>"date,company_id","group"=>"date,company_id"])->toArray();
         $departmentStructure = (new DepartmentService())->getDepartmentStructure($company_id);
-        $steps_to_update = $this->getStepsData($company_id,"");
+        echo "here";
+        print_R($departmentStructure);
+        foreach($dateList as $dateInfo)
+        {
+            $steps_to_update = $this->getStepsData($dateInfo['company_id'],$dateInfo['date']);
+            print_R($steps_to_update);
+            die();
+
+        }
         foreach($steps_to_update as $step)
         {
             $userInfo = (new UserService())->getUserInfo($step['user_id'],"user_id,department_id");
@@ -135,7 +154,7 @@ class StepsService extends BaseService
             //echo "count:".$count."\n";
             //print_R($list_1);
             $departmentStructure["all"][$key_1]["list_total"] = $count;
-            $departmentStructure["all"][$key_1]["total"] = $list_1["count"];
+            $departmentStructure["all"][$key_1]["total"] = $list_1["count"]+$count;
             /*
             foreach($list_1['list'] as $key_2 => $list_2)
             {
@@ -145,12 +164,50 @@ class StepsService extends BaseService
         }
         print_R($departmentStructure["all"]);
 
+        foreach($departmentStructure["all"] as $lv_1 => $lv_1_data)
+        {
+            $key = $company_id."_".$lv_1."_0_0_".date("Ymd",strtotime($date));
+            echo "key:".$key."\n";
+            foreach($lv_1_data["list"] as $lv_2 => $lv_2_data)
+            {
+                $key = $company_id."_".$lv_1."_".$lv_2."_0_".date("Ymd",strtotime($date));
+                echo "key:".$key."\n";
+                foreach($lv_2_data["list"] as $lv_3 => $lv_3_data)
+                {
+                    $key = $company_id."_".$lv_1."_".$lv_2."_".$lv_3."_".date("Ymd",strtotime($date));
+                    echo "key:".$key."\n";
+                }
+            }
+
+        }
+
     }
 
     public function getStepsData($company_id,$date)
     {
-        $steps = (new \HJ\Steps())::find(["company_id=".$company_id,"columns"=>"sum(step) as step,user_id,count(1) as count","group"=>"user_id"]);
+        $steps = (new \HJ\Steps())::find(["company_id='".$company_id."' and date = '".$date."'","columns"=>"sum(step) as step,user_id,count(1) as count","group"=>"user_id"]);
         return $steps->toArray();
+    }
+
+    public function generateTestSteps($month = 1)
+    {
+        $start_date = "2020-".$month."-01";
+        $userList = (new \HJ\UserInfo())::find(["department_id>0 and company_id = 1","columns"=>"user_id,department_id,company_id"]);
+        foreach($userList  as $userInfo)
+        {
+            $steps = ['data'=>["stepInfoList"=>[]]];
+            for($i=0;$i<date("t",strtotime($start_date));$i++)
+            {
+                $timeStamp = strtotime($start_date)+$i*86400;
+                $steps['data']['stepInfoList'][] = ['timestamp' => $timeStamp,"step"=>rand(1,9999)];
+            }
+            $steps['data'] = json_encode($steps['data']);
+            $update = $this->updateStepsForUser($userInfo,$steps);
+            print_R($update);
+            //$department = (new DepartmentService())->getDepartment($userInfo['department_id']);
+            //print_R($department);
+        }
+
     }
 
 
