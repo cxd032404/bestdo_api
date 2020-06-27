@@ -903,6 +903,34 @@ class PageElementService extends BaseService
         $data['detail']['residuals'] = $residuals;
         return $data;
     }
+    /*
+    * 步数统计信息
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
+    public function getElementPage_stepsData($data,$params,$user_info,$company_id){
+        $userService = new UserService();
+        //日期范围类型  day日期 week周 month月 3month3个月 halfyear半年 year年
+        $dateRangeType = $this->getFromParams($params,'dateRangeType',"3month");
+        //日期端类型 1自然 2当前推
+        $dateType = $this->getFromParams($params,'dateType',1);
+        $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
+        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
+        $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
+        $companyInfo->detail = json_decode($companyInfo->detail,true);
+        $stepsGoal = $companyInfo->detail['daily_step'] * $dateRange['days'];
+        foreach($stepsData as $key => $detail)
+        {
+            $stepsData[$key]['distance'] = intval($detail['step']*0.6);
+            $stepsData[$key]['kcal'] = intval($detail['step']/20);
+            $stepsData[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nickname,user_img");
+            $stepsData[$key]['achives'] = ($detail['step']>=$stepsGoal)?1:0;
+        }
+        $data['detail']['steps'] = $stepsData;
+        return $data;
+    }
 
 
 

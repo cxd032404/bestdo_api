@@ -159,6 +159,94 @@ class Common extends Component {
         $calculatedDistance = $earthRadius * $stepTwo;
         return round($calculatedDistance);
     }
+    /**
+     * 生成日期段
+     * @param string $dateRangeType 日期段类型范围  day日期 week周 month月 3month3个月 halfyear半年
+     * @param string $dateType 日期端类型 1自然 2当前推
+
+     */
+    static function processDateRange($dateRangeType = "week",$dateType = 1)
+    {
+        $currentTime = time();
+        if($dateRangeType == "day")
+        {
+            $return =  ["date" => date("Y-m-d",$currentTime)];
+        }
+        elseif($dateRangeType == "week")
+        {
+            if ($dateType == 1)
+            {
+                $s = date("w",$currentTime);
+                $startDate = date("Y-m-d",$currentTime-$s*86400);
+                $endDate = date("Y-m-d",strtotime($startDate)+7*86400);
+                $return =  ["startDate" => $startDate,"endDate" => $endDate];
+            }
+            else
+            {
+                $return =  ["startDate" => date("Y-m-d",$currentTime-7*86400),"endDate" => date("Y-m-d",$currentTime)];
+            }
+        }
+        elseif($dateRangeType == "month")
+        {
+            if ($dateType == 1)
+            {
+                $s = date("w",$currentTime);
+                $startDate = date("Y-m-01",$currentTime);
+                $endDate = date("Y-m-t",$currentTime);
+                $return =  ["startDate" => $startDate,"endDate" => $endDate];
+            }
+            else
+            {
+                $return =  ["startDate" => date("Y-m-d",$currentTime-30*86400),"endDate" => date("Y-m-d",$currentTime)];
+            }
+        }
+        elseif($dateRangeType == "3month")
+        {
+            if ($dateType == 1)
+            {
+                $m = date("n",$currentTime);
+                $startMonth = ceil($m/3)*3-2;
+                $startDate = date("Y",$currentTime)."-".sprintf("%02d",$startMonth)."-01";
+                $endDate = date("Y-m-t",strtotime("+2 month",strtotime($startDate)));
+                $return =  ["startDate" => $startDate,"endDate" => $endDate];
+            }
+            else
+            {
+                $return =  ["startDate" => date("Y-m-d",$currentTime-30*3*86400),"endDate" => date("Y-m-d",$currentTime)];
+            }
+        }
+        elseif($dateRangeType == "halfyear")
+        {
+            if ($dateType == 1)
+            {
+                $m = date("n",$currentTime);
+                $startMonth = ceil($m/6)*6-5;
+                $startDate = date("Y",$currentTime)."-".sprintf("%02d",$startMonth)."-01";
+                $endDate = date("Y-m-t",strtotime("+5 month",strtotime($startDate)));
+                $return =  ["startDate" => $startDate,"endDate" => $endDate];
+            }
+            else
+            {
+                $return =  ["startDate" => date("Y-m-d",$currentTime-30*6*86400),"endDate" => date("Y-m-d",$currentTime)];
+            }
+        }
+        elseif($dateRangeType == "year")
+        {
+            if ($dateType == 1)
+            {
+                $startDate = date("Y-01-01",$currentTime);
+                $endDate = date("Y-12-t",$currentTime);
+                $return =  ["startDate" => $startDate,"endDate" => $endDate];
+            }
+            else
+            {
+                $return =  ["startDate" => date("Y-m-d",$currentTime-365*86400),"endDate" => date("Y-m-d",$currentTime)];
+            }
+        }
+        $days = isset($return['date'])?1:(intval((strtotime($return['endDate'])-strtotime($return['startDate']))/86400)+1);
+        $return["days"] = $days;
+        return $return;
+    }
 
 
 

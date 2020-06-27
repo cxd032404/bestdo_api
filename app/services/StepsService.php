@@ -188,6 +188,27 @@ class StepsService extends BaseService
         $steps = (new \HJ\Steps())::find(["company_id='".$company_id."' and date = '".$date."'","columns"=>"sum(step) as step,user_id,count(1) as count","group"=>"user_id"]);
         return $steps->toArray();
     }
+    public function getStepsDataByDate($dateRange,$company_id,$page = 1,$pageSize = 3)
+    {
+        $whereCondition = "company_id = '".$company_id."' ";
+        if(isset($dateRange['date']))
+        {
+            $whereCondition.= " and date = '".$dateRange['date']."'";
+        }
+        else
+        {
+            $whereCondition.= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
+        }
+
+        $params = [
+            $whereCondition,
+            "columns"=>"user_id,sum(step) as step",
+            "group"=>"user_id",
+            "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+        ];
+        $steps = (new \HJ\Steps())::find($params);
+        return $steps->toArray();
+    }
 
     public function generateTestSteps($month = 1)
     {
