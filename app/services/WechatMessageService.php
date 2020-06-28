@@ -75,12 +75,12 @@ class WechatMessageService extends BaseService
 
         $user_list_info= [];
         switch ($type)
-        {
+        {   //通知多个管理员
             case 'clubJoin' :
 
             case 'clubLeave':$club_id = $info['club_id'];
                 $user_list = (new ClubService())->getClubManagerList($club_id);break;
-
+            //通知个人
             case 'applicationPass':
 
             case 'applicationReject':$user_list[] = $info['user_id'];break;
@@ -245,6 +245,7 @@ class WechatMessageService extends BaseService
             if(!$res)
             {
                 $error_data[] = $WechatMessage;
+                $this->logger->info('微信模板消息:'.json_encode($WechatMessage));
             }
         }
         if(!isset($error_data))
@@ -258,28 +259,48 @@ class WechatMessageService extends BaseService
     }
 
 
+    /*
+     * 推送微信公众号信息
+     */
+    public function sendWechatMessage($content)
+    {
+        $accessToken = $this->checkWechatAccessToken();
+        $sendUrl = "http://api.weixin.qq.com/cgi-bin/message/template/send?access_token=$accessToken";
+        $res = $this->curl->post_request($sendUrl,$content);
+        if($res['errcode']==0)
+            return true;
+        return false;
 
+    }
 
-
-
-
-    public function sendMessage1(){
-        $redisKey = $this->config->redisQueue->wechatMessageQueue;
-
-        for($i=0;$i<50;$i++) {
-
-                $message [] = $this->getMessage();
-
+    /*
+     * 检测accessToken
+     */
+    public function checkWechatAccessToken(){
+        $redisSettings = $this->config->cache_settings->accessToken;
+        $accessToken = $this->redis->get($redisSettings->name);
+        if($accessToken)
+        {
+            return $accessToken;
+        }else
+        {
+            return $this->getWechatAccessToken();
         }
-        print_r($message);die();
-
+    }
+    /*
+     * 获取最新accessToken
+     */
+    public function getWechatAccessToken(){
+        $redisSettings = $this->config->cache_settings->accessToken;
+        $appid = $this->key_config->wechat->appid??"";
+        $appsecret = $this->key_config->wechat->appsecret??"";
+        $AccessTokenUri =  "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=$appid&secret=$appsecret";
+        $data = file_get_contents($AccessTokenUri);
+        $accessTokenInfo = json_decode($data,true);
+        $this->redis->set($redisSettings->name,$accessTokenInfo['access_token']);
+        $this->redis->expire($redisSettings->name,$accessTokenInfo['expires_in']);
+        return $accessTokenInfo['access_token'];
     }
 
-    //从队列获取信息
-    private function getMessage(){
-        $redisKey = $this->config->redisQueue->wechatMessageQueue;
-        $res = $this->redis->lpop($redisKey);
-        return $res;
-    }
 
 }
