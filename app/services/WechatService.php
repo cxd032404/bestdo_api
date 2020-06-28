@@ -90,18 +90,20 @@ class WechatService extends BaseService
         return true;
     }
     /*更新用户微信信息*/
+    /*更新用户微信信息*/
     public function updateUserWithMiniProgram($user_id=0,$miniProgramUserInfo="")
     {
         $miniProgramUserInfo = json_decode($miniProgramUserInfo,true);
-        $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'], $data );
+        $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'],$this->key_config->wechat_mini_program, $miniProgramUserInfo['session_key'] );
+
+        $miniProgramUserInfo = json_decode($miniProgramUserInfo['data'],true);
         if(isset($miniProgramUserInfo['openId']))
         {
             //修改用户信息
             $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
-            //var_dump($userinfo);
             if($userinfo){
-                $userinfo->wechatid = $miniProgramUserInfo['openId']??"";
-                $userinfo->unionid = $miniProgramUserInfo['nickName']??"";
+                $userinfo->mini_program_id = $miniProgramUserInfo['openId']??"";
+                $userinfo->unionid = $miniProgramUserInfo['unionId']??"";
                 $userinfo->nick_name = $miniProgramUserInfo['nickName']??"";
                 $userinfo->sex = $miniProgramUserInfo['gender'];
                 $userinfo->user_img = $miniProgramUserInfo['avatarUrl'];
@@ -110,7 +112,6 @@ class WechatService extends BaseService
                 $userinfo->update();
             }
         }
-
         return true;
     }
 
