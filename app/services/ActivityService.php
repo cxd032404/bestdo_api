@@ -720,5 +720,19 @@ class ActivityService extends BaseService
         return $return;
     }
 
+    /*
+     * 获取某月用户活动列表
+     */
+    public function getMonthlyActivityList($user_id,$month){
+        $year = date('Y',time());
+        $date =$year.'-'.$month;
+        $activity_list = (new \HJ\UserActivityLog())->find(['user_id = '.$user_id,'columns'=>'id,activity_id']);
+        foreach ($activity_list as $key=>$value)
+        {
+            $activity_info = (new Activity())->findFirst(['activity_id ='.$value->activity_id,'columns'=>'activity_id,start_time,end_time']);
+        }
+
+    }
+
 
 }

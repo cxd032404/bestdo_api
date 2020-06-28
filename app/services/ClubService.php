@@ -128,9 +128,8 @@ class ClubService extends BaseService
     /*
      * 管理员操作用户申请
      */
-    public function applicationOperate($user_id,$operation,$log_id = 0)
+    public function applicationOperate($user_id,$operation,$log_ids = 0)
     {
-        $log_ids = explode(',',$log_id);
         if($operation == 'pass')
         {
             $success = 0;
@@ -274,7 +273,7 @@ class ClubService extends BaseService
            {
                //刷新缓存
                $this->getUserClubMembership($send_user,$club_id,0);
-               $this->getUserClubList($send_user,'member_id',1,0);
+               $this->getUserClubList($send_user,'member_id,club_id',1,0);
                $this->getUserClubListWithPermission($send_user);
                return true;
            }else
@@ -558,7 +557,14 @@ class ClubService extends BaseService
             $conditions = "club_id = ".$club_id;
         }elseif($result == 3)
         {
-            $conditions = "club_id = ".$club_id.' and result = 1 or result =2';
+            $club_ids = '';
+            foreach ($club_id as $key =>$value)
+            {
+                $club_ids .=','.$value;
+            }
+            $club_ids =substr($club_ids,1);
+            $club_ids ='('.$club_ids.')';
+            $conditions = "club_id in ".$club_ids.' and ( result = 1 or result =2)';
         }else
         {
             $conditions = "club_id = ".$club_id.' and result ='.$result;
@@ -746,20 +752,30 @@ class ClubService extends BaseService
                 }
             }
         }
+
         if($columns != "*")
         {
             $t = explode(",",$columns);
             foreach($clubList as $key => $clubInfo)
             {
+                $clubInfo = json_decode(json_encode($clubInfo),true);
                 foreach($clubInfo as $k => $v)
-                if(!in_array($k,$t))
                 {
-                    unset($clubList[$key]->$k);
+                    if (!in_array($k, $t))
+                    {
+                        unset($clubInfo[$k]);
+                    }
                 }
+                $clubList[$key] = json_decode(json_encode($clubInfo));
             }
         }
+
         foreach($clubList as $key => $club)
         {
+            if(isset($club->club_id))
+            {
+                continue;
+            }
             $clubInfo = $this->getClubInfo($club->club_id);
             if($clubInfo->club_id)
             {

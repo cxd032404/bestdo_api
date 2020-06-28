@@ -440,14 +440,13 @@ class PageElementService extends BaseService
          return $data;
      }
 
-
-    /*
-    * 活动报名
-    * userinfo 用户信息
-    * company_id 公司id
-    * data 用户包含的element信息
-    * params 页面标识和company_id
-    */
+        /*
+        * 活动报名
+        * userinfo 用户信息
+        * company_id 公司id
+        * data 用户包含的element信息
+        * params 页面标识和company_id
+        */
     public function getElementPage_activityApply($data,$params,$user_info,$company_id){
 
         if(isset($data['detail']['auto']) && $data['detail']['auto']==1)
@@ -502,26 +501,47 @@ class PageElementService extends BaseService
     * data 用户包含的element信息
     * params 页面标识和company_id
     */
-    public function getElementPage_clubMemberLog($data,$params,$user_info,$company_id){
+    public function getElementPage_clubMemberLog($data,$params,$user_info,$company_id)
+    {
 
-        if(isset($data['detail']['club_id']))
-        {
+        if (isset($data['detail']['club_id'])) {
             $club_id = $data['detail']['club_id'];
-        }
-        else//页面获取
+        } else//页面获取
         {
-            $club_id = $this->getFromParams($params,$data['detail']['from_params'],0);
+            $club_id = $this->getFromParams($params, $data['detail']['from_params'], 0);
         }
         //管理的俱乐部列表
         $club_list_permission = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
-        $club_list=[];
-        foreach ($club_list_permission as $key=> $value)
-        {
+        $club_list = [];
+        $club_ids = [];
+        foreach ($club_list_permission as $key => $value) {
+            $club_list[$key]['Usercount'] = (new ClubService())->getClubMemberCount($value->club_id);
             $club_list[$key]['club_id'] = $value->club_id;
             $club_list[$key]['club_name'] = $value->club_name;
+            $club_ids [] = $value->club_id;
         }
         $data['detail']['club_list'] = $club_list;
         //默认第一个俱乐部
+        $result = $this->getFromParams($params, 'result', 0);
+        if ($result == 3) {
+            $club_id = $club_ids;
+            $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id, 'log_id,club_id,create_time,user_id,result', $this->getFromParams($params, 'start', 0), $this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3), $this->getFromParams($params, 'result', 0));
+            foreach ($club_member_logs as $key => $value) {
+                $user_info = (new UserService())->getUserInfo($value->user_id ?? 0, 'user_id,nick_name,true_name,user_img');
+                $user_count = (new ClubService())->getClubMemberCount($value->club_id);
+                $member_log_list[$key]['user_id'] = $user_info->user_id;
+                $member_log_list[$key]['user_count'] = $user_count;
+                $member_log_list[$key]['nick_name'] = $user_info->nick_name;
+                $member_log_list[$key]['true_name'] = $user_info->true_name;
+                $member_log_list[$key]['user_img'] = $user_info->user_img;
+                $member_log_list[$key]['log_id'] = $value->log_id;
+                $member_log_list[$key]['result'] = $value->result;
+                $member_log_list[$key]['club_id'] = $value->club_id;
+                $member_log_list[$key]['create_time'] = date('Y/m/d h:i', strtotime($value->create_time));
+            }
+        $data['detail']['member_log_list'] = $member_log_list;
+        return $data;
+    }
         if(!$club_id)
         {
             $club_id = isset($club_list[0])?$club_list[0]['club_id']:0;
