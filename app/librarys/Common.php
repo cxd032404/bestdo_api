@@ -177,7 +177,15 @@ class Common extends Component {
             if ($dateType == 1)
             {
                 $s = date("w",$currentTime);
-                $startDate = date("Y-m-d",$currentTime-$s*86400);
+                if($s == 0)
+                {
+                    $s = 6;
+                }
+                else
+                {
+                    $s--;
+                }
+                $startDate = date("Y-m-d",$currentTime-($s)*86400);
                 $endDate = date("Y-m-d",strtotime($startDate)+7*86400);
                 $return =  ["startDate" => $startDate,"endDate" => $endDate];
             }
