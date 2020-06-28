@@ -913,20 +913,22 @@ class PageElementService extends BaseService
     public function getElementPage_stepsData($data,$params,$user_info,$company_id){
         $userService = new UserService();
         //日期范围类型  day日期 week周 month月 3month3个月 halfyear半年 year年
-        $dateRangeType = $this->getFromParams($params,'dateRangeType',"3month");
+        $dateRangeType = $this->getFromParams($params,'date_range_type',"month");
         //日期端类型 1自然 2当前推
-        $dateType = $this->getFromParams($params,'dateType',1);
+        $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
-        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
+        $departmentId = $this->getFromParams($params,'department_id',1);
+        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$departmentId,$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
         $stepsGoal = $companyInfo->detail['daily_step'] * $dateRange['days'];
         foreach($stepsData as $key => $detail)
         {
-            $stepsData[$key]['distance'] = intval($detail['step']*0.6);
-            $stepsData[$key]['kcal'] = intval($detail['step']/20);
-            $stepsData[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nickname,user_img");
-            $stepsData[$key]['achives'] = ($detail['step']>=$stepsGoal)?1:0;
+            $stepsData[$key]['distance'] = intval($detail['totalStep']*0.6);
+            $stepsData[$key]['kcal'] = intval($detail['totalStep']/20);
+            $stepsData[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nickname,user_img,department_id");
+            $stepsData[$key]['goal'] = $stepsGoal;
+            $stepsData[$key]['achives'] = ($detail['totalStep']>=$stepsGoal)?1:0;
         }
         $data['detail']['steps'] = $stepsData;
         return $data;

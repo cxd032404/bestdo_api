@@ -857,6 +857,7 @@ class UserService extends BaseService
         }
         if($columns != "*")
         {
+
             $t = explode(",",$columns);
             foreach($userInfo as $key => $value)
             {
