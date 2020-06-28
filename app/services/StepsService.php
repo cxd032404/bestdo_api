@@ -79,7 +79,10 @@ class StepsService extends BaseService
         $steps->update_time = date("Y-m-d H:i:s",$currentTime);
         foreach($department as $key => $value)
         {
-            $steps->$key = $value;
+            if($key != "current_level")
+            {
+                $steps->$key = $value;
+            }
         }
         $create = $steps->save();
         return $create;
@@ -91,7 +94,10 @@ class StepsService extends BaseService
         $steps = (new \HJ\Steps())::findFirst("log_id = ".$log_id);
         foreach($department as $key => $value)
         {
-            $steps->$key = $value;
+            if($key != "current_level")
+            {
+                $steps->$key = $value;
+            }
         }
         $steps->step = $step;
         $steps->update_time = date("Y-m-d H:i:s",$currentTime);
@@ -188,8 +194,9 @@ class StepsService extends BaseService
         $steps = (new \HJ\Steps())::find(["company_id='".$company_id."' and date = '".$date."'","columns"=>"sum(step) as step,user_id,count(1) as count","group"=>"user_id"]);
         return $steps->toArray();
     }
-    public function getStepsDataByDate($dateRange,$company_id,$page = 1,$pageSize = 3)
+    public function getStepsDataByDate($dateRange,$company_id,$department_id,$page = 1,$pageSize = 3)
     {
+        $deparment = (new DepartmentService())->getDepartment($department_id);
         $whereCondition = "company_id = '".$company_id."' ";
         if(isset($dateRange['date']))
         {
@@ -199,12 +206,34 @@ class StepsService extends BaseService
         {
             $whereCondition.= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
         }
-
+        $level_name = "department_id_".$deparment['current_level'];
+        $whereCondition.= "and ".$level_name." = ".$deparment[$level_name];
         $params = [
             $whereCondition,
-            "columns"=>"user_id,sum(step) as step",
+            "columns"=>"user_id,sum(step) as totalStep",
             "group"=>"user_id",
+            "order"=>"totalStep",
             "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+        ];
+        $steps = (new \HJ\Steps())::find($params);
+        return $steps->toArray();
+    }
+    public function getUserStepsDataByDate($dateRange,$company_id,$user_id)
+    {
+        $whereCondition = "company_id = '".$company_id."' and user_id = '".$user_id."'";
+        if(isset($dateRange['date']))
+        {
+            $whereCondition.= " and date = '".$dateRange['date']."'";
+        }
+        else
+        {
+            $whereCondition.= " and date >= '".$dateRange['startDate']."' and date < '".$dateRange['endDate']."'";
+        }
+        $params = [
+            $whereCondition,
+            "columns"=>"date,sum(step) as totalStep",
+            "group"=>"date",
+            "order"=>"date",
         ];
         $steps = (new \HJ\Steps())::find($params);
         return $steps->toArray();

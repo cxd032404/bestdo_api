@@ -920,22 +920,74 @@ class PageElementService extends BaseService
     public function getElementPage_stepsData($data,$params,$user_info,$company_id){
         $userService = new UserService();
         //日期范围类型  day日期 week周 month月 3month3个月 halfyear半年 year年
-        $dateRangeType = $this->getFromParams($params,'dateRangeType',"3month");
+        $dateRangeType = $this->getFromParams($params,'date_range_type',"month");
         //日期端类型 1自然 2当前推
-        $dateType = $this->getFromParams($params,'dateType',1);
+        $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
-        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
+        $departmentId = $this->getFromParams($params,'department_id',1);
+        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$departmentId,$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
         $stepsGoal = $companyInfo->detail['daily_step'] * $dateRange['days'];
         foreach($stepsData as $key => $detail)
         {
-            $stepsData[$key]['distance'] = intval($detail['step']*0.6);
-            $stepsData[$key]['kcal'] = intval($detail['step']/20);
-            $stepsData[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nickname,user_img");
-            $stepsData[$key]['achives'] = ($detail['step']>=$stepsGoal)?1:0;
+            $stepsData[$key]['distance'] = intval($detail['totalStep']*0.6);
+            $stepsData[$key]['kcal'] = intval($detail['totalStep']/20);
+            $stepsData[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nickname,user_img,department_id");
+            $stepsData[$key]['goal'] = $stepsGoal;
+            $stepsData[$key]['achives'] = ($detail['totalStep']>=$stepsGoal)?1:0;
         }
         $data['detail']['steps'] = $stepsData;
+        return $data;
+    }
+    /*
+    * 用户步数统计信息
+    * userinfo 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
+    public function getElementPage_userStepsData($data,$params,$user_info,$company_id){
+        $userService = new UserService();
+        //日期范围类型  day日期 week周 month月 3month3个月 halfyear半年 year年
+        $dateRangeType = $this->getFromParams($params,'date_range_type',"day");
+        //日期端类型 1自然 2当前推
+        $dateType = $this->getFromParams($params,'date_type',1);
+        $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
+        $userId = $this->getFromParams($params,'user_id',0);
+        $userInfo = $userService->getUserInfo($userId,"user_id,company_id,department_id");
+        if(isset($userInfo->user_id) && $userInfo->company_id == $user_info['data']['company_id'])
+        {
+            //用户指定的用户找到，且是属于同一家公司
+            //$userInfo = $userService->getUserInfo($user_info,"user_id,company_id,department_id");
+        }
+        else
+        {
+            //指定为当前用户
+            $userId = $user_info['data']['user_id'];
+            $userInfo = $userService->getUserInfo($userId,"user_id,company_id,department_id");
+        }
+        $stepsData = (new StepsService())->getUserStepsDataByDate($dateRange,$user_info['data']['company_id'],$userInfo->user_id);
+        $t  = [];
+        for($date = (!isset($dateRange['date'])?$dateRange['startDate']:$dateRange['date']);$date<=(!isset($dateRange['date'])?$dateRange['endDate']:$dateRange['date']);$date = date("Y-m-d",strtotime($date)+86400))
+        {
+            $t[$date] = ["date"=>$date,"totalStep"=>0];
+        }
+        $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
+        $companyInfo->detail = json_decode($companyInfo->detail,true);
+        $stepsGoal = $companyInfo->detail['daily_step'];
+        foreach($stepsData as $key => $detail)
+        {
+            $t[$detail['date']] = array_merge($t[$detail['date']],$detail);
+        }
+        foreach($t as $date => $detail)
+        {
+            $t[$date]['distance'] = intval($detail['totalStep']*0.6);
+            $t[$date]['kcal'] = intval($detail['totalStep']/20);
+            $t[$date]['goal'] = $stepsGoal;
+            $t[$date]['achives'] = ($detail['totalStep']>=$stepsGoal)?1:0;
+        }
+        $data['detail']['steps'] = $t;
         return $data;
     }
 

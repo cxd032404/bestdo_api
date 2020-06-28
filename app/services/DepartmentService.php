@@ -55,7 +55,7 @@ class DepartmentService extends BaseService
         if($departmentInfo->parent_id==0)
         {
             //第一级
-            $return = ['department_id_1'=>$department_id,"department_id_2"=>0,"department_id_3"=>0];
+            $return = ['department_id_1'=>$department_id,"department_id_2"=>0,"department_id_3"=>0,"current_level"=>1];
         }
         else
         {
@@ -63,12 +63,12 @@ class DepartmentService extends BaseService
             if($parentDepartmentInfo->parent_id==0)
             {
                 //第二级
-                $return = ["department_id_1"=>$departmentInfo->parent_id,'department_id_2'=>$department_id,"department_id_3"=>0];
+                $return = ["department_id_1"=>$departmentInfo->parent_id,'department_id_2'=>$department_id,"department_id_3"=>0,"current_level"=>2];
             }
             else
             {
-                //第二级
-                $return = ["department_id_1"=>$parentDepartmentInfo->parent_id,'department_id_2'=>$departmentInfo->parent_id,"department_id_3"=>$department_id];
+                //第三级
+                $return = ["department_id_1"=>$parentDepartmentInfo->parent_id,'department_id_2'=>$departmentInfo->parent_id,"department_id_3"=>$department_id,"current_level"=>3];
             }
         }
         return $return;
