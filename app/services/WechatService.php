@@ -211,6 +211,7 @@ class WechatService extends BaseService
                 $access_token['expires_time'] = time()+intval($access_token['expires_in']);
                 $this->setRedis('access_token',$access_token);
             }
+            print_r($access_token);die();
         }
         return $access_token['access_token'];
     }

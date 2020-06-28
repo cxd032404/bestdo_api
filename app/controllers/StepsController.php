@@ -52,7 +52,5 @@ class StepsController extends BaseController
         //更新步数
         $update = (new StepsService())->updateStepsForUser($userInfo, $stepsData);
         return $this->success($update);
-
-
     }
 }

@@ -64,10 +64,10 @@ class SendCodeService extends BaseService
                 if ($sendcode->create() === false) {
                     $return['msg']  = $this->msgList['sms_insert_error'];
                 }else{
-                    $return  = ['result'=>1,'msg'=>$return_sms['WechatMessageService'],"data"=>$data["jsonTemplateParam"],'code'=>200];
+                    $return  = ['result'=>1,'msg'=>$return_sms['Message'],"data"=>$data["jsonTemplateParam"],'code'=>200];
                 }
             }else{
-                $return['msg']  = $return_sms['WechatMessageService'];
+                $return['msg']  = $return_sms['Message'];
             }
         }
         return $return;
@@ -95,8 +95,7 @@ class SendCodeService extends BaseService
             $data['jsonTemplateParam'] = json_encode(['code'=>$authCodeMT]);//模板变量json字符串
             //调用阿里云发送短信
             $return_sms =  $this->sendAliDaYuAuthCode($data);
-            if($return_sms['Code'] == "OK"){
-                //短信发送记录存入数据库中
+            if($return_sms['Code'] == "OK"){     //短信发送记录存入数据库中
                 $sendcode = new HJ\SendCode();
                 $sendcode->to = $mobile;
                 $sendcode->type = "mobile";
@@ -107,13 +106,14 @@ class SendCodeService extends BaseService
                     //短信验证码存入redis缓存中
                     $this->redis->set($code_name.$mobile,$data['jsonTemplateParam']);
                     $this->redis->expire($code_name.$mobile,60*5);
-                    $return  = ['result'=>1,'msg'=>$return_sms['WechatMessageService'],'data'=>$data['jsonTemplateParam'],'code'=>200];
+                    $return  = ['result'=>1,'msg'=>$return_sms['Message'],'data'=>$data['jsonTemplateParam'],'code'=>200];
                 }
             }else{
-                $return['msg']  = $return_sms['WechatMessageService'];
+                $return['msg']  = $return_sms['Message'];
             }
         }
         return $return;
+
     }
 
     //忘记密码发送短信验证码方法
@@ -146,10 +146,10 @@ class SendCodeService extends BaseService
                 if ($sendcode->create() === false) {
                     $return['msg']  = $this->msgList['sms_insert_error'];
                 }else{
-                    $return  = ['result'=>1,'msg'=>$return_sms['WechatMessageService'],'data'=>$data['jsonTemplateParam'],'code'=>200];
+                    $return  = ['result'=>1,'msg'=>$return_sms['Message'],'data'=>$data['jsonTemplateParam'],'code'=>200];
                 }
             }else{
-                $return['msg']  = $return_sms['WechatMessageService'];
+                $return['msg']  = $return_sms['Message'];
             }
         }
         return $return;
