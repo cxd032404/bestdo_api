@@ -855,18 +855,20 @@ class UserService extends BaseService
                 }
             }
         }
+        $userInfo = json_decode(json_encode($userInfo),true);
         if($columns != "*")
         {
-
             $t = explode(",",$columns);
+            $userInfo = json_decode(json_encode($userInfo),true);
             foreach($userInfo as $key => $value)
             {
                 if(!in_array($key,$t))
                 {
-                    unset($userInfo->$key);
+                    unset($userInfo[$key]);
                 }
             }
         }
+        $userInfo = json_decode(json_encode($userInfo));
         return $userInfo;
     }
     public function getUserInfoByWechat($openId = "")
