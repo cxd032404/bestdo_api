@@ -83,6 +83,19 @@ class CacheController extends BaseController
             {
                 $this->failure([],"not found","400");
             }
-        }    }
+        }
+        elseif($type=="post")
+        {
+            $postsInfo = (new PostsService())->getPosts($id,"*",0);
+            if(isset($postsInfo->post_id))
+            {
+                $this->success($postsInfo,"ok",200);
+            }
+            else
+            {
+                $this->failure([],"not found","400");
+            }
+        }
+    }
 
 }
