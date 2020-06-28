@@ -953,9 +953,10 @@ class PageElementService extends BaseService
         {
             $stepsData[$key]['distance'] = intval($detail['totalStep']*0.6);
             $stepsData[$key]['kcal'] = intval($detail['totalStep']/20);
-            $stepsData[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nickname,user_img,department_id");
+            $stepsData[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nickname,user_img,department_id",1);
             $stepsData[$key]['goal'] = $stepsGoal;
-            $stepsData[$key]['achives'] = ($detail['totalStep']>=$stepsGoal)?1:0;
+            $stepsData[$key]['achive'] = ($detail['totalStep']>=$stepsGoal)?1:0;
+            $stepsData[$key]['achive_rate'] = intval(100*($detail['totalStep']/$stepsGoal));
         }
         $data['detail']['steps'] = $stepsData;
         return $data;
@@ -1006,6 +1007,7 @@ class PageElementService extends BaseService
             $t[$date]['kcal'] = intval($detail['totalStep']/20);
             $t[$date]['goal'] = $stepsGoal;
             $t[$date]['achives'] = ($detail['totalStep']>=$stepsGoal)?1:0;
+            $t[$date]['achive_rate'] = intval(100*($detail['totalStep']/$stepsGoal));
         }
         $data['detail']['steps'] = $t;
         return $data;

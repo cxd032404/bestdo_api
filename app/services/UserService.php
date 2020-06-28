@@ -118,7 +118,7 @@ class UserService extends BaseService
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
-        if(in_array($mobile,['18365285403','17621822661','13472871514','17082170787','18621758237','15150731278']) ){
+        if(in_array($mobile,['18550306937','18365285403','17621822661','13472871514','17082170787','18621758237','15150731278']) ){
             $login_code = json_encode(['code'=>123456]);
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
@@ -855,18 +855,20 @@ class UserService extends BaseService
                 }
             }
         }
+        $userInfo = json_decode(json_encode($userInfo),true);
         if($columns != "*")
         {
-
             $t = explode(",",$columns);
+            $userInfo = json_decode(json_encode($userInfo),true);
             foreach($userInfo as $key => $value)
             {
                 if(!in_array($key,$t))
                 {
-                    unset($userInfo->$key);
+                    unset($userInfo[$key]);
                 }
             }
         }
+        $userInfo = json_decode(json_encode($userInfo));
         return $userInfo;
     }
     public function getUserInfoByWechat($openId = "")
