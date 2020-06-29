@@ -43,7 +43,6 @@ class StepsController extends BaseController
         $userInfo = $return['data']['user_info'];
         //接收参数并格式化
         $data = $this->request->get();
-        $this->logger->info(json_encode($data));
         $session_key = trim($data['session_key']??"");
         $iv = trim($data['iv']??"");
         $data = trim($data['encryptedData']??"");

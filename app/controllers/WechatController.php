@@ -41,7 +41,6 @@ class WechatController extends BaseController
     {
         //接收参数并格式化
         $data = $this->request->get();
-        $this->logger->info(json_encode($data));
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         //通过code获取sessionKey,openid,Unionid
         $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
@@ -72,7 +71,6 @@ class WechatController extends BaseController
     {
         //接收参数并格式化
         $data = $this->request->get();
-        $this->logger->info(json_encode($data));
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         //通过code获取sessionKey,openid,Unionid
         $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
@@ -96,7 +94,6 @@ class WechatController extends BaseController
     {
         //接收参数并格式化
         $data = $this->request->get();
-        $this->logger->info(json_encode($data));
         $session_key = trim($data['session_key']??"");
         $iv = trim($data['iv']??"");
         $data = trim($data['encryptedData']??"");
@@ -104,7 +101,7 @@ class WechatController extends BaseController
         $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
         if($decrypt['result'])
         {
-            $this->success($decrypt['data'],"",$decrypt['code']);
+            $this->success($decrypt['data']??[],"",$decrypt['code']);
         }
         else
         {
@@ -122,7 +119,6 @@ class WechatController extends BaseController
     {
         //接收参数并格式化
         $data = $this->request->get();
-        $this->logger->info(json_encode($data));
         $session_key = trim($data['session_key']??"");
         $iv = trim($data['iv']??"");
         $data = trim($data['encryptedData']??"");

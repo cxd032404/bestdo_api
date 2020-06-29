@@ -76,6 +76,14 @@ $config = [
         'path_services'  => ROOT_PATH . '/app/services/',
         'path_model'     => ROOT_PATH . '/app/models/'
     ],
+    'wechat_logger' => [
+        'adapter' =>'logger',
+        'path'     => ROOT_PATH . '/runtime/wechat_log/',
+        'format'   => '%date% [%type%] %message%',
+        'date'     => 'H:i:s',
+        'logLevel' => Phalcon\Logger::DEBUG,
+        'filename' => 'wechat-'.date('Y-m-d') .'.log',
+    ],
     'logger' => [
         'adapter' =>'logger',
         'path'     => ROOT_PATH . '/runtime/logs/',
@@ -137,6 +145,11 @@ $config = [
         "need_club_membership"=>999,
         "activity_member_full"=>998,
     ],
+    'steps'=>[
+        'stepsPerKcal' => 20,
+        'distancePerStep' => 0.6,
+        'stepsPerMinute' => 30,
+    ]
 
 
 

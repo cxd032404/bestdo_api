@@ -146,8 +146,6 @@ class ActivityController extends BaseController
         $activity_id = isset($data['activity_id'])?intval($data['activity_id']):0;
         //调用手机号密码登录方法
         $return  = (new ActivityService())->activityApply($activity_id,$user_id);
-        //日志记录
-        $this->logger->info(json_encode($return));
         //返回值判断
         if($return['result']!=1){
             return $this->failure([],$return['msg'],$return['code']);
