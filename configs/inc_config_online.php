@@ -145,6 +145,11 @@ $config = [
         "need_club_membership"=>999,
         "activity_member_full"=>998,
     ],
+    'steps'=>[
+        'stepsPerKcal' => 20,
+        'distancePerStep' => 0.6,
+        'stepsPerMinute' => 30,
+    ]
 
 
 

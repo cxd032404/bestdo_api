@@ -96,6 +96,18 @@ class CacheController extends BaseController
                 $this->failure([],"not found","400");
             }
         }
+        elseif($type=="company")
+        {
+            $companyInfo = (new CompanyService())->getCompanyInfo($id,"*",0);
+            if(isset($companyInfo->company_id))
+            {
+                $this->success($companyInfo,"ok",200);
+            }
+            else
+            {
+                $this->failure([],"not found","400");
+            }
+        }
     }
 
 }

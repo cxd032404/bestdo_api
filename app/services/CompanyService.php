@@ -9,7 +9,7 @@ class CompanyService extends BaseService
     //根据id获取列表信息
     //$company_id：企业id
     //cloumns：数据库的字段列表
-    public function getCompanyInfo($company_id,$columns = "company_name,company_id,icon")
+    public function getCompanyInfo($company_id,$columns = "company_name,company_id,icon,detail")
     {
         return (new Company())->findFirst(
             [

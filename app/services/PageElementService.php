@@ -149,7 +149,12 @@ class PageElementService extends BaseService
     */
 
     public function getElementPage_companyInfo($data,$params,$user_info,$company_id){
-        $data['detail'] = (new CompanyService())->getCompanyInfo($company_id)->toArray();
+        $company_info = (new CompanyService())->getCompanyInfo($company_id)->toArray();
+        if(isset($company_info['detail']))
+        {
+           $company_info['detail'] = json_decode($company_info['detail'],true);
+        }
+        $data['detail'] = $company_info;
         return $data;
     }
     /*
@@ -949,10 +954,12 @@ class PageElementService extends BaseService
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
         $stepsGoal = $companyInfo->detail['daily_step'] * $dateRange['days'];
+        $stepsConfig = $this->config->steps;
         foreach($stepsData as $key => $detail)
         {
-            $stepsData[$key]['distance'] = intval($detail['totalStep']*0.6);
-            $stepsData[$key]['kcal'] = intval($detail['totalStep']/20);
+            $stepsData[$key]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
+            $stepsData[$key]['kcal'] = intval($detail['totalStep']/$stepsConfig->stepsPerKcal);
+            $stepsData[$key]['time'] = intval($detail['totalStep']/$stepsConfig->stepsPerMinute);
             $stepsData[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nickname,user_img,department_id",1);
             $stepsData[$key]['goal'] = $stepsGoal;
             $stepsData[$key]['achive'] = ($detail['totalStep']>=$stepsGoal)?1:0;
@@ -1001,10 +1008,12 @@ class PageElementService extends BaseService
         {
             $t[$detail['date']] = array_merge($t[$detail['date']],$detail);
         }
+        $stepsConfig = $this->config->steps;
         foreach($t as $date => $detail)
         {
-            $t[$date]['distance'] = intval($detail['totalStep']*0.6);
-            $t[$date]['kcal'] = intval($detail['totalStep']/20);
+            $t[$date]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
+            $t[$date]['kcal'] = intval($detail['totalStep']/$stepsConfig->stepsPerKcal);
+            $t[$date]['time'] = intval($detail['totalStep']/$stepsConfig->stepsPerMinute);
             $t[$date]['goal'] = $stepsGoal;
             $t[$date]['achives'] = ($detail['totalStep']>=$stepsGoal)?1:0;
             $t[$date]['achive_rate'] = intval(100*($detail['totalStep']/$stepsGoal));
