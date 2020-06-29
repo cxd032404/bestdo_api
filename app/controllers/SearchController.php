@@ -104,8 +104,6 @@ class SearchController extends BaseController
         {
             $search_return_list[$key]['highlight'] = $search_return_list_highlight[$key];
         }*/
-        //日志记录
-        $this->logger->info(json_encode($search_return_list));
         return $this->success(['company_user_list'=>$search_return_list]);
     }
     /*
@@ -179,8 +177,6 @@ class SearchController extends BaseController
         }
         */
         $search_return_list = $search_return;
-        //日志记录
-        $this->logger->info(json_encode($search_return_list));
         return $this->success(['question_list'=>$search_return_list]);
     }
 
