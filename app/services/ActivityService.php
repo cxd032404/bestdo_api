@@ -726,13 +726,71 @@ class ActivityService extends BaseService
     public function getMonthlyActivityList($user_id,$month){
         $year = date('Y',time());
         $date =$year.'-'.$month;
+        $monthly_activities = [];
         $activity_list = (new \HJ\UserActivityLog())->find(['user_id = '.$user_id,'columns'=>'id,activity_id']);
         foreach ($activity_list as $key=>$value)
         {
-            $activity_info = (new Activity())->findFirst(['activity_id ='.$value->activity_id,'columns'=>'activity_id,start_time,end_time']);
+            $activity_start_time = '';
+            $activity_end_time = '';
+            $activity_info = (new Activity())->findFirst(['activity_id ='.$value->activity_id,'columns'=>'activity_id,start_time,end_time,activity_name']);
+            if(!$activity_info)
+            {
+                continue;
+            }
+            $activity_start_time = date('Y-m',strtotime($activity_info->start_time));
+            $activity_end_time = date('Y-m',strtotime($activity_info->end_time));
+            if($activity_start_time!=$date)
+            {
+                continue;
+            }
+            $activity_data = [];
+            $activity_data['activity_id'] = $activity_info->activity_id;
+            $activity_data['activity_name'] = $activity_info->activity_name;
+            $monthly_activities[date('d',strtotime($activity_info->start_time))][] = $activity_data;
         }
+        $return = ['result' => 1, 'msg' => "请求成功", 'code' => 200, 'data' => $monthly_activities];
+        return $return;
 
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }

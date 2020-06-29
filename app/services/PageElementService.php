@@ -520,9 +520,11 @@ class PageElementService extends BaseService
             $club_list[$key]['club_name'] = $value->club_name;
             $club_ids [] = $value->club_id;
         }
+        $club_list = array_values($club_list);
         $data['detail']['club_list'] = $club_list;
         //默认第一个俱乐部
         $result = $this->getFromParams($params, 'result', 0);
+        $member_log_list = [];
         if ($result == 3) {
             $club_id = $club_ids;
             $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id, 'log_id,club_id,create_time,user_id,result', $this->getFromParams($params, 'start', 0), $this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3), $this->getFromParams($params, 'result', 0));
@@ -542,11 +544,11 @@ class PageElementService extends BaseService
         $data['detail']['member_log_list'] = $member_log_list;
         return $data;
     }
+
         if(!$club_id)
         {
-            $club_id = isset($club_list[0])?$club_list[0]['club_id']:0;
+            $club_id = current($club_list)['club_id'];
         }
-        $member_log_list = [];
         if($club_id) {
             $club_info = (new ClubService())->getClubInfo($club_id, 'club_name,icon');
             $data['detail']['club_id'] = $club_id;
@@ -567,7 +569,6 @@ class PageElementService extends BaseService
                 $member_log_list[$key]['create_time'] = date('Y/m/d h:i', strtotime($value->create_time));
             }
         }
-        
         $data['detail']['member_log_list']= $member_log_list;
         return $data;
     }
@@ -647,7 +648,7 @@ class PageElementService extends BaseService
             }
             $managed_activity_list[$key] = (object)array_merge((array)$managed_activity_list[$key],(array)$managed_activity_list[$key]->club_info);
         }
-        $managed_club_list = json_decode(json_encode($managed_club_list));
+        $managed_club_list = json_decode(json_encode($managed_club_list),true);
         $data['detail']['managed_club_list'] = array_values($managed_club_list);
         $data['detail']['residuals'] = $return['residuals'];
         $data['detail']['managed_activity_list'] = array_values($managed_activity_list);

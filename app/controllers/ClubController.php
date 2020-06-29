@@ -11,7 +11,7 @@ class ClubController extends BaseController
     /*
      * 加入俱乐部
      */
-     public function joinClubAction(){
+     public function operateClubAction(){
          //验证token
          $return = (new UserService)->getDecrypt();
          if($return['result']!=1){
@@ -23,24 +23,27 @@ class ClubController extends BaseController
          $club_id = $this->request->get('club_id')??0;
          if($operation == 'join')
          {
-             $return  = (new ClubService())->joinClub($user_id,$club_id);
+             $res  = (new ClubService())->joinClub($user_id,$club_id);
          }
          elseif($operation == 'cancel')
          {
-             $return  = (new ClubService())->applicationCancel($user_id,$log_id);
+             $res  = (new ClubService())->applicationCancel($user_id,$log_id);
          }
          elseif($operation == 'pass' || $operation == 'reject')
          {
-             $return  = (new ClubService())->ApplicationOperate($user_id,$operation,$log_id);
+             $res  = (new ClubService())->ApplicationOperate($user_id,$operation,$log_id);
+         }else
+         {
+             $res = ['result'=> 0,'msg'=>'操作类型有误'];
          }
 
-         if($return['result'])
+         if($res['result'])
          {
-             $this->success($return['data']??[],$return['msg']);
+             $this->success($res['data']??[],$res['msg']);
          }
          else
          {
-             $this->failure([],$return['msg']);
+             $this->failure([],$res['msg']);
          }
      }
 
