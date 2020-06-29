@@ -152,7 +152,7 @@ class DepartmentService extends BaseService
                  $conditions = 'company_id = '.$company_id.' and parent_id = '.$parent_id;
                  $params = [
                      $conditions,
-                     'columns'=>'department_id,department_name'
+                     'columns'=>'*'
                  ];
                  $department_data = (new \HJ\Department())->find($params);
                  $this->redis->set($redisKey_name,json_encode($department_data));
@@ -164,7 +164,7 @@ class DepartmentService extends BaseService
             $conditions = 'company_id = '.$company_id.' and parent_id = '.$parent_id;
             $params = [
                 $conditions,
-                'columns'=>'department_id,department_name'
+                'columns'=>'*'
             ];
             $department_data = (new \HJ\Department())->find($params);
             $this->redis->set($redisKey_name,json_encode($department_data));

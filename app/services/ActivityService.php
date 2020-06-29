@@ -727,14 +727,14 @@ class ActivityService extends BaseService
         $year = date('Y',time());
         $date =$year.'-'.$month;
         $monthly_activities = [];
-        $date_list = [];
+        $date_list = []; //日期下标数据
         $activity_list = (new \HJ\UserActivityLog())->find(['user_id = '.$user_id,'columns'=>'id,activity_id']);
         $monthly_activities = [];
         foreach ($activity_list as $key=>$value)
         {
             $activity_start_time = '';
             $activity_end_time = '';
-            $activity_info = (new Activity())->findFirst(['activity_id ='.$value->activity_id,'columns'=>'activity_id,start_time,end_time,activity_name']);
+            $activity_info = (new Activity())->findFirst(['activity_id ='.$value->activity_id,'columns'=>'activity_id,start_time,end_time,activity_name,icon,comment']);
             if(!$activity_info)
             {
                 continue;
@@ -753,10 +753,12 @@ class ActivityService extends BaseService
             $date_data = [];
             $date_data['activity_id'] = $activity_info->activity_id;
             $date_data['activity_name'] = $activity_info->activity_name;
+            $date_data['icon'] = $activity_info->icon;
+            $date_data['comment'] = $activity_info->comment;
+            $date_data['time'] = date('h:i',strtotime($activity_info->start_time));
             $date_list[date('d',strtotime($activity_info->start_time))][] = $date_data;
         }
-        $return = ['result' => 1, 'msg' => "请求成功", 'code' => 200, 'data' => ['month_activities'=>$monthly_activities,'date_data'=>$date_list]];
-        return $return;
+        return ['month_activities'=>$monthly_activities,'date_data'=>$date_list];
 
     }
 

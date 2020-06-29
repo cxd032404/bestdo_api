@@ -64,6 +64,7 @@ class PageService extends BaseService
     //order：排序
 	public function getPageElementByPage($page_id,$columns = "element_id,element_type",$element_sign_list = ["pic_2"],$order = "element_type DESC")
     {
+
         $params =             [
             //"page_id = ".$page_id,
             "columns" => $columns,
@@ -78,7 +79,6 @@ class PageService extends BaseService
         {
             $params[] = "page_id = ".$page_id;
         }
-
         return (new \HJ\PageElement())->find(
             $params
         );

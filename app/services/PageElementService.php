@@ -1025,66 +1025,39 @@ class PageElementService extends BaseService
 
     /*
      * 获取部门和子部门
+     * user_info 用户信息
+     * company_id 公司id
+     * data 用户包含的element信息
+     * params 页面标识和company_id
      */
 
     public function getElementPage_childDepartment($data,$params,$user_info,$company_id){
-
         $parent_id = $this->getFromParams($params,'parent_id',0);
-
         $department_data = (new DepartmentService())->getDepartmentListByParent($user_info['data']['company_id'],$parent_id);
         $data['detail']['child_department'] = $department_data;
         return $data;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    /*
+    * 用户当月参加的活动列表
+    * user_info 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
+    public function getElementPage_UserMonthlyActivities($data,$params,$user_info,$company_id){
+        $month = $this->getFromParams($params,'month',date('m',time()));
+         if(!$month)
+         {
+             $month = date('m',time());
+         }
+        if(strlen($month)==1)
+        {
+            $month = '0'.$month;
+        }
+        $activity_list = (new ActivityService())->getMonthlyActivityList($user_info['data']['user_id'],$month);
+        $data['detail']['user_monthly_activities'] = $activity_list;
+        return $data;
+    }
 
 
 }
