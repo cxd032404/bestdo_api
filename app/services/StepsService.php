@@ -206,8 +206,6 @@ class StepsService extends BaseService
                 $level_name = "department_id_".$i;
                 $whereCondition.= " and ".$level_name." = ".$department[$level_name];
             }
-            print_R($department);
-
         }
         if(isset($dateRange['date']))
         {
@@ -217,7 +215,6 @@ class StepsService extends BaseService
         {
             $whereCondition .= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
         }
-        echo "whereCondition:".$whereCondition;
         $params = [
             $whereCondition,
             "columns"=>"user_id,sum(step) as totalStep",
