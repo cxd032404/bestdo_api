@@ -196,18 +196,28 @@ class StepsService extends BaseService
     }
     public function getStepsDataByDate($dateRange,$company_id,$department_id,$page = 1,$pageSize = 3)
     {
-        $deparment = (new DepartmentService())->getDepartment($department_id);
-        $whereCondition = "company_id = '".$company_id."' ";
+        $whereCondition = "company_id = ".$company_id." ";
+
+        if($department_id > 0)
+        {
+            $department = (new DepartmentService())->getDepartment($department_id);
+            for($i = 1;$i<=$department['current_level'];$i++)
+            {
+                $level_name = "department_id_".$i;
+                $whereCondition.= " and ".$level_name." = ".$department[$level_name];
+            }
+            print_R($department);
+
+        }
         if(isset($dateRange['date']))
         {
-            $whereCondition.= " and date = '".$dateRange['date']."'";
+            $whereCondition .= " and date = '".$dateRange['date']."'";
         }
         else
         {
-            $whereCondition.= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
+            $whereCondition .= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
         }
-        $level_name = "department_id_".$deparment['current_level'];
-        $whereCondition.= "and ".$level_name." = ".$deparment[$level_name];
+        echo "whereCondition:".$whereCondition;
         $params = [
             $whereCondition,
             "columns"=>"user_id,sum(step) as totalStep",

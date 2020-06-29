@@ -949,7 +949,7 @@ class PageElementService extends BaseService
         //日期端类型 1自然 2当前推
         $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
-        $departmentId = $this->getFromParams($params,'department_id',1);
+        $departmentId = $this->getFromParams($params,'department_id',0);
         $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$departmentId,$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
