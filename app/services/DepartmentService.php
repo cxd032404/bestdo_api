@@ -133,4 +133,78 @@ class DepartmentService extends BaseService
         }
         return $departmentInfo;
     }
+
+    /*
+     * 获取部门和子部门
+     */
+    public function getDepartmentListByParent($company_id,$parent_id,$columns = 'department_id,department_name',$cache = 1){
+        $redisKey = $this->config->cache_settings->department_parent;
+        $redisKey_name = $redisKey->name.'company_id:'.$company_id.'parment_id:'.$parent_id;
+        if($cache == 1)
+        {
+             $res = $this->redis->get($redisKey_name);
+             $redis_data = json_decode($this->redis->get($redisKey_name));
+             if($redis_data)
+             {
+               $department_data = $redis_data;
+             }else
+             {
+                 $conditions = 'company_id = '.$company_id.' and parent_id = '.$parent_id;
+                 $params = [
+                     $conditions,
+                     'columns'=>'department_id,department_name'
+                 ];
+                 $department_data = (new \HJ\Department())->find($params);
+                 $this->redis->set($redisKey_name,json_encode($department_data));
+                 $this->redis->expire($redisKey_name,$redisKey->expire);
+                 $department_data = json_decode($this->redis->get($redisKey_name));
+             }
+        }else
+        {
+            $conditions = 'company_id = '.$company_id.' and parent_id = '.$parent_id;
+            $params = [
+                $conditions,
+                'columns'=>'department_id,department_name'
+            ];
+            $department_data = (new \HJ\Department())->find($params);
+            $this->redis->set($redisKey_name,json_encode($department_data));
+            $this->redis->expire($redisKey_name,$redisKey->expire);
+            $department_data = json_decode($this->redis->get($redisKey_name));
+        }
+        if($columns != '*')
+        {
+            $temp =  explode(',',$columns);
+            foreach ($department_data as $key =>$value)
+            {
+                foreach ($value as $k=>$v)
+                {
+                    if(!in_array($k,$temp))
+                    {
+                        unset($department_data[$key][$k]);
+                    }
+                }
+            }
+        }
+        return $department_data;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

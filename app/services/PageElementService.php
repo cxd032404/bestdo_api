@@ -1023,6 +1023,19 @@ class PageElementService extends BaseService
         return $data;
     }
 
+    /*
+     * 获取部门和子部门
+     */
+
+    public function getElementPage_childDepartment($data,$params,$user_info,$company_id){
+
+        $parent_id = $this->getFromParams($params,'parent_id',0);
+
+        $department_data = (new DepartmentService())->getDepartmentListByParent($user_info['data']['company_id'],$parent_id);
+        $data['detail']['child_department'] = $department_data;
+        return $data;
+    }
+
 
 
 

@@ -245,8 +245,12 @@ class ActivityController extends BaseController
         $user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
         //接收参数并格式化
         $data = $this->request->get();
-        $month_array = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-        $month = in_array($data['month'],$month_array)?($data['month']):date('m',time());
+
+        $month = $data['month']?($data['month']):date('m',time());
+        if(strlen($month)==1)
+        {
+            $month = '0'.$month;
+        }
         $return = (new ActivityService())->getMonthlyActivityList($user_id,$month);
         if($return['result']) {
             $this->success($return['data'] ?? [], $return['msg']);
