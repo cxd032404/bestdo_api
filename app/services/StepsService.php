@@ -237,10 +237,6 @@ class StepsService extends BaseService
         }
         $steps = (new \HJ\Steps())::find($params);
         return $steps->toArray();
-        //ALTER TABLE `user_steps` ADD `daily_step` INT(10) UNSIGNED NULL DEFAULT '0' COMMENT '每日步数目标' AFTER `step`;
-        //ALTER TABLE `user_info` ADD `department_id_1` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '对应一级部门ID' AFTER `department_id`;
-        //ALTER TABLE `user_info` ADD `department_id_2` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '对应二级部门ID' AFTER `department_id_1`;
-        //ALTER TABLE `user_info` ADD `department_id_3` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '对应三级部门ID' AFTER `department_id_2`;
     }
     public function getUserStepsDataByDate($dateRange,$company_id,$user_id)
     {
