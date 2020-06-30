@@ -287,12 +287,12 @@ class StepsService extends BaseService
     public function getStepsDateRange($company_id,$date)
     {
         $where = "company_id = ".$company_id." and start_date <='".$date."' and end_date >= '".$date."'";
-        //$dateRange = (new \HJ\StepsDateRange())::findFirst([$where]);
+        $dateRange = (new \HJ\StepsDateRange())::findFirst([$where]);
         if(isset($dateRange->date_id))
         {
             $rangeStartDate = $dateRange->start_date;
             $rangeEndDate = $dateRange->end_date;
-            $return = ["day"=>["date"=>$date],"week"=>[],"month"=>[]];
+            $return = ["day"=>["date"=>$date,"days"=>1],"week"=>[],"month"=>[]];
             $days = ["week"=>7,"month"=>30];
             foreach($days as $key => $value)
             {
@@ -301,12 +301,21 @@ class StepsService extends BaseService
                 $return[$key]['startDate'] = date("Y-m-d",strtotime($rangeStartDate) + $value * $lag * 86400);
                 $return[$key]['endDate'] = min($rangeEndDate,date("Y-m-d",strtotime($rangeStartDate) + $value * ($lag+1) * 86400));
                 $return[$key]['endDate'] = date("Y-m-d",strtotime($return[$key]['endDate'])-86400);
+                $return[$key]['days'] = intval((strtotime($return[$key]['endDate'])-strtotime($return[$key]['startDate']))/86400)+1;
             }
         }
         else
         {
             $week = (new Common())->processDateRange("week",1);
-            $return = ["day"=>["date"=>$date],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=>date("Y-m-t",strtotime($date))]];
+            $return = ["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=>date("Y-m-t",strtotime($date))]];
+        }
+        foreach($return as $key => $value)
+        {
+            if(isset($value['startDate']))
+            {
+                $days = intval((strtotime($value['endDate'])-strtotime($value['startDate']))/86400);
+                $return[$key]['days'] = $days+1;
+            }
         }
         return $return;
     }

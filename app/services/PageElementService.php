@@ -1053,6 +1053,12 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_departmentStepsAchiveRate($data,$params,$user_info,$company_id){
+        $company_info = (new CompanyService())->getCompanyInfo($company_id)->toArray();
+        if(isset($company_info['detail']))
+        {
+            $company_info['detail'] = json_decode($company_info['detail'],true);
+        }
+        $dailyStep = $company_info['detail']['daily_step']??$this->config->steps->defaultDailyStep;
         $currentTime = time();
         $currentDate = date("Y-m-d",$currentTime);
         $currentDateRange = (new StepsService())->getStepsDateRange($user_info['data']['company_id'],$currentDate);
@@ -1077,6 +1083,7 @@ class PageElementService extends BaseService
         $departmentList = (new DepartmentService())->getDepartmentListByParent($user_info['data']['company_id'],0);
         foreach($departmentList as $key => $departmentInfo)
         {
+            $userCount = (new UserService())->getUserCountByDepartment($departmentInfo->department_id);
             foreach($dataArr as $dateType => $Listdata)
             {
                 if(!isset($dataArr[$dateType]['list'][$departmentInfo->department_id]))
@@ -1084,7 +1091,9 @@ class PageElementService extends BaseService
                     $dataArr[$dateType]['list'][$departmentInfo->department_id] = ['department_id_1'=>$departmentInfo->department_id,'totalStep'=>0,'total_daily_step'=>0];
                 }
                 $dataArr[$dateType]['list'][$departmentInfo->department_id]['department_name'] = $departmentInfo->department_name;
-
+                $dataArr[$dateType]['list'][$departmentInfo->department_id]['user_count'] = $userCount;
+                $dataArr[$dateType]['list'][$departmentInfo->department_id]['goal'] = $userCount*$dailyStep*$Listdata['dateRange']['days'];
+                $dataArr[$dateType]['list'][$departmentInfo->department_id]['achive_rate'] = sprintf("%10.2f",($dataArr[$dateType]['list'][$departmentInfo->department_id]['goal']==0?0:$dataArr[$dateType]['list'][$departmentInfo->department_id]['totalStep']/$dataArr[$dateType]['list'][$departmentInfo->department_id]['goal'])*100);
             }
         }
         $data['detail']= $dataArr;

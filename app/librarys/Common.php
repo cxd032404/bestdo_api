@@ -186,7 +186,7 @@ class Common extends Component {
                     $s--;
                 }
                 $startDate = date("Y-m-d",$currentTime-($s)*86400);
-                $endDate = date("Y-m-d",strtotime($startDate)+7*86400);
+                $endDate = date("Y-m-d",strtotime($startDate)+6*86400);
                 $return =  ["startDate" => $startDate,"endDate" => $endDate];
             }
             else
