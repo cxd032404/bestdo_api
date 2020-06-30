@@ -140,7 +140,8 @@ $config = [
         'activity_list_by_creater'=>['name'=>'activity_list_by_creater_','expire'=>3600],//单个企业下特定用户创建的活动列表
         'activity_info'=>['name'=>'activity_info_','expire'=>3600],//活动
         'department_info'=>['name'=>'department_info_','expire'=>3600],//部门信息
-        'department_parent'=>['name'=>'department_parent_','expire'=>3600]//父级子部门信息
+        'department_parent'=>['name'=>'department_parent_','expire'=>3600],//父级子部门信息
+        'department_user_count'=>['name'=>'department_user_count_','expire'=>3600],//部门（包含子部门）人数
     ],
     'special_code'=>[
         "need_club_membership"=>999, //需要加入俱乐部

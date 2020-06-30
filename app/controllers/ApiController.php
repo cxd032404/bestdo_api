@@ -19,6 +19,9 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
+
+        (new UserService())->fixUserDepartment(0);
+        die();
         (new StepsService())->generateTestSteps(6);
         die();
         (new StepsService())->refreshStepsCache();

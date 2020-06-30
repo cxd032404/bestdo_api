@@ -232,6 +232,7 @@ class UserService extends BaseService
                         $transaction->rollback($this->msgList['companyuser_empty']);
                     }
                     $currentTime = time();
+                    $department = (new DepartmentService())->getDepartment($companyuserlist->department_id);
                     //创建用户
                     $user = new \HJ\UserInfo();
                     $user->setTransaction($transaction);
@@ -239,6 +240,9 @@ class UserService extends BaseService
                     $user->mobile = $mobile;
                     $user->company_id = $companyuserlist->company_id;
                     $user->department_id = $companyuserlist->department_id;
+                    $user->department_id_1 = $department['department_id_1'];
+                    $user->department_id_2 = $department['department_id_2'];
+                    $user->department_id_3 = $department['department_id_3'];
                     $user->worker_id = $companyuserlist->worker_id;
                     $user->true_name = $companyuserlist->name;
                     $user->nick_name = $companyuserlist->name;
@@ -636,6 +640,9 @@ class UserService extends BaseService
             'mobile'=>$userinfo->mobile??"",
             'company_id'=>$userinfo->company_id??0,
             'department_id'=>$userinfo->department_id??0,
+            'department_id_1'=>$userinfo->department_id_1??0,
+            'department_id_2'=>$userinfo->department_id_2??0,
+            'department_id_3'=>$userinfo->department_id_3??0,
             'company_name'=>$company_name,
             'worker_id'=>$userinfo->worker_id??"",
             'last_login_time'=>$userinfo->last_login_time??"",
@@ -825,7 +832,7 @@ class UserService extends BaseService
             if(isset($userInfo->user_id))
             {
                 $this->redis->set($cacheName,json_encode($userInfo));
-                $this->redis->expire($cacheName,3600);
+                $this->redis->expire($cacheName,$cacheSetting->expire);
             }
             else
             {
@@ -854,6 +861,10 @@ class UserService extends BaseService
                     return [];
                 }
             }
+        }
+        if(!isset($userInfo->department_id_1) || $userInfo->department_id_1==0)
+        {
+            $this->fixUserDepartment($user_id);
         }
         $userInfo = json_decode(json_encode($userInfo),true);
         if($columns != "*")
@@ -945,5 +956,85 @@ class UserService extends BaseService
             $return = ['result' => 1, 'msg' => $this->msgList['login_success'], 'code' => 200, 'data' => ['user_info' => $tokeninfo['map'], 'user_token' => $tokeninfo['token']]];
         }
         return $return;
+    }
+    public function fixUserDepartment($user_id = 0)
+    {
+        if($user_id>0)
+        {
+            $params = [
+                "user_id='".$user_id."'",
+                'columns'=>'*',
+            ];
+        }
+        else
+        {
+            $params = [
+                "department_id >0 and department_id_1 = 0",
+                'columns'=>'*',
+            ];
+        }
+        //获取列表作者信息
+        $userList = \HJ\UserInfo::find($params);
+        foreach($userList as $userInfo)
+        {
+            if($userInfo->department_id_1==0 && $userInfo->department_id>0)
+            {
+                $department = (new DepartmentService())->getDepartment($userInfo->department_id);
+                $this->updateUserInfo(['department_id_1'=>$department['department_id_1'],'department_id_2'=>$department['department_id_2'],'department_id_3'=>$department['department_id_3']],$userInfo->user_id);
+                $userInfo = $this->getUserInfo($userInfo->user_id,"*",0);
+            }
+        }
+
+    }
+    //获取用户信息
+    public function getUserCountByDepartment($department_id,$cache = 1)
+    {
+        $departmentService = new DepartmentService();
+        $cacheSetting = $this->config->cache_settings->department_user_count;
+        $cacheName = $cacheSetting->name.$department_id;
+        $department = $departmentService->getDepartment($department_id);
+        $departmentInfo = $departmentService->getDepartmentInfo($department_id,"department_id,company_id");
+        $params = [
+            "company_id = ".$departmentInfo->company_id." and department_id_".$department['current_level']." =".$department_id." and is_del=0",
+            'columns'=>'count(user_id) as userCount',
+        ];
+        if($cache == 0)
+        {
+            //用户数量
+            $userCount = \HJ\UserInfo::findFirst($params);
+            if(isset($userCount->userCount))
+            {
+                $this->redis->set($cacheName,json_encode($userCount));
+                $this->redis->expire($cacheName,$cacheSetting->expire);
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if(isset($cache->userCount))
+            {
+                $userCount = $cache;
+            }
+            else
+            {
+                //用户数量
+                $userCount = \HJ\UserInfo::findFirst($params);
+                if(isset($userCount->userCount))
+                {
+                    $this->redis->set($cacheName,json_encode($userCount));
+                    $this->redis->expire($cacheName,$cacheSetting->expire);
+                }
+                else
+                {
+                    return [];
+                }
+            }
+        }
+        return $userCount->userCount;
     }
 }
