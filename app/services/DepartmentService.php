@@ -135,7 +135,7 @@ class DepartmentService extends BaseService
     }
 
     /*
-     * 获取部门和子部门
+     * 获取子部门
      */
     public function getDepartmentListByParent($company_id,$parent_id,$columns = 'department_id,department_name',$cache = 1){
         $redisKey = $this->config->cache_settings->department_parent;

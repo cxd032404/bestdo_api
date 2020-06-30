@@ -280,7 +280,6 @@ class ActivityService extends BaseService
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
         {
-
             $activity_list = $this->getActivityListByCompany($user_info->company_id,"activity_id,activity_name",$club_id,0);
         }
         else
