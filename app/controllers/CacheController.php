@@ -108,6 +108,20 @@ class CacheController extends BaseController
                 $this->failure([],"not found","400");
             }
         }
+        elseif($type=="page")
+        {
+            $pageInfo = (new PageService())->getPageInfoById($id,"*",0);
+            if(isset($pageInfo->page_sign))
+            {
+                $pageInfo = (new PageService())->getPageInfoBySign($pageInfo->company_id,$pageInfo->page_sign,"*",0);
+                $pageElementList = (new PageService())->getPageElementByPage($pageInfo->page_id,"*",[],$order = "element_type DESC",0);
+                $this->success([$pageInfo,$pageElementList],"ok",200);
+            }
+            else
+            {
+                $this->failure([],"not found","400");
+            }
+        }
     }
 
 }
