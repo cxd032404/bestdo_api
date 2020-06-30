@@ -553,7 +553,13 @@ class PageElementService extends BaseService
             $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id, 'log_id,club_id,create_time,user_id,result', $this->getFromParams($params, 'start', 0), $this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3), $this->getFromParams($params, 'result', 0));
             foreach ($club_member_logs as $key => $value) {
                 $user_info = (new UserService())->getUserInfo($value->user_id ?? 0, 'user_id,nick_name,true_name,user_img');
+                if(!$user_info)
+                {
+                    continue;
+                }
+
                 $user_count = (new ClubService())->getClubMemberCount($value->club_id);
+
                 $member_log_list[$key]['user_id'] = $user_info->user_id;
                 $member_log_list[$key]['user_count'] = $user_count;
                 $member_log_list[$key]['nick_name'] = $user_info->nick_name;
@@ -562,6 +568,8 @@ class PageElementService extends BaseService
                 $member_log_list[$key]['log_id'] = $value->log_id;
                 $member_log_list[$key]['result'] = $value->result;
                 $member_log_list[$key]['club_id'] = $value->club_id;
+                $club_info = (new ClubService())->getClubInfo($value->club_id,'club_id,club_name');
+                $member_log_list[$key]['club_name'] = $club_info->club_name;
                 $member_log_list[$key]['create_time'] = date('Y/m/d h:i', strtotime($value->create_time));
             }
         $data['detail']['member_log_list'] = $member_log_list;
@@ -581,6 +589,10 @@ class PageElementService extends BaseService
             $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id, 'log_id,club_id,create_time,user_id,result', $this->getFromParams($params, 'start', 0), $this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 4), $this->getFromParams($params, 'result', 0));
             foreach ($club_member_logs as $key => $value) {
                 $user_info = (new UserService())->getUserInfo($value->user_id ?? 0, 'user_id,nick_name,true_name,user_img');
+                if(!$user_info)
+                {
+                    continue;
+                }
                 $member_log_list[$key]['user_id'] = $user_info->user_id;
                 $member_log_list[$key]['nick_name'] = $user_info->nick_name;
                 $member_log_list[$key]['true_name'] = $user_info->true_name;
@@ -997,10 +1009,12 @@ class PageElementService extends BaseService
         }
         else
         {
+            echo 22;
             //指定为当前用户
             $userId = $user_info['data']['user_id'];
             $userInfo = $userService->getUserInfo($userId,"user_id,company_id,department_id");
         }
+        print_r($userInfo);die();
         $stepsData = (new StepsService())->getUserStepsDataByDate($dateRange,$user_info['data']['company_id'],$userInfo->user_id);
         $t  = [];
         for($date = (!isset($dateRange['date'])?$dateRange['startDate']:$dateRange['date']);$date<=(!isset($dateRange['date'])?$dateRange['endDate']:$dateRange['date']);$date = date("Y-m-d",strtotime($date)+86400))
@@ -1009,12 +1023,12 @@ class PageElementService extends BaseService
         }
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
-        $stepsGoal = $companyInfo->detail['daily_step'];
+        $stepsConfig = $this->config->steps;
+        $stepsGoal = $companyInfo->detail['daily_step']??$stepsConfig->defaultDailyStep;
         foreach($stepsData as $key => $detail)
         {
             $t[$detail['date']] = array_merge($t[$detail['date']],$detail);
         }
-        $stepsConfig = $this->config->steps;
         foreach($t as $date => $detail)
         {
             $t[$date]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
