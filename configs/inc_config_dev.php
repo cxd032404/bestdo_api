@@ -124,6 +124,7 @@ $config = [
     ],
     'checkin_max_distance' => 1000,
     'cache_settings' =>[
+        'page_info_sign'=>['name'=>'page_info_sign_','expire'=>3600],//根据页面标示获取页面
         'list'=>['name'=>'list_','expire'=>3600],//列表
         'post'=>['name'=>'user_posts_','expire'=>3600],//文章
         'wechat'=>['name'=>'wechat_token_','expire'=>3600],//微信token

@@ -21,9 +21,9 @@ class PageService extends BaseService
         {
             $params = json_decode($params,true);
             //转数组
-            $pageInfo = $pageInfo->toArray();
+            //$pageInfo = $pageInfo->toArray();
             //获取页面元素详情
-	        $pageElementList  = $this->getPageElementByPage($pageInfo['page_id'],"element_id,element_name,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
+	        $pageElementList  = $this->getPageElementByPage($pageInfo->page_id,"element_id,element_name,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
 	        foreach($pageElementList as $key => $elementDetail)
             {
                 //数组解包
@@ -50,13 +50,67 @@ class PageService extends BaseService
     //根据页面标识获取页面
     //$page_sign：页面标识
     //cloumns：数据库的字段列表
-    public function getPageBySign($company_id,$page_sign,$columns = "page_id,page_name")
+    public function getPageBySign($company_id,$page_sign,$columns = "page_id,page_name",$cache = 1)
     {
-        $params =             [
+        $cacheSetting = $this->config->cache_settings->page_info_sign;
+        $cacheName = $cacheSetting->name.$company_id."_".$page_sign;
+        $params = [
             "page_sign = '$page_sign' and company_id = '$company_id'",
             "columns" => $columns
         ];
-        return (new Page())->findFirst($params);
+        if($cache == 0)
+        {
+            //获取页面信息
+            $pageInfo = (new Page())->findFirst($params);
+            if(isset($pageInfo->page_id))
+            {
+                $this->redis->set($cacheName,json_encode($pageInfo));
+                $this->redis->expire($cacheName,$cacheSetting->expire);
+            }
+            else
+            {
+                return [];
+            }
+        }
+        else
+        {
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if(isset($pageInfo->page_id))
+            {
+                //获取页面信息
+                $pageInfo = $cache;
+            }
+            else
+            {
+                //获取页面信息
+                $pageInfo = (new Page())->findFirst($params);
+                if(isset($pageInfo->page_id))
+                {
+                    $this->redis->set($cacheName,json_encode($pageInfo));
+                    $this->redis->expire($cacheName,$cacheSetting->expire);
+                }
+                else
+                {
+                    return [];
+                }
+            }
+        }
+        $pageInfo = json_decode(json_encode($pageInfo),true);
+        if($columns != "*")
+        {
+            $t = explode(",",$columns);
+            $pageInfo = json_decode(json_encode($pageInfo),true);
+            foreach($pageInfo as $key => $value)
+            {
+                if(!in_array($key,$t))
+                {
+                    unset($pageInfo[$key]);
+                }
+            }
+        }
+        $pageInfo = json_decode(json_encode($pageInfo));
+        return $pageInfo;
     }
 	//根据页面ID获取元素列表
     //$page_id：页面ID
@@ -91,18 +145,18 @@ class PageService extends BaseService
         $pageInfo = $this->getPageBySign($company,$page_sign,'page_id,detail');
         if($pageInfo)
         {
-            $pageInfo = $pageInfo->toArray();
+            //$pageInfo = json_decode(json_encode($pageInfo),true);
         }
         else
         {
             return ['result'=>0,'code'=>404,'msg'=>"无此页面"];
         }
-        $pageInfo['detail'] = json_decode($pageInfo['detail'],true);
-        if(isset($pageInfo['detail']['params']) && count($pageInfo['detail']['params'])>0)
+        $pageInfo->detail = json_decode($pageInfo->detail,true);
+        if(isset($pageInfo->detail['params']) && count($pageInfo->detail['params'])>0)
         {
             $params = json_decode($params,true);
             $return = ['result'=>1,'detail'=>['lack'=>[],'error'=>[]]];
-            foreach($pageInfo['detail']['params'] as $paramsInfo)
+            foreach($pageInfo->detail['params'] as $paramsInfo)
             {
                 if(!isset($params[$paramsInfo['name']]))
                 {
