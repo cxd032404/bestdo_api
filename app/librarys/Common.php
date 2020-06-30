@@ -220,7 +220,7 @@ class Common extends Component {
             }
             else
             {
-                $return =  ["startDate" => date("Y-m-d",$currentTime-30*3*86400),"endDate" => date("Y-m-d",$currentTime)];
+                $return =  ["startDate" => date("Y-m-d",$currentTime-(30*3-1)*86400),"endDate" => date("Y-m-d",$currentTime)];
             }
         }
         elseif($dateRangeType == "halfyear")
@@ -235,7 +235,7 @@ class Common extends Component {
             }
             else
             {
-                $return =  ["startDate" => date("Y-m-d",$currentTime-30*6*86400),"endDate" => date("Y-m-d",$currentTime)];
+                $return =  ["startDate" => date("Y-m-d",$currentTime-(30*6-1)*86400),"endDate" => date("Y-m-d",$currentTime)];
             }
         }
         elseif($dateRangeType == "year")
@@ -243,12 +243,12 @@ class Common extends Component {
             if ($dateType == 1)
             {
                 $startDate = date("Y-01-01",$currentTime);
-                $endDate = date("Y-12-t",$currentTime);
+                $endDate = date("Y-12-31",$currentTime);
                 $return =  ["startDate" => $startDate,"endDate" => $endDate];
             }
             else
             {
-                $return =  ["startDate" => date("Y-m-d",$currentTime-365*86400),"endDate" => date("Y-m-d",$currentTime)];
+                $return =  ["startDate" => date("Y-m-d",$currentTime-(365-1)*86400),"endDate" => date("Y-m-d",$currentTime)];
             }
         }
         $days = isset($return['date'])?1:(intval((strtotime($return['endDate'])-strtotime($return['startDate']))/86400)+1);

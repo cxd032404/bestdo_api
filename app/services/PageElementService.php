@@ -950,17 +950,17 @@ class PageElementService extends BaseService
     */
     public function getElementPage_stepsData($data,$params,$user_info,$company_id){
         $userService = new UserService();
+        $stepsConfig = $this->config->steps;
         //日期范围类型  day日期 week周 month月 3month3个月 halfyear半年 year年
         $dateRangeType = $this->getFromParams($params,'date_range_type',"month");
         //日期端类型 1自然 2当前推
         $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
         $departmentId = $this->getFromParams($params,'department_id',0);
-        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$departmentId,$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
+        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$departmentId,"user_id",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
-        $stepsGoal = $companyInfo->detail['daily_step'] * $dateRange['days'];
-        $stepsConfig = $this->config->steps;
+        $stepsGoal = $companyInfo->detail['daily_step']??$stepsConfig->defaultDailyStep * $dateRange['days'];
         foreach($stepsData as $key => $detail)
         {
             $stepsData[$key]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
@@ -1063,6 +1063,49 @@ class PageElementService extends BaseService
         $data['detail']['user_monthly_activities'] = $activity_list;
         return $data;
     }
+    /*
+    * 用户当月参加的活动列表
+    * user_info 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
+    public function getElementPage_departmentStepsAchiveRate($data,$params,$user_info,$company_id){
+        $currentTime = time();
+        $currentDate = date("Y-m-d",$currentTime);
+        $currentDateRange = (new StepsService())->getStepsDateRange($user_info['data']['company_id'],$currentDate);
+        $dataArr = [];
+        foreach($currentDateRange as $key => $dateRange)
+        {
+            $dataArr[$key] = ['dateRange'=>$dateRange,'list'=>[]];
+            $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],0,"department_id_1",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
+            foreach($stepsData as $detail)
+            {
+                $dataArr[$key]['list'][$detail['department_id_1']] = $detail;
+            }
+        }
+        foreach($currentDateRange as $dateRange)
+        {
+            $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],0,"",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
+            foreach($stepsData as $detail)
+            {
+                $dataArr[$key]['list'][0] = $detail;
+            }
+        }
+        $departmentList = (new DepartmentService())->getDepartmentListByParent($user_info['data']['company_id'],0);
+        foreach($departmentList as $key => $departmentInfo)
+        {
+            foreach($dataArr as $dateType => $Listdata)
+            {
+                if(!isset($dataArr[$dateType]['list'][$departmentInfo->department_id]))
+                {
+                    $dataArr[$dateType]['list'][$departmentInfo->department_id] = ['department_id_1'=>$departmentInfo->department_id,'totalStep'=>0,'total_daily_step'=>0];
+                }
+                $dataArr[$dateType]['list'][$departmentInfo->department_id]['department_name'] = $departmentInfo->department_name;
 
-
+            }
+        }
+        $data['detail']= $dataArr;
+        return $data;
+    }
 }

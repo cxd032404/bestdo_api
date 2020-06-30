@@ -146,7 +146,7 @@ class DepartmentService extends BaseService
              $redis_data = json_decode($this->redis->get($redisKey_name));
              if($redis_data)
              {
-               $department_data = $redis_data;
+               $departmentInfo = $redis_data;
              }else
              {
                  $conditions = 'company_id = '.$company_id.' and parent_id = '.$parent_id;
@@ -154,10 +154,10 @@ class DepartmentService extends BaseService
                      $conditions,
                      'columns'=>'*'
                  ];
-                 $department_data = (new \HJ\Department())->find($params);
-                 $this->redis->set($redisKey_name,json_encode($department_data));
+                 $departmentInfo = (new \HJ\Department())->find($params);
+                 $this->redis->set($redisKey_name,json_encode($departmentInfo));
                  $this->redis->expire($redisKey_name,$redisKey->expire);
-                 $department_data = json_decode($this->redis->get($redisKey_name));
+                 $departmentInfo = json_decode($this->redis->get($redisKey_name));
              }
         }else
         {
@@ -166,26 +166,28 @@ class DepartmentService extends BaseService
                 $conditions,
                 'columns'=>'*'
             ];
-            $department_data = (new \HJ\Department())->find($params);
-            $this->redis->set($redisKey_name,json_encode($department_data));
+            $departmentInfo = (new \HJ\Department())->find($params);
+            $this->redis->set($redisKey_name,json_encode($departmentInfo));
             $this->redis->expire($redisKey_name,$redisKey->expire);
-            $department_data = json_decode($this->redis->get($redisKey_name));
+            $departmentInfo = json_decode($this->redis->get($redisKey_name));
         }
+        $departmentInfo = json_decode(json_encode($departmentInfo),true);
         if($columns != '*')
         {
             $temp =  explode(',',$columns);
-            foreach ($department_data as $key =>$value)
+            foreach ($departmentInfo as $key =>$value)
             {
                 foreach ($value as $k=>$v)
                 {
                     if(!in_array($k,$temp))
                     {
-                        unset($department_data[$key][$k]);
+                        unset($departmentInfo[$key][$k]);
                     }
                 }
             }
         }
-        return $department_data;
+        $departmentInfo = json_decode(json_encode($departmentInfo));
+        return $departmentInfo;
     }
 
 

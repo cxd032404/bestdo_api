@@ -150,6 +150,7 @@ $config = [
         'stepsPerKcal' => 20,
         'distancePerStep' => 0.6,
         'stepsPerMinute' => 30,
+        'defaultDailyStep' => 6000,
     ]
 
 
