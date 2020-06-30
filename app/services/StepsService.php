@@ -62,7 +62,7 @@ class StepsService extends BaseService
         $steps = (new \HJ\Steps())::findFirst(["user_id='".$user_id."' and date = '".$date."'"]);
         return $steps;
     }
-
+    //创建记录
     public function createUserSteps($user_info,$date,$step,$department)
     {
         $company_info = (new CompanyService())->getCompanyInfo($user_info->company_id,"company_id,detail");
@@ -87,7 +87,7 @@ class StepsService extends BaseService
         $create = $steps->save();
         return $create;
     }
-
+    //更新记录
     public function updateUserSteps($log_id,$step,$department)
     {
         $currentTime = time();
@@ -189,12 +189,12 @@ class StepsService extends BaseService
 
     }
 
-    public function getStepsData($company_id,$date)
+    public function getStepsData($company_id,$date,$group)
     {
         $steps = (new \HJ\Steps())::find(["company_id='".$company_id."' and date = '".$date."'","columns"=>"sum(step) as step,user_id,count(1) as count","group"=>"user_id"]);
         return $steps->toArray();
     }
-    public function getStepsDataByDate($dateRange,$company_id,$department_id,$page = 1,$pageSize = 3)
+    public function getStepsDataByDate($dateRange,$company_id,$department_id,$group = "user_id",$page = 1,$pageSize = 3)
     {
         $whereCondition = "company_id = ".$company_id." ";
 
@@ -215,15 +215,32 @@ class StepsService extends BaseService
         {
             $whereCondition .= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
         }
-        $params = [
-            $whereCondition,
-            "columns"=>"user_id,sum(step) as totalStep",
-            "group"=>"user_id",
-            "order"=>"totalStep",
-            "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
-        ];
+
+        if(trim($group)!= "")
+        {
+            $params = [
+                $whereCondition,
+                "columns"=>$group.",sum(step) as totalStep,sum(if(step>daily_step,1,0)) as achives,sum(daily_step) as total_daily_step",
+                "group"=>$group,
+                "order"=>"totalStep",
+                "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+            ];
+        }
+        else
+        {
+            $params = [
+                $whereCondition,
+                "columns"=>"sum(step) as totalStep,sum(if(step>daily_step,1,0)) as achives",
+                "order"=>"totalStep",
+                "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+            ];
+        }
         $steps = (new \HJ\Steps())::find($params);
         return $steps->toArray();
+        //ALTER TABLE `user_steps` ADD `daily_step` INT(10) UNSIGNED NULL DEFAULT '0' COMMENT '每日步数目标' AFTER `step`;
+        //ALTER TABLE `user_info` ADD `department_id_1` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '对应一级部门ID' AFTER `department_id`;
+        //ALTER TABLE `user_info` ADD `department_id_2` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '对应二级部门ID' AFTER `department_id_1`;
+        //ALTER TABLE `user_info` ADD `department_id_3` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '对应三级部门ID' AFTER `department_id_2`;
     }
     public function getUserStepsDataByDate($dateRange,$company_id,$user_id)
     {
@@ -275,25 +292,22 @@ class StepsService extends BaseService
         {
             $rangeStartDate = $dateRange->start_date;
             $rangeEndDate = $dateRange->end_date;
-            $return = ["day"=>$date,"week"=>[],"month"=>[]];
+            $return = ["day"=>["date"=>$date],"week"=>[],"month"=>[]];
             $days = ["week"=>7,"month"=>30];
             foreach($days as $key => $value)
             {
                 $d = $rangeStartDate;
                 $lag = intval((strtotime($date)-strtotime($rangeStartDate))/( $value * 86400 ));
-                $return[$key]['start_date'] = date("Y-m-d",strtotime($rangeStartDate) + $value * $lag * 86400);
-                $return[$key]['end_date'] = min($rangeEndDate,date("Y-m-d",strtotime($rangeStartDate) + $value * ($lag+1) * 86400));
-                $return[$key]['end_date'] = date("Y-m-d",strtotime($return[$key]['end_date'])-86400);
+                $return[$key]['startDate'] = date("Y-m-d",strtotime($rangeStartDate) + $value * $lag * 86400);
+                $return[$key]['endDate'] = min($rangeEndDate,date("Y-m-d",strtotime($rangeStartDate) + $value * ($lag+1) * 86400));
+                $return[$key]['endDate'] = date("Y-m-d",strtotime($return[$key]['endDate'])-86400);
             }
         }
         else
         {
-            $week = (new Common())->processDateRange("year",1);
-            print_R($week);
-            $return = ["day"=>$date,"week"=>["start_date"=>$week['startDate'],"end_date"=>$week['endDate']],"month"=>["start_date"=>date("Y-m-01",strtotime($date)),"end_date"=>date("Y-m-t",strtotime($date))]];
+            $week = (new Common())->processDateRange("week",1);
+            $return = ["day"=>["date"=>$date],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=>date("Y-m-t",strtotime($date))]];
         }
-        print_R($return);
-        die();
         return $return;
     }
 }

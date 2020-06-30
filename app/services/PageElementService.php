@@ -939,7 +939,7 @@ class PageElementService extends BaseService
         $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
         $departmentId = $this->getFromParams($params,'department_id',0);
-        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$departmentId,$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
+        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$departmentId,"user_id",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
         $stepsGoal = $companyInfo->detail['daily_step']??$stepsConfig->defaultDailyStep * $dateRange['days'];
@@ -1056,10 +1056,38 @@ class PageElementService extends BaseService
         $currentTime = time();
         $currentDate = date("Y-m-d",$currentTime);
         $currentDateRange = (new StepsService())->getStepsDateRange($user_info['data']['company_id'],$currentDate);
-        die();
-        $month = $this->getFromParams($params,'month',date('m',time()));
-        $activity_list = (new ActivityService())->getMonthlyActivityList($user_info['data']['user_id'],$month);
-        $data['detail']['user_monthly_activities'] = $activity_list;
+        $dataArr = [];
+        foreach($currentDateRange as $key => $dateRange)
+        {
+            $dataArr[$key] = ['dateRange'=>$dateRange,'list'=>[]];
+            $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],0,"department_id_1",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
+            foreach($stepsData as $detail)
+            {
+                $dataArr[$key]['list'][$detail['department_id_1']] = $detail;
+            }
+        }
+        foreach($currentDateRange as $dateRange)
+        {
+            $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],0,"",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
+            foreach($stepsData as $detail)
+            {
+                $dataArr[$key]['list'][0] = $detail;
+            }
+        }
+        $departmentList = (new DepartmentService())->getDepartmentListByParent($user_info['data']['company_id'],0);
+        foreach($departmentList as $key => $departmentInfo)
+        {
+            foreach($dataArr as $dateType => $Listdata)
+            {
+                if(!isset($dataArr[$dateType]['list'][$departmentInfo->department_id]))
+                {
+                    $dataArr[$dateType]['list'][$departmentInfo->department_id] = ['department_id_1'=>$departmentInfo->department_id,'totalStep'=>0,'total_daily_step'=>0];
+                }
+                $dataArr[$dateType]['list'][$departmentInfo->department_id]['department_name'] = $departmentInfo->department_name;
+
+            }
+        }
+        $data['detail']= $dataArr;
         return $data;
     }
 }
