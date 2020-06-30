@@ -1009,12 +1009,10 @@ class PageElementService extends BaseService
         }
         else
         {
-            echo 22;
             //指定为当前用户
             $userId = $user_info['data']['user_id'];
             $userInfo = $userService->getUserInfo($userId,"user_id,company_id,department_id");
         }
-        print_r($userInfo);die();
         $stepsData = (new StepsService())->getUserStepsDataByDate($dateRange,$user_info['data']['company_id'],$userInfo->user_id);
         $t  = [];
         for($date = (!isset($dateRange['date'])?$dateRange['startDate']:$dateRange['date']);$date<=(!isset($dateRange['date'])?$dateRange['endDate']:$dateRange['date']);$date = date("Y-m-d",strtotime($date)+86400))
@@ -1043,7 +1041,7 @@ class PageElementService extends BaseService
     }
 
     /*
-     * 获取部门和子部门
+     * 下级部门
      * user_info 用户信息
      * company_id 公司id
      * data 用户包含的element信息
