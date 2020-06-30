@@ -811,7 +811,6 @@ class ClubService extends BaseService
                 unset($userClubList[$key]->clubInfo);
             }
         }
-
         $userInfo = (new UserService())->getUserInfo($user_id,"user_id,company_id,manager_id");
         if($userInfo->manager_id > 0)
         {

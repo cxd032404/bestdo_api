@@ -298,7 +298,6 @@ class PageService extends BaseService
         else
         {
             $return  = ['result'=>1];
-
         }
         return $return;
     }

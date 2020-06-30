@@ -206,7 +206,7 @@ class ActivityService extends BaseService
         $cacheSetting = $this->config->cache_settings->activity_info;
         $cacheName = $cacheSetting->name.$activity_id;
         $params =             [
-            "activity_id = ".$activity_id.' and status = 0',
+            "activity_id = ".$activity_id.' and status = 1',
             "columns" => '*',
         ];
         if($cache == 1)
