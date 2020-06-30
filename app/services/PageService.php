@@ -111,6 +111,71 @@ class PageService extends BaseService
         $pageInfo = json_decode(json_encode($pageInfo));
         return $pageInfo;
     }
+    //根据页面ID获取页面
+    //$page_sign：页面标识
+    //cloumns：数据库的字段列表
+    public function getPageInfoById($page_id,$columns = "page_id,page_name",$cache = 1)
+    {
+        $cacheSetting = $this->config->cache_settings->page_info_id;
+        $cacheName = $cacheSetting->name.$page_id;
+        $params = [
+            "page_id = ".$page_id,
+            "columns" => $columns
+        ];
+        if($cache == 0)
+        {
+            //获取页面信息
+            $pageInfo = (new Page())->findFirst($params);
+            if(isset($pageInfo->page_id))
+            {
+                $this->redis->set($cacheName,json_encode($pageInfo));
+                $this->redis->expire($cacheName,$cacheSetting->expire);
+            }
+            else
+            {
+                return [];
+            }
+        }
+        else
+        {
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if(isset($pageInfo->page_id))
+            {
+                //获取页面信息
+                $pageInfo = $cache;
+            }
+            else
+            {
+                //获取页面信息
+                $pageInfo = (new Page())->findFirst($params);
+                if(isset($pageInfo->page_id))
+                {
+                    $this->redis->set($cacheName,json_encode($pageInfo));
+                    $this->redis->expire($cacheName,$cacheSetting->expire);
+                }
+                else
+                {
+                    return [];
+                }
+            }
+        }
+        $pageInfo = json_decode(json_encode($pageInfo),true);
+        if($columns != "*")
+        {
+            $t = explode(",",$columns);
+            $pageInfo = json_decode(json_encode($pageInfo),true);
+            foreach($pageInfo as $key => $value)
+            {
+                if(!in_array($key,$t))
+                {
+                    unset($pageInfo[$key]);
+                }
+            }
+        }
+        $pageInfo = json_decode(json_encode($pageInfo));
+        return $pageInfo;
+    }
 	//根据页面ID获取元素列表
     //$page_id：页面ID
     //cloumns：数据库的字段列表

@@ -93,12 +93,5 @@ class ListController extends BaseController
             return $this->failure([], $remove['data']['msg']);
         }
     }
-    public function refreshAction()
-    {
-        $data = $this->request->get();
-        $list_id = isset($data['list_id'])?intval($data['list_id']):0;
-        $list_info = (new ListService())->getListInfo($list_id,"*",0);
-        $this->success($list_info);
-    }
 }
 

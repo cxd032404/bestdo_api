@@ -224,40 +224,5 @@ class ActivityController extends BaseController
         }
 
     }
-    public function refreshAction()
-    {
-        $data = $this->request->get();
-        $activity_id = isset($data['activity_id'])?intval($data['activity_id']):0;
-        $activity_info = (new ActivityService())->getActivityInfo($activity_id,"*",0);
-        $this->success($activity_info);
-    }
-
-    /*
-     * 获取用户当月活动列表
-     */
-    public function UserMonthlyActivitiesAction(){
-        /*验证token开始*/
-        $return  = (new UserService)->getDecrypt();
-        if($return['result']!=1){
-            return $this->failure([],$return['msg'],$return['code']);
-        }
-        /*验证token结束*/
-        $user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
-        //接收参数并格式化
-        $data = $this->request->get();
-
-        $month = $data['month']?($data['month']):date('m',time());
-        if(strlen($month)==1)
-        {
-            $month = '0'.$month;
-        }
-        $return = (new ActivityService())->getMonthlyActivityList($user_id,$month);
-        if($return['result']) {
-            $this->success($return['data'] ?? [], $return['msg']);
-        }else
-        {
-            $this->failure([],$return['msg']);
-        }
-    }
 
 }
