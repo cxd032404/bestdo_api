@@ -761,25 +761,12 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_clubBannerList($data,$params,$user_info,$company_id){
-        $club_list = (new  ClubService())->getClubListByCompany($user_info['data']['company_id'],'club_id,club_name,detail');
+        $company_info = (new  CompanyService())->getCompanyInfo($user_info['data']['company_id'],'company_id,detail');
+        $detail = json_decode($company_info->detail,true);
         $bannerList = [];
-        foreach ($club_list as $key=> $club_info)
+        if(isset($detail['clubBanner']))
         {
-            $detail = json_decode($club_info->clubInfo->detail??"",true);
-            if(isset($detail['banner']))
-            {
-                foreach($detail['banner'] as $k => $banner)
-                {
-                    if(count($bannerList)<=20)
-                    {
-                        $bannerList[] = $banner;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
+            $bannerList = $detail['clubBanner'];
         }
         $data['detail']['banner_list'] = $bannerList;
         return $data;
@@ -838,7 +825,7 @@ class PageElementService extends BaseService
     {
         $company_info = (new PostsService())->getCompanyInfo($user_info['data']['user_id']);
         $detail = json_decode($company_info->detail);
-        $boutique = $detail->boutique;
+        $boutique = isset($detail->boutique)?$detail->boutique:[];
         foreach ($boutique as $key => $value) {
             $list_info = (new ListService())->getListInfo($value, 'list_id,list_name');
             $list_artical = new stdClass();

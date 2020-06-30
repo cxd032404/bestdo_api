@@ -879,6 +879,18 @@ class ClubService extends BaseService
         }
         return $user_list;
     }
+    /*
+     * 获取用户正在审核的俱乐部列表
+     */
+    public function UserElationClub($user_id){
+        $conditions = 'user_id ='.$user_id.' and result = 0';
+        $params = [
+            $conditions,
+            'columns'=>'log_id,club_id'
+        ];
+        $club_member_logs = (new \HJ\ClubMemberLog())->find($params);
+        return $club_member_logs;
+    }
 
 
 
