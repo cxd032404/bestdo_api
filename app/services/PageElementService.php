@@ -853,7 +853,7 @@ class PageElementService extends BaseService
 
     public function getElementPage_boutique($data,$params,$user_info,$company_id)
     {
-        $company_info = (new PostsService())->getCompanyInfo($user_info['data']['user_id']);
+        $company_info = (new  CompanyService())->getCompanyInfo($user_info['data']['company_id']);
         $detail = json_decode($company_info->detail);
         $boutique = isset($detail->boutique)?$detail->boutique:[];
         foreach ($boutique as $key => $value) {
@@ -1083,12 +1083,12 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_departmentStepsAchiveRate($data,$params,$user_info,$company_id){
-        $company_info = (new CompanyService())->getCompanyInfo($company_id)->toArray();
-        if(isset($company_info['detail']))
+        $company_info = (new CompanyService())->getCompanyInfo($company_id);
+        if(isset($company_info->detail))
         {
-            $company_info['detail'] = json_decode($company_info['detail'],true);
+            $company_info->detail = json_decode($company_info->detail,true);
         }
-        $dailyStep = $company_info['detail']['daily_step']??$this->config->steps->defaultDailyStep;
+        $dailyStep = $company_info->detail['daily_step']??$this->config->steps->defaultDailyStep;
         $currentTime = time();
         $currentDate = date("Y-m-d",$currentTime);
         $currentDateRange = (new StepsService())->getStepsDateRange($user_info['data']['company_id'],$currentDate);
@@ -1102,18 +1102,23 @@ class PageElementService extends BaseService
                 $dataArr[$key]['list'][$detail['department_id_1']] = $detail;
             }
         }
-        foreach($currentDateRange as $dateRange)
+        foreach($currentDateRange as $key => $dateRange)
         {
+            $userCount = (new UserService())->getUserCountByDepartment($company_info->company_id,0);
             $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],0,"",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
-            foreach($stepsData as $detail)
+            if(count($stepsData)>=1)
             {
-                $dataArr[$key]['list'][0] = $detail;
+                $dataArr[$key]['list'][0] = $stepsData['0'];
+                $dataArr[$key]['list'][0]['department_name'] = $company_info->company_name;
+                $dataArr[$key]['list'][0]['user_count'] = $userCount;
+                $dataArr[$key]['list'][0]['goal'] = $userCount*$dailyStep*$dateRange['days'];
+                $dataArr[$key]['list'][0]['achive_rate'] = sprintf("%10.2f",($dataArr[$key]['list'][0]['goal']==0?0:$dataArr[$key]['list'][0]['totalStep']/$dataArr[$key]['list'][0]['goal'])*100);
             }
         }
         $departmentList = (new DepartmentService())->getDepartmentListByParent($user_info['data']['company_id'],0);
         foreach($departmentList as $key => $departmentInfo)
         {
-            $userCount = (new UserService())->getUserCountByDepartment($departmentInfo->department_id);
+            $userCount = (new UserService())->getUserCountByDepartment($company_info->company_id,$departmentInfo->department_id);
             foreach($dataArr as $dateType => $Listdata)
             {
                 if(!isset($dataArr[$dateType]['list'][$departmentInfo->department_id]))

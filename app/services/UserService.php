@@ -684,7 +684,7 @@ class UserService extends BaseService
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
         if(!isset($user_info) || (isset($user_info) && json_decode($user_info)->expire_time<time())){
-            $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
+            $page_info = (new PageService)->getPageInfoBySign($company,$page_sign,"page_id,need_login");
             if(isset($page_info['need_login']) && $page_info['need_login']==1){
                 $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_fail'], 'code'=>403, 'data'=>[]];
             }
@@ -987,17 +987,27 @@ class UserService extends BaseService
 
     }
     //获取用户信息
-    public function getUserCountByDepartment($department_id,$cache = 1)
+    public function getUserCountByDepartment($company_id,$department_id,$cache = 1)
     {
         $departmentService = new DepartmentService();
         $cacheSetting = $this->config->cache_settings->department_user_count;
         $cacheName = $cacheSetting->name.$department_id;
-        $department = $departmentService->getDepartment($department_id);
-        $departmentInfo = $departmentService->getDepartmentInfo($department_id,"department_id,company_id");
-        $params = [
-            "company_id = ".$departmentInfo->company_id." and department_id_".$department['current_level']." =".$department_id." and is_del=0",
-            'columns'=>'count(user_id) as userCount',
-        ];
+        if($department_id > 0)
+        {
+            $department = $departmentService->getDepartment($department_id);
+            //$departmentInfo = $departmentService->getDepartmentInfo($department_id,"department_id,company_id");
+            $params = [
+                "company_id = ".$company_id." and department_id_".$department['current_level']." =".$department_id." and is_del=0",
+                'columns'=>'count(user_id) as userCount',
+            ];
+        }
+        else
+        {
+            $params = [
+                "company_id = ".$company_id." and is_del=0",
+                'columns'=>'count(user_id) as userCount',
+            ];
+        }
         if($cache == 0)
         {
             //用户数量
