@@ -264,9 +264,36 @@ class StepsService extends BaseService
             //$department = (new DepartmentService())->getDepartment($userInfo['department_id']);
             //print_R($department);
         }
-
     }
-
-
-
+    //获取当前匹配的健步走日期段
+    //如果匹配不上，就是当前月
+    public function getStepsDateRange($company_id,$date)
+    {
+        $where = "company_id = ".$company_id." and start_date <='".$date."' and end_date >= '".$date."'";
+        //$dateRange = (new \HJ\StepsDateRange())::findFirst([$where]);
+        if(isset($dateRange->date_id))
+        {
+            $rangeStartDate = $dateRange->start_date;
+            $rangeEndDate = $dateRange->end_date;
+            $return = ["day"=>$date,"week"=>[],"month"=>[]];
+            $days = ["week"=>7,"month"=>30];
+            foreach($days as $key => $value)
+            {
+                $d = $rangeStartDate;
+                $lag = intval((strtotime($date)-strtotime($rangeStartDate))/( $value * 86400 ));
+                $return[$key]['start_date'] = date("Y-m-d",strtotime($rangeStartDate) + $value * $lag * 86400);
+                $return[$key]['end_date'] = min($rangeEndDate,date("Y-m-d",strtotime($rangeStartDate) + $value * ($lag+1) * 86400));
+                $return[$key]['end_date'] = date("Y-m-d",strtotime($return[$key]['end_date'])-86400);
+            }
+        }
+        else
+        {
+            $week = (new Common())->processDateRange("year",1);
+            print_R($week);
+            $return = ["day"=>$date,"week"=>["start_date"=>$week['startDate'],"end_date"=>$week['endDate']],"month"=>["start_date"=>date("Y-m-01",strtotime($date)),"end_date"=>date("Y-m-t",strtotime($date))]];
+        }
+        print_R($return);
+        die();
+        return $return;
+    }
 }

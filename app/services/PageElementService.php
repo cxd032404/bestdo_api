@@ -932,6 +932,7 @@ class PageElementService extends BaseService
     */
     public function getElementPage_stepsData($data,$params,$user_info,$company_id){
         $userService = new UserService();
+        $stepsConfig = $this->config->steps;
         //日期范围类型  day日期 week周 month月 3month3个月 halfyear半年 year年
         $dateRangeType = $this->getFromParams($params,'date_range_type',"month");
         //日期端类型 1自然 2当前推
@@ -941,8 +942,7 @@ class PageElementService extends BaseService
         $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$departmentId,$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
-        $stepsGoal = $companyInfo->detail['daily_step'] * $dateRange['days'];
-        $stepsConfig = $this->config->steps;
+        $stepsGoal = $companyInfo->detail['daily_step']??$stepsConfig->defaultDailyStep * $dateRange['days'];
         foreach($stepsData as $key => $detail)
         {
             $stepsData[$key]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
@@ -1045,6 +1045,21 @@ class PageElementService extends BaseService
         $data['detail']['user_monthly_activities'] = $activity_list;
         return $data;
     }
-
-
+    /*
+    * 用户当月参加的活动列表
+    * user_info 用户信息
+    * company_id 公司id
+    * data 用户包含的element信息
+    * params 页面标识和company_id
+    */
+    public function getElementPage_departmentStepsAchiveRate($data,$params,$user_info,$company_id){
+        $currentTime = time();
+        $currentDate = date("Y-m-d",$currentTime);
+        $currentDateRange = (new StepsService())->getStepsDateRange($user_info['data']['company_id'],$currentDate);
+        die();
+        $month = $this->getFromParams($params,'month',date('m',time()));
+        $activity_list = (new ActivityService())->getMonthlyActivityList($user_info['data']['user_id'],$month);
+        $data['detail']['user_monthly_activities'] = $activity_list;
+        return $data;
+    }
 }
