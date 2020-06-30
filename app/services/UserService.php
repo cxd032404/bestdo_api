@@ -684,7 +684,7 @@ class UserService extends BaseService
         $oJwt = new ThirdJwt();
         $user_info = $oJwt::getUserId($user_token);
         if(!isset($user_info) || (isset($user_info) && json_decode($user_info)->expire_time<time())){
-            $page_info = (new PageService)->getPageBySign($company,$page_sign,"page_id,need_login");
+            $page_info = (new PageService)->getPageInfoBySign($company,$page_sign,"page_id,need_login");
             if(isset($page_info['need_login']) && $page_info['need_login']==1){
                 $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_fail'], 'code'=>403, 'data'=>[]];
             }

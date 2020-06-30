@@ -11,7 +11,7 @@ class PageService extends BaseService
     public function getPageInfo($company_id,$page_sign,$params = "",$user_info)
 	{
 	    //获取页面信息
-	    $pageInfo = $this->getPageBySign($company_id,$page_sign);
+	    $pageInfo = $this->getPageInfoBySign($company_id,$page_sign);
 	    //没如果获取到
 	    if(!$pageInfo)
         {
@@ -20,11 +20,9 @@ class PageService extends BaseService
 	    else
         {
             $params = json_decode($params,true);
-            //转数组
-            //$pageInfo = $pageInfo->toArray();
             //获取页面元素详情
-	        $pageElementList  = $this->getPageElementByPage($pageInfo->page_id,"element_id,element_name,element_sign,element_type,detail",$params['element_sign_list']??[])->toArray();
-	        foreach($pageElementList as $key => $elementDetail)
+	        $pageElementList  = $this->getPageElementByPage($pageInfo->page_id,"element_sign,element_name,element_type,detail",$params['element_sign_list']??[]);
+            foreach($pageElementList as $key => $elementDetail)
             {
                 //数组解包
                 $pageElementList[$key]['detail'] = json_decode($elementDetail['detail'],true);
@@ -36,7 +34,8 @@ class PageService extends BaseService
                         continue;
                     }
                         $pageElementList[$key] = $return;
-                }else
+                }
+                else
                 {
                     $pageElementList[$key] = $pageElementList[$key];
 
@@ -50,7 +49,7 @@ class PageService extends BaseService
     //根据页面标识获取页面
     //$page_sign：页面标识
     //cloumns：数据库的字段列表
-    public function getPageBySign($company_id,$page_sign,$columns = "page_id,page_name",$cache = 1)
+    public function getPageInfoBySign($company_id,$page_sign,$columns = "page_id,page_name",$cache = 1)
     {
         $cacheSetting = $this->config->cache_settings->page_info_sign;
         $cacheName = $cacheSetting->name.$company_id."_".$page_sign;
@@ -116,33 +115,85 @@ class PageService extends BaseService
     //$page_id：页面ID
     //cloumns：数据库的字段列表
     //order：排序
-	public function getPageElementByPage($page_id,$columns = "element_id,element_type",$element_sign_list = ["pic_2"],$order = "element_type DESC")
+	public function getPageElementByPage($page_id,$columns = "element_id,element_type",$element_sign_list = ["pic_2"],$order = "element_type DESC",$cache = 0)
     {
-
+        $cacheSetting = $this->config->cache_settings->page_element_list;
+        $cacheName = $cacheSetting->name.$page_id;
         $params =             [
-            //"page_id = ".$page_id,
-            "columns" => $columns,
+            "page_id = '".$page_id."'",
+            "columns" => "*",
             "order" => $order,
-            "bind" => ["elementSignList"=>$element_sign_list]
         ];
-        if(count($element_sign_list))
+        if($cache == 0)
         {
-            $params[] = "page_id = $page_id and element_sign IN ({elementSignList:array})";
+            //获取页面元素列表
+            $pageElementList = (new \HJ\PageElement())->find($params);
+            if(count($pageElementList)>0)
+            {
+                $this->redis->set($cacheName,json_encode($pageElementList));
+                $this->redis->expire($cacheName,$cacheSetting->expire);
+            }
+            else
+            {
+                return [];
+            }
         }
         else
         {
-            $params[] = "page_id = ".$page_id;
+            $cache = $this->redis->get($cacheName);
+            $cache = json_decode($cache);
+            if(count($cache)>0)
+            {
+                $pageElementList = $cache;
+            }
+            else
+            {
+                //获取页面元素列表
+                $pageElementList = (new \HJ\PageElement())->find($params);
+                if(count($pageElementList)>0)
+                {
+                    $this->redis->set($cacheName,json_encode($pageElementList));
+                    $this->redis->expire($cacheName,$cacheSetting->expire);
+                }
+                else
+                {
+                    return [];
+                }
+            }
         }
-        return (new \HJ\PageElement())->find(
-            $params
-        );
+        $pageElementList = json_decode(json_encode($pageElementList),true);
+        if(count($element_sign_list)>0)
+        {
+            foreach($pageElementList as $key => $value)
+            {
+                if(!in_array($value['element_sign'],$element_sign_list))
+                {
+                    unset($pageElementList[$key]);
+                }
+            }
+        }
+        if($columns != "*")
+        {
+            $t = explode(",",$columns);
+            foreach($pageElementList as $key => $value)
+            {
+                foreach($value as $k => $v)
+                {
+                    if(!in_array($k,$t))
+                    {
+                        unset($pageElementList[$key][$k]);
+                    }
+                }
+            }
+        }
+        return $pageElementList;
     }
     //检查页面参数是否完整和类型正确
     //$params:页面参数json串
     public function checkPageParams($params,$company,$page_sign)
     {
         //获取页面信息
-        $pageInfo = $this->getPageBySign($company,$page_sign,'page_id,detail');
+        $pageInfo = $this->getPageInfoBySign($company,$page_sign,'page_id,detail');
         if($pageInfo)
         {
             //$pageInfo = json_decode(json_encode($pageInfo),true);
