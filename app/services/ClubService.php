@@ -882,7 +882,7 @@ class ClubService extends BaseService
     /*
      * 获取用户正在审核的俱乐部列表
      */
-    public function UserElationClub($user_id){
+    public function getUserElationClub($user_id){
         $conditions = 'user_id ='.$user_id.' and result = 0';
         $params = [
             $conditions,
@@ -892,7 +892,16 @@ class ClubService extends BaseService
         return $club_member_logs;
     }
 
-
-
-
+    /*
+     * 俱乐部活动总次数统计
+     */
+    public function getClubActivityCount($club_id){
+        $conditions = 'club_id ='.$club_id;
+        $params = [
+            $conditions,
+            'columns'=>"count('activity_id')"
+        ];
+        $count = (new \HJ\Activity())->findFirst($params);
+        return $count->{0};
+    }
 }

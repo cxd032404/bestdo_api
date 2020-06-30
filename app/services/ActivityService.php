@@ -691,6 +691,7 @@ class ActivityService extends BaseService
             $update_res = $activityInfo->save();
             if($update_res)
             {
+                $this->getActivityInfo($activity_id,'*',0);
                 $return  = ['result'=>1,"msg"=>"取消成功",'code'=>400];
             }else
             {
@@ -721,45 +722,42 @@ class ActivityService extends BaseService
     }
 
     /*
-     * 获取某月用户活动列表
+     * 获取某公司活动列表
      */
-    public function getMonthlyActivityList($user_id,$month){
+    public function getMonthlyActivityList($company_id,$month){
         $year = date('Y',time());
         $date =$year.'-'.$month;
         $monthly_activities = [];
         $date_list = []; //日期下标数据
-        $activity_list = (new \HJ\UserActivityLog())->find(['user_id = '.$user_id,'columns'=>'id,activity_id']);
-        $monthly_activities = [];
-        foreach ($activity_list as $key=>$value)
+        $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id.' and status = 1','columns'=>'activity_id,club_id,start_time,end_time,icon,comment']);
+        foreach ($activity_list as $key=>$activity_info)
         {
             $activity_start_time = '';
-            $activity_end_time = '';
-            $activity_info = (new Activity())->findFirst(['activity_id ='.$value->activity_id,'columns'=>'activity_id,start_time,end_time,activity_name,icon,comment']);
-            if(!$activity_info)
-            {
-                continue;
-            }
             $activity_start_time = date('Y-m',strtotime($activity_info->start_time));
-            $activity_end_time = date('Y-m',strtotime($activity_info->end_time));
             if($activity_start_time!=$date)
             {
                 continue;
             }
             $activity_data = [];
+            $day = date('d',strtotime($activity_info->start_time));
             $activity_data['activity_id'] = $activity_info->activity_id;
-            $activity_data['activity_name'] = $activity_info->activity_name;
-            $activity_data['date'] = date('d',strtotime($activity_info->start_time));
+            $activity_data['date'] = $day;
             $monthly_activities[] = $activity_data;
-            $date_data = [];
-            $date_data['activity_id'] = $activity_info->activity_id;
-            $date_data['activity_name'] = $activity_info->activity_name;
-            $date_data['icon'] = $activity_info->icon;
-            $date_data['comment'] = $activity_info->comment;
-            $date_data['time'] = date('h:i',strtotime($activity_info->start_time));
-            $date_list[date('d',strtotime($activity_info->start_time))][] = $date_data;
+            $activity_data = [];
+            $activity_data['activity_id'] = $activity_info->activity_id;
+            $activity_data['comment'] = $activity_info->comment;
+            $activity_data['time'] = date('h:i',strtotime($activity_info->start_time));
+            $activity_data['club_icon'] = '';
+            $activity_data['club_name'] = '';
+            if($activity_info->club_id>0)
+            {
+                $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
+                $activity_data['club_icon'] = $club_info->icon;
+                $activity_data['club_name'] = $club_info->club_name;
+            }
+            $date_list[$day] = $activity_data;
         }
         return ['month_activities'=>$monthly_activities,'date_data'=>$date_list];
-
     }
 
 

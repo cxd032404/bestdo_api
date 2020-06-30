@@ -362,15 +362,33 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_attendClubList($data,$params,$user_info,$company_id){
-          $club_lsit = (new  ClubService())->getUserClubList($user_info['data']['user_id'],'club_id,club_name,icon');
+          $user_id = $user_info['data']['user_id'];
+          $club_lsit = (new  ClubService())->getUserClubList($user_id,'club_id,club_name,icon');
           $club_list = [];
           foreach ($club_lsit as $key=> $value)
           {
+              $club_list[$key]['user_count'] = (new ClubService())->getClubMemberCount($value->clubInfo->club_id);
+              $club_list[$key]['activity_count'] = (new ClubService())->getClubActivityCount($value->clubInfo->club_id);
               $club_list[$key]['club_id'] = $value->clubInfo->club_id;
               $club_list[$key]['club_name'] = $value->clubInfo->club_name;
               $club_list[$key]['icon'] = $value->clubInfo->icon;
+              $club_list[$key]['result'] = 1;
           }
-           $data['detail']['club_list'] = $club_list;
+          //下面为用户待审核的俱乐部列表
+          $club_log_list = [];
+          $user_club_log = (new ClubService())->getUserElationClub($user_id);
+          foreach ($user_club_log as $key=> $value)
+          {
+              $club_log_list[$key]['user_count'] = (new ClubService())->getClubMemberCount($value->club_id);
+              $club_log_list[$key]['activity_count'] = (new ClubService())->getClubActivityCount($value->club_id);
+              $club_info = (new ClubService())->getClubInfo($value->club_id,'club_id,club_name,icon');
+              $club_log_list[$key]['club_id'] = $club_info->club_id;
+              $club_log_list[$key]['club_name'] = $club_info->club_name;
+              $club_log_list[$key]['icon'] = $club_info->icon;
+              $club_log_list[$key]['result'] = 0;
+          }
+          $club_list = array_merge($club_list,$club_log_list);
+          $data['detail']['club_list'] = $club_list;
            return $data;
     }
 
@@ -1031,7 +1049,7 @@ class PageElementService extends BaseService
     * data 用户包含的element信息
     * params 页面标识和company_id
     */
-    public function getElementPage_UserMonthlyActivities($data,$params,$user_info,$company_id){
+    public function getElementPage_userMonthlyActivities($data,$params,$user_info,$company_id){
         $month = $this->getFromParams($params,'month',date('m',time()));
          if(!$month)
          {
@@ -1041,7 +1059,7 @@ class PageElementService extends BaseService
         {
             $month = '0'.$month;
         }
-        $activity_list = (new ActivityService())->getMonthlyActivityList($user_info['data']['user_id'],$month);
+        $activity_list = (new ActivityService())->getMonthlyActivityList($company_id,$month);
         $data['detail']['user_monthly_activities'] = $activity_list;
         return $data;
     }
