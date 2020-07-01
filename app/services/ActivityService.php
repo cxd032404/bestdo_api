@@ -288,9 +288,12 @@ class ActivityService extends BaseService
         }
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time",$club_id,0);
       //  print_r($activity_list);die();
-       // print_r($created_activity_list);
         foreach($created_activity_list as $key => $created)
         {
+            if(!$created)
+            {
+                continue;
+            }
             $flag = 0;
             foreach($activity_list as $key2 => $manager)
             {
@@ -526,6 +529,10 @@ class ActivityService extends BaseService
         $positionList = [];
         foreach($userCreatedAcitvityList as $key => $activityDetail)
         {
+            if(!$activityDetail)
+            {
+                continue;
+            }
             $activityDetail->detail = json_decode($activityDetail->detail);
             $checkin = $activityDetail->detail->checkin??[];
             if(isset($checkin->address))

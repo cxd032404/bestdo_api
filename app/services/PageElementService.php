@@ -404,7 +404,7 @@ class PageElementService extends BaseService
            foreach ($activity as $key=>$value)
            {
                $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
-               if($activity_info->status == 0)
+               if(!isset($activity_info->status) || $activity_info->status == 0 )
                {
                    continue;
                }
@@ -674,6 +674,7 @@ class PageElementService extends BaseService
         $managed_activity_list = $return['activity_list'];
         foreach ($managed_activity_list as $key=>$value)
         {
+            $managed_activity_list[$key]->chinese_start_time = date('m月d日',strtotime($value->start_time));
             if($value->club_id>0)
             {
                 $managed_activity_list[$key]->club_info = (new ClubService())->getClubInfo($value->club_id,'club_id,club_name,icon');
@@ -814,6 +815,11 @@ class PageElementService extends BaseService
         $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
         {
+            if(!$activity_info)
+            {
+                unset($activity_list[$key]);
+                continue;
+            }
             if((strtotime($activity_info->apply_start_time)<=$currentTime) && (strtotime($activity_info->apply_end_time)>=$currentTime))
             {
                 $clubInfo = $clubService->getClubInfo($activity_info->club_id,"club_id,club_name,icon");
@@ -1036,7 +1042,7 @@ class PageElementService extends BaseService
             $t[$date]['achives'] = ($detail['totalStep']>=$stepsGoal)?1:0;
             $t[$date]['achive_rate'] = intval(100*($detail['totalStep']/$stepsGoal));
         }
-        $data['detail']['steps'] = $t;
+        $data['detail']['steps'] = array_values($t);
         return $data;
     }
 
