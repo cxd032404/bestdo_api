@@ -195,11 +195,11 @@ class DepartmentService extends BaseService
      */
     public function getCompanyDepartment($company_id){
         $department = (new \HJ\Department())->find(['company_id ='.$company_id,'columns'=>'department_id,parent_id,department_name']);
+        $tree = [];
         if($department) {
             $department = $department->toArray();
             $department = array_column($department,null,'department_id');
             //print_r($department);die();
-            $tree = [];
             foreach ($department as $key => $value) {
                 if($value['parent_id']==0)
                 {
