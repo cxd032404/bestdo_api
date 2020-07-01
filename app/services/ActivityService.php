@@ -19,10 +19,79 @@ class ActivityService extends BaseService
         "activity_member_limit"=>"活动人数已满",
         "activity_club_limit"=>"申请加入 ",
     ];
+    //生成每周的重复性活动数据
+    public function generateNextActivityWeekly($activityParams)
+    {
+        $range_end_time = $activityParams['weekly_rebuild']['end_date']." 23:59:59";
+        $return = [];
+        $i = 0;
+        $end_time = strtotime($activityParams['end_time']);
+        while($end_time <= strtotime($range_end_time))
+        {
+            $end_time += 7*86400;
+            $nextParam = [];
+            $nextParam['start_time'] = date("Y-m-d H:i:s",strtotime($activityParams['start_time'])+$i*7*86400);
+            $nextParam['end_time'] = date("Y-m-d H:i:s",strtotime($activityParams['end_time'])+$i*7*86400);
+            $nextParam['appay_start_time'] = date("Y-m-d H:i:s",strtotime($activityParams['apply_start_time'])+$i*7*86400);
+            $nextParam['apply_end_time'] = date("Y-m-d H:i:s",strtotime($activityParams['apply_end_time'])+$i*7*86400);
+            $i++;
+            $return[] = $nextParam;
+        }
+        return $return;
+
+    }
+    public function generateTimeForActivity($activityParams)
+    {
+        $oCommon = new Common();
+        $activityParams['weekly_rebuild'] = json_decode($activityParams['weekly_rebuild'],true);
+        $currentDay = date("w",time());
+        if(!isset($activityParams['weekly_rebuild']['start_weekday'])
+            || !isset($activityParams['weekly_rebuild']['start_weekday'])
+            || !isset($activityParams['weekly_rebuild']['start_weekday'])
+            || !isset($activityParams['weekly_rebuild']['start_weekday'])
+            || !isset($activityParams['weekly_rebuild']['start_weekday'])
+            || !isset($activityParams['weekly_rebuild']['start_weekday']))
+        {
+            return false;
+        }
+        $currentDate = date('Y-m-d');
+        $applyStartDate = $oCommon->getNextWeekday($currentDate,$activityParams['weekly_rebuild']['apply_start_weekday']);
+        $applyEndDate = $oCommon->getNextWeekday($applyStartDate,$activityParams['weekly_rebuild']['apply_end_weekday']);
+        $startDate = $oCommon->getNextWeekday($applyStartDate,$activityParams['weekly_rebuild']['start_weekday']);
+        $endDate = $oCommon->getNextWeekday($startDate,$activityParams['weekly_rebuild']['end_weekday']);
+        $activityParams['start_time'] = $startDate." ".$activityParams['weekly_rebuild']['start_time'];
+        $activityParams['end_time'] = $endDate." ".$activityParams['weekly_rebuild']['end_time'];
+        $activityParams['apply_start_time'] = $applyStartDate." 00:00:00";
+        $activityParams['apply_end_time'] = $applyEndDate." 23:59:59";
+        return $activityParams;
+
+    }
 
     public function createActivity($activityParams = [],$user_info)
     {
         $currentTime = time();
+        /*
+        $activityParams['activity_name'] = "测试活动";
+        $activityParams['weekly_rebuild'] = ["start_weekday"=>0,"end_weekday"=>5,
+            "start_time" => date("H:i:s",$currentTime),"end_time"=>date("H:i:s",$currentTime + 7200),
+            "apply_start_weekday"=>6,"apply_end_weekday"=>2,
+            "start_date"=>"2020-01-01","end_date"=>"2020-12-31"];
+
+        $activityParams['weekly_rebuild'] = json_encode($activityParams['weekly_rebuild']);
+        */
+        //只有有重复参数且头部为0
+        if(isset($activityParams['weekly_rebuild']) && $activityParams['connect_activity_id'] == 0)
+        {
+            $activityParams = $this->generateTimeForActivity($activityParams);
+            if(!$activityParams)
+            {
+                $return  = ['result'=>0,"msg"=>"活动时间有误，请重新输入",'code'=>400];
+            }
+            else
+            {
+                $nextList = $this->generateNextActivityWeekly($activityParams);
+            }
+        }
         //活动时间校验
         if($activityParams['start_time']=="" || $activityParams['end_time']=="")
         {
@@ -60,6 +129,7 @@ class ActivityService extends BaseService
             }
             else
             {
+                /*
                 //检查名称是否重复
                 $nameExists = $this->getActivityByName($activityParams['activity_name'],$activityParams['end_time'],$user_info->company_id);
                 if(isset($nameExists->activity_id))
@@ -68,7 +138,8 @@ class ActivityService extends BaseService
                 }
                 else
                 {
-                    $activityParams['weekly_rebuild'] = ($activityParams['weekly_rebuild']>=0 && $activityParams['weekly_rebuild']<=6)?$activityParams['weekly_rebuild']:-1;
+                */
+                    //$activityParams['weekly_rebuild'] = ($activityParams['weekly_rebuild']>=0 && $activityParams['weekly_rebuild']<=6)?$activityParams['weekly_rebuild']:-1;
                     //写入数据
                     $activity = new Activity();
                     $activity->activity_name = $activityParams['activity_name'];
@@ -102,9 +173,19 @@ class ActivityService extends BaseService
                     }
                     else
                     {
-                        $return  = ['result'=>1,"msg"=>"活动创建成功！",'data'=>$this->getActivityInfo($activity->activity_id),'code'=>200];
+                        //从头创建模式
+                        if($activityParams['connect_activity_id'] == 0)
+                        {
+                            foreach($nextList as $key => $value)
+                            {
+                                $copyActivity = array_merge($activityParams,$value);
+                                $copyActivity['connect_activity_id'] = $copied['activity_id']??$activity->activity_id;
+                                $copied = $this->createActivity($copyActivity,$user_info);
+                            }
+                        }
+                        $return  = ['result'=>1,"msg"=>"活动创建成功！",'activity_id'=>$activity->activity_id,'data'=>$this->getActivityInfo($activity->activity_id,"*",0),'code'=>200];
                     }
-                }
+               //}
             }
         }
         return $return;
@@ -287,7 +368,6 @@ class ActivityService extends BaseService
             $activity_list = [];
         }
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time",$club_id,0);
-      //  print_r($activity_list);die();
         foreach($created_activity_list as $key => $created)
         {
             if(!$created)
