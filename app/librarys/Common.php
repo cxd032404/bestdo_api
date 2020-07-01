@@ -255,6 +255,20 @@ class Common extends Component {
         $return["days"] = $days;
         return $return;
     }
+    //根据当前日期，获取下一个周x
+    //weekday 0-6 周日-周六
+    public function getNextWeekday($startDate,$weekday)
+    {
+        while(1)
+        {
+            if(date("w",strtotime($startDate))==$weekday)
+            {
+                break;
+            }
+            $startDate = date("Y-m-d",strtotime($startDate)+86400);
+        }
+        return $startDate;
+    }
 
 
 
