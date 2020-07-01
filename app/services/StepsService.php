@@ -72,7 +72,7 @@ class StepsService extends BaseService
         $steps->user_id = $user_info->user_id;
         $steps->company_id = $user_info->company_id;
         $steps->department_id = $user_info->department_id;
-        $steps->deily_step = $company_info->detail->daily_step??5000;
+        $steps->daily_step = $company_info->detail->daily_step??$this->config->steps->defaultDailyStep;
         $steps->step = $step;
         $steps->date = $date;
         $steps->create_time = date("Y-m-d H:i:s",$currentTime);
@@ -262,11 +262,12 @@ class StepsService extends BaseService
     public function generateTestSteps($month = 1)
     {
         $start_date = "2020-".$month."-01";
+        $end_date = date("Y-m-t",strtotime($start_date));
         $userList = (new \HJ\UserInfo())::find(["department_id>0 and company_id = 1","columns"=>"user_id,department_id,company_id"]);
         foreach($userList  as $userInfo)
         {
             $steps = ['data'=>["stepInfoList"=>[]]];
-            for($i=0;$i<date("t",strtotime($start_date));$i++)
+            for($i=0;$i<date("t",strtotime($end_date));$i++)
             {
                 $timeStamp = strtotime($start_date)+$i*86400;
                 $steps['data']['stepInfoList'][] = ['timestamp' => $timeStamp,"step"=>rand(1,9999)];
