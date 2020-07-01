@@ -765,6 +765,13 @@ class ActivityService extends BaseService
         }
         return ['month_activities'=>$monthly_activities,'date_data'=>$date_list];
     }
+    /*
+     * 获取活动已签到人数
+     */
+    public function getActivityCheckinCount($activity_id){
+        $activity_count = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id.' and checkin_status = 1','columns'=>'count(activity_id)']);
+        return $activity_count->{0};
+    }
 
 
 

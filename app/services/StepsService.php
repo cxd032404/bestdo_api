@@ -194,49 +194,117 @@ class StepsService extends BaseService
         $steps = (new \HJ\Steps())::find(["company_id='".$company_id."' and date = '".$date."'","columns"=>"sum(step) as step,user_id,count(1) as count","group"=>"user_id"]);
         return $steps->toArray();
     }
-    public function getStepsDataByDate($dateRange,$company_id,$department_id,$group = "user_id",$page = 1,$pageSize = 3)
+    public function getStepsDataByDate($user_id,$dateRange,$company_id,$department_id,$group = "user_id",$page = 1,$pageSize = 3)
     {
-        $whereCondition = "company_id = ".$company_id." ";
-
-        if($department_id > 0)
+        $redis_key = md5(json_encode([$dateRange,$company_id,$department_id,$group]));
+        $cache = $this->redis->get($redis_key);
+        //默认不拿数据库
+        $from_db = 0;
+        if(!$cache)
         {
-            $department = (new DepartmentService())->getDepartment($department_id);
-            for($i = 1;$i<=$department['current_level'];$i++)
+            //缓存获取失败
+            $from_db = 1;
+        }
+        else
+        {
+            $steps = json_decode($cache,true);
+            if(count($steps)==0 || is_array($steps))
             {
-                $level_name = "department_id_".$i;
-                $whereCondition.= " and ".$level_name." = ".$department[$level_name];
+                //缓存为空，或者 是缓存解不开
+                $from_db = 1;
             }
         }
-        if(isset($dateRange['date']))
+        if($from_db == 1)
         {
-            $whereCondition .= " and date = '".$dateRange['date']."'";
+            $whereCondition = "company_id = ".$company_id." ";
+
+            if($department_id > 0)
+            {
+                $department = (new DepartmentService())->getDepartment($department_id);
+                for($i = 1;$i<=$department['current_level'];$i++)
+                {
+                    $level_name = "department_id_".$i;
+                    $whereCondition.= " and ".$level_name." = ".$department[$level_name];
+                }
+            }
+            if(isset($dateRange['date']))
+            {
+                $whereCondition .= " and date = '".$dateRange['date']."'";
+            }
+            else
+            {
+                $whereCondition .= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
+            }
+
+            if(trim($group)!= "")
+            {
+                $params = [
+                    $whereCondition,
+                    "columns"=>$group.",sum(step) as totalStep,sum(if(step>daily_step,1,0)) as achives,sum(daily_step) as total_daily_step",
+                    "group"=>$group,
+                    "order"=>"totalStep DESC",
+                    //        "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+                ];
+            }
+            else
+            {
+                $params = [
+                    $whereCondition,
+                    "columns"=>"sum(step) as totalStep,sum(if(step>daily_step,1,0)) as achives",
+                    "order"=>"totalStep",
+                    //      "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+                ];
+            }
+            $steps = (new \HJ\Steps())::find($params)->toArray();
+            $this->redis->set($redis_key,json_encode($steps));
+            //expire
         }
-        else
+        $start = ($pageSize-1)*$page;
+        $end = ($start+$pageSize-1);
+        $return = ["list"=>[],"mine"=>[]];
+        foreach($steps as $key => $value)
         {
-            $whereCondition .= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
+            if(($key+1) >=$start || ($key+1) <= $end)
+            {
+                $return["list"][] = $value;
+            }
+            elseif($key>$end)
+            {
+                break;
+            }
+        }
+        $group = explode(",",$group??"");
+        if(in_array("user_id",$group??[]))
+        {
+            $found = 0;
+            foreach($steps as $key => $value)
+            {
+                if($value['user_id'] == "$user_id")
+                {
+                    $return["mine"] = $value;
+                    $return["mine"]["rank"] = $key+1;
+                    $found = 1;
+                    break;
+                }
+            }
+            if($found == 0)
+            {
+                $return["mine"] = [
+                    'user_id'=>$user_id,
+                    'totalStep'=>0,
+                    'achives'=>0,
+                    'total_daily_step'=>0,
+                    'distance'=>0,
+                    'kcal'=>0,
+                    'time'=>0,
+                    ];//{};
+                $return["mine"]["Rank"] = count($return["list"])+1;
+            }
+
         }
 
-        if(trim($group)!= "")
-        {
-            $params = [
-                $whereCondition,
-                "columns"=>$group.",sum(step) as totalStep,sum(if(step>daily_step,1,0)) as achives,sum(daily_step) as total_daily_step",
-                "group"=>$group,
-                "order"=>"totalStep",
-                "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
-            ];
-        }
-        else
-        {
-            $params = [
-                $whereCondition,
-                "columns"=>"sum(step) as totalStep,sum(if(step>daily_step,1,0)) as achives",
-                "order"=>"totalStep",
-                "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
-            ];
-        }
-        $steps = (new \HJ\Steps())::find($params);
-        return $steps->toArray();
+
+        return $return;
     }
     public function getUserStepsDataByDate($dateRange,$company_id,$user_id)
     {

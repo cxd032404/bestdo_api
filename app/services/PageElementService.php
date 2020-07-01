@@ -624,15 +624,30 @@ class PageElementService extends BaseService
         }
         $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
         $data['detail']['activity_info'] = $activity_info;
+        //活动剩余名额
         $detail = json_decode($activity_info->detail);
         $data['detail']['activity_info']->checkin = $detail->checkin??[];
-        $chinese_apply_start_date = date('m月d日',strtotime($activity_info->apply_start_time)).date('h:i',strtotime($activity_info->apply_start_time));
-        $chinese_apply_end_date = date('m月d日',strtotime($activity_info->apply_end_time)).date('h:i',strtotime($activity_info->apply_end_time));
+        $chinese_apply_start_date = date('m月d日',strtotime($activity_info->apply_start_time)).date('H:i',strtotime($activity_info->apply_start_time));
+        $chinese_apply_end_date = date('m月d日',strtotime($activity_info->apply_end_time)).date('H:i',strtotime($activity_info->apply_end_time));
         $activity_info->chinese_apply_start_time = $chinese_apply_start_date;
         $activity_info->chinese_apply_end_time = $chinese_apply_end_date;
+        $chinese_start_date = date('m月d日',strtotime($activity_info->start_time)).date('H:i',strtotime($activity_info->apply_start_time));
+        $chinese_end_date = date('m月d日',strtotime($activity_info->end_time)).date('H:i',strtotime($activity_info->apply_end_time));
+        $activity_info->chinese_start_time = $chinese_start_date;
+        $activity_info->chinese_end_time = $chinese_end_date;
         //$data['detail']['address'] = isset($detail['checkin']['address'])?$detail['checkin']['address']:'';
-        $data['detail']['userCount'] = (new ActivityService())->getActivityMemberCount($activity_id);
-        $club_info = (new ClubService())->getClubInfo($activity_info->club_id,"club_id,detail");
+        $user_count = (new ActivityService())->getActivityMemberCount($activity_id);
+        $data['detail']['userCount'] = $user_count;
+        $data['detail']['activity_info']->remain = $activity_info->member_limit - $user_count;
+        $data['detail']['activity_info']->activity_name = mb_substr($activity_info->activity_name,0,20);
+        $club_info = (new ClubService())->getClubInfo($activity_info->club_id,"club_id,icon,detail");
+        if($club_info)
+        {
+            $data['detail']['icon'] = $club_info->icon;
+        }else
+        {
+            $data['detail']['icon'] = '';
+        }
         $detail = json_decode($club_info->detail);
         if(isset($detail->banner))
         {
@@ -909,28 +924,48 @@ class PageElementService extends BaseService
 
     public function getElementPage_attendActivityListToCheckin($data,$params,$user_info,$company_id){
         $activity = (new ActivityService())->getActivityList($user_info['data']['user_id'])->toArray();
+        $activity_list = [];
         foreach ($activity as $key=>$value)
         {
-            if($value['checkin_status'] == 1)
-            {
-                //筛选掉已签到活动
-                continue;
-            }
             $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
-            if($activity_info->status == 0)
-            { //筛选掉无效活动
+            if(!$activity_info)
+            {
                 continue;
             }
+            if(!isset($activity_info->club_id) || $activity_info->club_id==0)
+            {
+                continue;
+            }
+            $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,club_name,icon');
+            $detail = json_decode($activity_info->detail);
+            $address = $detail->checkin->address??'';
             $activity_member_count = (new ActivityService())->getActivityMemberCount($value['activity_id']);
-            //活动人数
-            $activity_list[$key]['count'] = $activity_member_count;
-            $activity_list[$key]['activity_id'] = $value['activity_id'];
+            //活动已签到人数
+            $checkin_count = (new ActivityService())->getActivityCheckinCount($activity_info->activity_id);
+            $activity_list[$key]['activity_id'] = $activity_info->activity_id;
+            $activity_list[$key]['checkin_count'] = $checkin_count;
             $activity_list[$key]['activity_name'] = $activity_info->activity_name;
             $activity_list[$key]['club_id'] = $activity_info->club_id;
-            $activity_list[$key]['icon'] = $activity_info->icon;
+            $activity_list[$key]['club_icon'] = $club_info->icon;
+            $activity_list[$key]['club_name'] = $club_info->club_name;
             $activity_list[$key]['start_time'] = $activity_info->start_time;
             $activity_list[$key]['end_time'] = $activity_info->end_time;
+
+            $hour = date('H', strtotime($activity_info->start_time));
+            if($hour>12)
+            {
+                $now = '下午';
+            }else
+            {
+                $now = '上午';
+            }
+            $time = date('H:i', strtotime($activity_info->start_time));
+            $activity_list[$key]['now'] = $now;
+            $activity_list[$key]['time'] = $time;
+            $activity_list[$key]['chinese_start_time'] = date('m月d日',strtotime($activity_info->start_time));
+            $activity_list[$key]['chinese_end_time'] = date('m月d日',strtotime($activity_info->end_time));
             $activity_list[$key]['checkin_status'] = $value['checkin_status'];
+            $activity_list[$key]['address'] = $address;
             if(time()<$activity_info->start_time)
             {
                 $status = 0; //未开始的活动
@@ -975,21 +1010,26 @@ class PageElementService extends BaseService
         $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
         $departmentId = $this->getFromParams($params,'department_id',0);
-        $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],$departmentId,"user_id",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
+        $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],$departmentId,"user_id",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
+        $stepsList = $stepsData['list'];
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
         $stepsGoal = $companyInfo->detail['daily_step']??$stepsConfig->defaultDailyStep * $dateRange['days'];
-        foreach($stepsData as $key => $detail)
+        foreach($stepsList as $key => $detail)
         {
-            $stepsData[$key]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
-            $stepsData[$key]['kcal'] = intval($detail['totalStep']/$stepsConfig->stepsPerKcal);
-            $stepsData[$key]['time'] = intval($detail['totalStep']/$stepsConfig->stepsPerMinute);
-            $stepsData[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nickname,user_img,department_id",1);
-            $stepsData[$key]['goal'] = $stepsGoal;
-            $stepsData[$key]['achive'] = ($detail['totalStep']>=$stepsGoal)?1:0;
-            $stepsData[$key]['achive_rate'] = intval(100*($detail['totalStep']/$stepsGoal));
+            $stepsList[$key]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
+            $stepsList[$key]['kcal'] = intval($detail['totalStep']/$stepsConfig->stepsPerKcal);
+            $stepsList[$key]['time'] = intval($detail['totalStep']/$stepsConfig->stepsPerMinute);
+            $stepsList[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nick_name,true_name,user_img,department_id",1);
+            $stepsList[$key]['goal'] = $stepsGoal;
+            $stepsList[$key]['achive'] = ($detail['totalStep']>=$stepsGoal)?1:0;
+            $stepsList[$key]['achive_rate'] = intval(100*($detail['totalStep']/$stepsGoal));
         }
-        $data['detail']['steps'] = $stepsData;
+        $level= array_column($stepsList,'totalStep');
+        array_multisort($level,SORT_DESC,$stepsList);
+        $data['detail']['steps'] = $stepsList;
+        $data['detail']['mine'] = $stepsData['mine'];
+        $data['detail']['mine']['user_info'] = (new UserService())->getUserInfo($user_info['data']['user_id'],'user_id,nick_name,true_name,user_img');
         return $data;
     }
     /*
@@ -1102,8 +1142,9 @@ class PageElementService extends BaseService
         foreach($currentDateRange as $key => $dateRange)
         {
             $dataArr[$key] = ['dateRange'=>$dateRange,'list'=>[]];
-            $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],0,"department_id_1",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
-            foreach($stepsData as $detail)
+            $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],0,"department_id_1",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
+            $stepsList = $stepsData['list'];
+            foreach($stepsList as $detail)
             {
                 $dataArr[$key]['list'][$detail['department_id_1']] = $detail;
             }
@@ -1111,10 +1152,11 @@ class PageElementService extends BaseService
         foreach($currentDateRange as $key => $dateRange)
         {
             $userCount = (new UserService())->getUserCountByDepartment($company_info->company_id,0);
-            $stepsData = (new StepsService())->getStepsDataByDate($dateRange,$user_info['data']['company_id'],0,"",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
-            if(count($stepsData)>=1)
+            $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],0,"",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
+            $stepsList = $stepsData['list'];
+            if(count($stepsList)>=1)
             {
-                $dataArr[$key]['list'][0] = $stepsData['0'];
+                $dataArr[$key]['list'][0] = $stepsList['0'];
                 $dataArr[$key]['list'][0]['department_name'] = $company_info->company_name;
                 $dataArr[$key]['list'][0]['user_count'] = $userCount;
                 $dataArr[$key]['list'][0]['goal'] = $userCount*$dailyStep*$dateRange['days'];
@@ -1138,6 +1180,16 @@ class PageElementService extends BaseService
             }
         }
         $data['detail']= $dataArr;
+        return $data;
+    }
+
+    /*
+     * 获取公司部门信息
+     */
+    public function getElementPage_companyDepartment($data,$params,$user_info,$company_id){
+
+        $department_data = (new DepartmentService())->getCompanyDepartment($company_id);
+        $data['detail']['department'] = $department_data;
         return $data;
     }
 }
