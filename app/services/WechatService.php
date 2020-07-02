@@ -293,7 +293,6 @@ class WechatService extends BaseService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $output = curl_exec($ch);
         curl_close($ch);
-        $this->wechat_logger->info(["url"=>$url,"return"=>$output]);
         return json_decode($output, true);
     }
 
