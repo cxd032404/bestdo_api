@@ -58,7 +58,6 @@ class ActivityController extends BaseController
         $activityData['checkin'] = json_decode($data['checkin']??"",true);
 
         //ALTER TABLE `config_activity` ADD `connect_activity_id` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '关联的活动id' AFTER `activity_id`, ADD INDEX (`connect_activity_id`);
-
         //创建活动
         $create = (new ActivityService())->createActivity($activityData, $userInfo);
 		if($create['result'])

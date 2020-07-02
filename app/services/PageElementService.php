@@ -1177,7 +1177,6 @@ class PageElementService extends BaseService
             }
             else
             {
-                echo "666";
                 $total['list'][$key] =   ['totalStep'=>0,'total_daily_step'=>0,'achives'=>0,'days'=>$dateRange['days']];
             }
         }

@@ -80,7 +80,8 @@ class ActivityService extends BaseService
         $activityParams['weekly_rebuild'] = json_encode($activityParams['weekly_rebuild']);
         */
         //只有有重复参数且头部为0
-        if(isset($activityParams['weekly_rebuild']) && $activityParams['connect_activity_id'] == 0)
+        $nextList = [];
+        if(isset($activityParams['weekly_rebuild']) && is_array($activityParams['weekly_rebuild']) && $activityParams['connect_activity_id'] == 0)
         {
             $activityParams = $this->generateTimeForActivity($activityParams);
             if(!$activityParams)
@@ -92,6 +93,7 @@ class ActivityService extends BaseService
                 $nextList = $this->generateNextActivityWeekly($activityParams);
             }
         }
+        //print_r($activityParams);die();
         //活动时间校验
         if($activityParams['start_time']=="" || $activityParams['end_time']=="")
         {
