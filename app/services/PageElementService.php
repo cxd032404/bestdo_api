@@ -1095,6 +1095,10 @@ class PageElementService extends BaseService
             $t[$date]['achive_rate'] = intval(100*($detail['totalStep']/$stepsGoal));
         }
         $data['detail']['steps'] = array_values($t);
+        if(count($data['detail']['steps'])==1)
+        {
+            $data['detail']['steps'] =  $data['detail']['steps']['0'];
+        }
         return $data;
     }
 
@@ -1207,7 +1211,7 @@ class PageElementService extends BaseService
                 }
             }
             ksort($dataArr);
-        $data['detail']= array_values($dataArr);
+        $data['detail']= $dataArr;
         /*
         foreach($currentDateRange as $key => $dateRange)
         {
