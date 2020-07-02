@@ -1141,6 +1141,7 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_departmentStepsAchiveRate($data,$params,$user_info,$company_id){
+        $userService = new UserService();
         $company_info = (new CompanyService())->getCompanyInfo($company_id);
         if(isset($company_info->detail))
         {
@@ -1151,6 +1152,64 @@ class PageElementService extends BaseService
         $currentDate = date("Y-m-d",$currentTime);
         $currentDateRange = (new StepsService())->getStepsDateRange($user_info['data']['company_id'],$currentDate);
         $dataArr = [];
+        foreach($currentDateRange as $key => $dateRange)
+        {
+            //$dataArr[$key] = ['dateRange'=>$dateRange,'list'=>[]];
+            $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],0,"department_id_1",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
+            $stepsList = $stepsData['list'];
+            foreach($stepsList as $detail)
+            {
+                $detail['days'] = $dateRange['days'];
+                $dataArr[$detail['department_id_1']]['list'][$key] = $detail;
+            }
+        }
+        $total = ["list"=>[]];
+        $total['department_name'] = "全员总达成率";//$company_info->company_name;
+        $total['user_count'] = $userService->getUserCountByDepartment($company_info->company_id,0);
+        foreach($currentDateRange as $key => $dateRange)
+        {
+            $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],0,"",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
+            $stepsList = $stepsData['list'];
+            if(count($stepsList)>=1)
+            {
+                $total['list'][$key] = $stepsList['0'];
+                $total['list'][$key]['days'] = $dateRange['days'];
+            }
+            else
+            {
+                echo "666";
+                $total['list'][$key] =   ['totalStep'=>0,'total_daily_step'=>0,'achives'=>0,'days'=>$dateRange['days']];
+            }
+        }
+        $dataArr['0'] = $total;
+        $departmentList = (new DepartmentService())->getDepartmentListByParent($user_info['data']['company_id'],0);
+        foreach($departmentList as $key => $departmentInfo)
+        {
+            if (!isset($dataArr[$departmentInfo->department_id]))
+            {
+                foreach ($currentDateRange as $range => $dateRange)
+                {
+                    $list[$range] = array_merge(['totalStep' => 0, 'total_daily_step' => 0,'achives'=>0 ], ['days' => $dateRange['days']]);
+                }
+                $dataArr[$departmentInfo->department_id] = ["list" => $list];
+            }
+            $dataArr[$departmentInfo->department_id]['department_name'] = $departmentInfo->department_name;
+            $dataArr[$departmentInfo->department_id]['user_count'] = $userService->getUserCountByDepartment($company_info->company_id, $departmentInfo->department_id);
+        }
+            //continue;
+            foreach($dataArr as $department_id => $Listdata)
+            {
+                foreach($Listdata['list']  as $dateType=> $detail)
+                {
+                    $detail['goal'] =  $Listdata['user_count']*$dailyStep*$detail['days'];
+                    $detail['achive_rate'] = sprintf("%10.2f",($detail['goal']==0?0:$detail['totalStep']/$detail['goal'])*100);
+
+                    $dataArr[$department_id]['list'][$dateType] = $detail;
+                }
+            }
+            ksort($dataArr);
+        $data['detail']= array_values($dataArr);
+        /*
         foreach($currentDateRange as $key => $dateRange)
         {
             $dataArr[$key] = ['dateRange'=>$dateRange,'list'=>[]];
@@ -1170,8 +1229,8 @@ class PageElementService extends BaseService
             {
                 $userCount = (new UserService())->getUserCountByDepartment($company_info->company_id,0);
                 $total = $stepsList['0'];
-                $total['department_id'] = 0;
-                $total['department_name'] = '全员总达成率';
+                $total['department_id_1'] = 0;
+                $total['department_name'] = "全员总达成率";//$company_info->company_name;
                 $total['user_count'] = $userCount;
                 $total['goal'] = $userCount*$dailyStep*$dateRange['days'];
                 $total['achive_rate'] = sprintf("%10.2f",($total['goal']==0?0:$total['totalStep']/$total['goal'])*100);
@@ -1194,13 +1253,15 @@ class PageElementService extends BaseService
                 $dataArr[$dateType]['list'][$departmentInfo->department_id]['goal'] = $userCount*$dailyStep*$Listdata['dateRange']['days'];
                 $dataArr[$dateType]['list'][$departmentInfo->department_id]['achive_rate'] = sprintf("%10.2f",($dataArr[$dateType]['list'][$departmentInfo->department_id]['goal']==0?0:$dataArr[$dateType]['list'][$departmentInfo->department_id]['totalStep']/$dataArr[$dateType]['list'][$departmentInfo->department_id]['goal'])*100);
             }
-            array_multisort(array_column($dataArr[$dateType]['list'],"achive_rate"),SORT_ASC,$dataArr[$dateType]['list']);
-            $dataArr[$dateType]['list'][] = $dataArr[$dateType]['total'];
-            krsort($dataArr[$dateType]['list']);
+            $dataArr[$dateType]['list'][0] = $dataArr[$dateType]['total'];
+            ksort($dataArr[$dateType]['list']);
+            //array_multisort(array_column($dataArr[$dateType]['list'],"department_id_1"),SORT_ASC,$dataArr[$dateType]['list']);
+            //krsort($dataArr[$dateType]['list']);
             $dataArr[$dateType]['list'] = array_values($dataArr[$dateType]['list']);
+            unset($dataArr[$dateType]['total']);
         }
-
         $data['detail']= $dataArr;
+        */
         return $data;
     }
 
