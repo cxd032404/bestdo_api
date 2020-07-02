@@ -293,6 +293,7 @@ class WechatService extends BaseService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $output = curl_exec($ch);
         curl_close($ch);
+        $this->wechat_logger->info(["url"=>$url,"return"=>$output]);
         return json_decode($output, true);
     }
 
@@ -337,7 +338,7 @@ class WechatService extends BaseService
     }
 
 
-    //根据code获取小程序的用户身份信息
+    //根据code获取小程:q!序的用户身份信息
     public function getUserInfoByCode_mini_program($wechat = [],$code="")
     {
         $wechat_cache = $this->config->cache_settings->mini_program_code;
@@ -346,14 +347,14 @@ class WechatService extends BaseService
         if($cache!= "")
         {
             $user_info = json_decode($cache,true);
-            if(isset($user_info['unionid']))
+            if(isset($user_info['openid']))
             {
             }
             else
             {
                 $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
                 $user_info = $this->getJson($url_get);
-                if(isset($user_info['unionid']))
+                if(isset($user_info['openid']))
                 {
                     //用户token存入redis缓存中
                     $this->redis->set($redis_key,json_encode($user_info));
@@ -365,7 +366,7 @@ class WechatService extends BaseService
         {
             $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
             $user_info = $this->getJson($url_get);
-            if(isset($user_info['unionid']))
+            if(isset($user_info['openid']))
             {
                 //用户token存入redis缓存中
                 $this->redis->set($redis_key,json_encode($user_info));

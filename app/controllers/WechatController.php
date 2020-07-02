@@ -46,7 +46,7 @@ class WechatController extends BaseController
         $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
         if($wechatUserInfo['unionid'])
         {
-            $return  = (new UserService)->miniProgramLogin($wechatUserInfo['unionid']);
+            $return  = (new UserService)->miniProgramLogin($wechatUserInfo['unionid']??"",$wechatUserInfo['openid']??"");
             if($return['result'])
             {
                 return $this->success($return['data']);
@@ -74,7 +74,7 @@ class WechatController extends BaseController
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         //通过code获取sessionKey,openid,Unionid
         $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
-        if($wechatUserInfo['unionid'])
+        if($wechatUserInfo['openid'])
         {
             return $this->success($wechatUserInfo);
         }
@@ -124,6 +124,7 @@ class WechatController extends BaseController
         $data = trim($data['encryptedData']??"");
         //解码
         $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
+
         if($decrypt['unionId'])
         {
             $return  = (new UserService)->miniProgramLogin($decrypt['unionId']);

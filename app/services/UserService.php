@@ -900,6 +900,10 @@ class UserService extends BaseService
     }
     public function getUserInfoByUnionId($unionId = "")
     {
+        if($unionId=="")
+        {
+            return [];
+        }
         //获取列表作者信息
         $userInfo = \HJ\UserInfo::findFirst([
             "unionid='".$unionId."' and is_del=0",
@@ -914,6 +918,23 @@ class UserService extends BaseService
             return [];
         }
     }
+    public function getUserInfoByMiniprogramId($miniprogramId = "")
+    {
+        //获取列表作者信息
+        $userInfo = \HJ\UserInfo::findFirst([
+            "mini_program_id='".$miniprogramId."' and is_del=0",
+            'columns'=>'*',
+        ]);
+        if(isset($userInfo->user_id))
+        {
+            return $userInfo;
+        }
+        else
+        {
+            return [];
+        }
+    }
+
     //微信通过openID登录
     public function wechatLogin($openId = "")
     {
@@ -936,16 +957,22 @@ class UserService extends BaseService
         return $return;
     }
     //微信通过openID登录
-    public function miniProgramLogin($unionId = "")
+    public function miniProgramLogin($unionId = "",$miniprogramId = "")
     {
         $userinfo = $this->getUserInfoByUnionId($unionId);
         if(!$userinfo)
         {
-            $return = [];
-            $return['result'] = 0;
-            $return['msg']  = $this->msgList['user_unionid_valid'];
-            $return['code']  = 403;
-        }else {
+            $userinfo = $this->getUserInfoByMiniprogramId($miniprogramId);
+            if(!$userinfo)
+            {
+                $return = [];
+                $return['result'] = 0;
+                $return['msg']  = $this->msgList['user_unionid_valid'];
+                $return['code']  = 403;
+            }
+        }
+        if(!isset($return['result']))
+        {
             $currentTime = time();
             //修改用户登录时间
             $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', $currentTime),
