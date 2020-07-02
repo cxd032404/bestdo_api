@@ -1007,7 +1007,21 @@ class PageElementService extends BaseService
         //日期端类型 1自然 2当前推
         $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
-        $departmentId = $this->getFromParams($params,'department_id',0);
+        $departmentId = $this->getFromParams($params,'department_id',"");
+        if($departmentId=="")
+        {
+            $userInfo = $userService->getUserInfo($user_info['data']['user_id'],"user_id,company_id,department_id");
+            $department = (new DepartmentService())->getDepartment($userInfo->department_id);
+            if($department['current_level']==3)
+            {
+                $departmentId = $department['department_id_2'];
+            }
+            else
+            {
+                $name = "department_id_".$department['current_level'];
+                $departmentId = $department[$name];
+            }
+        }
         $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],$departmentId,"user_id",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
         $stepsList = $stepsData['list'];
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
@@ -1176,6 +1190,8 @@ class PageElementService extends BaseService
                 $dataArr[$dateType]['list'][$departmentInfo->department_id]['goal'] = $userCount*$dailyStep*$Listdata['dateRange']['days'];
                 $dataArr[$dateType]['list'][$departmentInfo->department_id]['achive_rate'] = sprintf("%10.2f",($dataArr[$dateType]['list'][$departmentInfo->department_id]['goal']==0?0:$dataArr[$dateType]['list'][$departmentInfo->department_id]['totalStep']/$dataArr[$dateType]['list'][$departmentInfo->department_id]['goal'])*100);
             }
+
+
         }
         $data['detail']= $dataArr;
         return $data;
@@ -1186,9 +1202,23 @@ class PageElementService extends BaseService
      */
     public function getElementPage_companyDepartment($data,$params,$user_info,$company_id)
     {
-
+        $user_info = (new UserService())->getUserInfo($user_info['data']['user_id'],'user_id,department_id');
+        $department_id = $user_info->department_id;
+        $departmentService = new DepartmentService();
+        $department = $departmentService->getDepartment($department_id);
         $department_data = (new DepartmentService())->getCompanyDepartment($company_id);
+        foreach($department_data as $key => $value)
+        {
+            if($value['department_id'] == $department['department_id_1'])
+            {
+                $department_data[$key]['checked'] = 1;
+            }else
+            {
+                $department_data[$key]['checked'] = 0;
+            }
+        }
         $data['detail']['department'] = $department_data;
+        return $data;
     }
     /*
      * 精彩回顾列表

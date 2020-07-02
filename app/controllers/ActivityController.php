@@ -222,7 +222,38 @@ class ActivityController extends BaseController
         {
             $this->failure([],$return['msg']);
         }
+    }
+    /*
+     * 活动签到也活动俱乐部名称和活动时间
+     */
+    public function activityInfoAction(){
+        /*验证token开始*/
+        $return  = (new UserService)->getDecrypt();
+        if($return['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        /*验证token结束*/
+        $user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+        //接收参数并格式化
+        $data = $this->request->get();
+        $activity_id = isset($data['activity_id'])?intval($data['activity_id']):0;
+        $activity_info = (new ActivityService())->getActivityInfo($activity_id,'activity_id,club_id,start_time,end_time');
+        $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,club_name,icon');
+        $time = date('Y年m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('H:i',strtotime($activity_info->end_time));
+        $data = [
+            'club_name'=>$club_info->club_name,
+            'club_icon'=>$club_info->icon,
+            'time'=>$time
+        ];
+        if($activity_info && $club_info)
+        {
+            $this->success($data??[],'请求成功');
+        }else
+        {
+            $this->failure([],'获取数据失败');
+        }
 
     }
+
 
 }

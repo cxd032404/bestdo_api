@@ -707,8 +707,6 @@ class ActivityService extends BaseService
         {
             $return  = ['result'=>0,"msg"=>$this->msgList["activity_empty"],'code'=>400];
         }
-
-
         return $return;
     }
 

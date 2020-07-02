@@ -196,7 +196,9 @@ class StepsService extends BaseService
     }
     public function getStepsDataByDate($user_id,$dateRange,$company_id,$department_id,$group = "user_id",$page = 1,$pageSize = 3)
     {
-        $redis_key = md5(json_encode([$dateRange,$company_id,$department_id,$group]));
+        $key = md5(json_encode([$dateRange,$company_id,$department_id,$group]));
+        $cache_settings = $this->config->cache_settings->steps_data;
+        $redis_key = $cache_settings->name.$key;
         $cache = $this->redis->get($redis_key);
         //默认不拿数据库
         $from_db = 0;
@@ -257,7 +259,7 @@ class StepsService extends BaseService
             }
             $steps = (new \HJ\Steps())::find($params)->toArray();
             $this->redis->set($redis_key,json_encode($steps));
-            //expire
+            $this->redis->expire($redis_key,$cache_settings->expire);
         }
         $start = ($pageSize-1)*$page;
         $end = ($start+$pageSize-1);

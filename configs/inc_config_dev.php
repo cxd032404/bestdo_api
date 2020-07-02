@@ -145,6 +145,7 @@ $config = [
         'department_info'=>['name'=>'department_info_','expire'=>3600],//部门信息
         'department_parent'=>['name'=>'department_parent_','expire'=>3600],//父级子部门信息
         'department_user_count'=>['name'=>'department_user_count_','expire'=>3600],//部门（包含子部门）人数
+        'steps_data'=>['name'=>'steps_rank_','expir'=>3600]
     ],
     'special_code'=>[
         "need_club_membership"=>999, //需要加入俱乐部
