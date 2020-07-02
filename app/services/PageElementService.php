@@ -63,9 +63,7 @@ class PageElementService extends BaseService
                 $data['data']['data'][$k]->is_kudos = 1;
             }
         }
-
             return $data;
-        
     }
     /*
         * 报名记录
@@ -1132,6 +1130,24 @@ class PageElementService extends BaseService
             }
         }
         $data['detail']= $dataArr;
+        return $data;
+    }
+    /*
+     * 精彩回顾列表
+     * userinfo 用户信息
+     * company_id 公司id
+     * data 用户包含的element信息
+     * params 页面标识和company_id
+     */
+    public function getElementPage_hotList($data,$params,$user_info,$company_id){
+        $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
+        $companyInfo->detail = json_decode($companyInfo->detail);
+        //获取企业指定的精彩回顾列表
+        $list_id = $companyInfo->detail->hot??0;
+        $params = ["list_id"=>$list_id];
+        $data = $this->getElementPage_list($data,$params,$user_info,$company_id);
+        $available = $this->getElementPage_post($data,$params,$user_info,$company_id);
+        $data['data']['available'] = $available['detail']['available']['result'];
         return $data;
     }
 }
