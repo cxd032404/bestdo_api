@@ -1170,8 +1170,8 @@ class PageElementService extends BaseService
             {
                 $userCount = (new UserService())->getUserCountByDepartment($company_info->company_id,0);
                 $total = $stepsList['0'];
-                $total['department_id'] = 0;
-                $total['department_name'] = $company_info->company_name;
+                $total['department_id_1'] = 0;
+                $total['department_name'] = "全员总达成率";//$company_info->company_name;
                 $total['user_count'] = $userCount;
                 $total['goal'] = $userCount*$dailyStep*$dateRange['days'];
                 $total['achive_rate'] = sprintf("%10.2f",($total['goal']==0?0:$total['totalStep']/$total['goal'])*100);
@@ -1194,10 +1194,12 @@ class PageElementService extends BaseService
                 $dataArr[$dateType]['list'][$departmentInfo->department_id]['goal'] = $userCount*$dailyStep*$Listdata['dateRange']['days'];
                 $dataArr[$dateType]['list'][$departmentInfo->department_id]['achive_rate'] = sprintf("%10.2f",($dataArr[$dateType]['list'][$departmentInfo->department_id]['goal']==0?0:$dataArr[$dateType]['list'][$departmentInfo->department_id]['totalStep']/$dataArr[$dateType]['list'][$departmentInfo->department_id]['goal'])*100);
             }
-            array_multisort(array_column($dataArr[$dateType]['list'],"achive_rate"),SORT_ASC,$dataArr[$dateType]['list']);
-            $dataArr[$dateType]['list'][] = $dataArr[$dateType]['total'];
-            krsort($dataArr[$dateType]['list']);
+            $dataArr[$dateType]['list'][0] = $dataArr[$dateType]['total'];
+            ksort($dataArr[$dateType]['list']);
+            //array_multisort(array_column($dataArr[$dateType]['list'],"department_id_1"),SORT_ASC,$dataArr[$dateType]['list']);
+            //krsort($dataArr[$dateType]['list']);
             $dataArr[$dateType]['list'] = array_values($dataArr[$dateType]['list']);
+            unset($dataArr[$dateType]['total']);
         }
 
         $data['detail']= $dataArr;
