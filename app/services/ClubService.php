@@ -56,7 +56,7 @@ class ClubService extends BaseService
       $club_member_log = (new \hj\ClubMemberLog())->findfirst($select_params);
       if(isset($club_member_log->log_id)&&$club_member_log->result == 0)
       {
-          $return = ['result'=> 1,'data'=>$club_member_log,'msg'=>'申请成功'];
+          $return = ['result'=> 0,'data'=>$club_member_log,'msg'=>'已经提交过无须重复申请'];
           return $return;
       }
       $current_time = time();

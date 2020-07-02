@@ -17,7 +17,7 @@ class ActivityService extends BaseService
         "activity_update_success"=>"活动更新成功",
         "activity_update_fail"=>"活动更新失败",
         "activity_member_limit"=>"活动人数已满",
-        "activity_club_limit"=>"申请加入 ",
+        "activity_club_limit"=>"申请加入",
     ];
     //生成每周的重复性活动数据
     public function generateNextActivityWeekly($activityParams)
@@ -445,6 +445,7 @@ class ActivityService extends BaseService
                     $club_info = (new ClubService())->getClubInfo($activityInfo->club_id,'club_id,club_name');
                     $return['msg']  = $this->msgList['activity_club_limit'].$club_info->club_name;
                     $return['code'] = $this->config->special_code['need_club_membership'];
+                    $return['data']['club_id'] = $club_info->club_id;
             }else{
                 $activityLog = $this->getActivityLogByUser($user_id,$activity_id);
                 if(isset($activityLog->id)){
@@ -707,6 +708,8 @@ class ActivityService extends BaseService
         {
             $return  = ['result'=>0,"msg"=>$this->msgList["activity_empty"],'code'=>400];
         }
+
+
         return $return;
     }
 

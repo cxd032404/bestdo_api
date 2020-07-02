@@ -148,7 +148,8 @@ class ActivityController extends BaseController
         $return  = (new ActivityService())->activityApply($activity_id,$user_id);
         //返回值判断
         if($return['result']!=1){
-            return $this->failure([],$return['msg'],$return['code']);
+            $return['data'] = $return['data']??[];
+            return $this->failure($return['data'],$return['msg'],$return['code']);
         }
         return $this->success($return['data'],$return['msg'],$return['code']);
     }

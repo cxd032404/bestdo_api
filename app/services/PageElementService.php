@@ -1171,7 +1171,7 @@ class PageElementService extends BaseService
                 $userCount = (new UserService())->getUserCountByDepartment($company_info->company_id,0);
                 $total = $stepsList['0'];
                 $total['department_id'] = 0;
-                $total['department_name'] = $company_info->company_name;
+                $total['department_name'] = '全员总达成率';
                 $total['user_count'] = $userCount;
                 $total['goal'] = $userCount*$dailyStep*$dateRange['days'];
                 $total['achive_rate'] = sprintf("%10.2f",($total['goal']==0?0:$total['totalStep']/$total['goal'])*100);
