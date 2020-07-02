@@ -210,10 +210,14 @@ class StepsService extends BaseService
         else
         {
             $steps = json_decode($cache,true);
-            if(count($steps)==0 || is_array($steps))
+            if(count($steps)==0 || !is_array($steps))
             {
                 //缓存为空，或者 是缓存解不开
                 $from_db = 1;
+            }
+            else
+            {
+                //echo "cached";
             }
         }
         if($from_db == 1)
