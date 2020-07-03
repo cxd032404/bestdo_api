@@ -1032,7 +1032,12 @@ class PageElementService extends BaseService
             $stepsList[$key]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
             $stepsList[$key]['kcal'] = intval($detail['totalStep']/$stepsConfig->stepsPerKcal);
             $stepsList[$key]['time'] = intval($detail['totalStep']/$stepsConfig->stepsPerMinute);
-            $stepsList[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nick_name,true_name,user_img,department_id",1);
+            $userInfo = $userService->getUserInfo($detail['user_id'],"user_id,nick_name,true_name,user_img,department_id",1);
+            if(!isset($userInfo->user_id))
+            {
+                $userInfo = ["user_img"=>"","true_name"=>"未知用户","user_id"=>$userInfo];
+            }
+            $stepsList[$key]['userInfo'] = $userInfo;
             $stepsList[$key]['goal'] = $stepsGoal;
             $stepsList[$key]['achive'] = ($detail['totalStep']>=$stepsGoal)?1:0;
             $stepsList[$key]['achive_rate'] = intval(100*($detail['totalStep']/$stepsGoal));
