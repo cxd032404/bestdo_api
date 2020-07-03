@@ -20,6 +20,7 @@ class ListController extends BaseController
 
     public function postAction()
     {
+        echo 111;die();
         //调用user_token解密方法
         $tokenInfo = (new UserService)->getDecrypt();
         //返回值判断

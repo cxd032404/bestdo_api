@@ -42,7 +42,7 @@ class PageElementService extends BaseService
             ])->toArray();
             $userList = array_column($userList,'user_id');
         }
-        $data['data'] = (new PostsService())->getPostsList($listInfo->list_id,$userList,"*","post_id DESC",$this->getFromParams($params,"start",0),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3));
+        $data['data'] = (new PostsService())->getPostsList($listInfo->list_id,$userList,"*","post_id DESC",$this->getFromParams($params,"start",0),$this->getFromParams($params,"page",1),$this->getFromParams($params,"page_size",3),0);
         foreach($data['data']['data'] as $k => $postDetail)
         {
             $data['data']['data'][$k]->source = json_decode($postDetail->source,true);
@@ -1303,7 +1303,8 @@ class PageElementService extends BaseService
         $companyInfo->detail = json_decode($companyInfo->detail);
         //获取企业指定的精彩回顾列表
         $list_id = $companyInfo->detail->hot??0;
-        $params = ["list_id"=>$list_id];
+        $params['list_id'] = $list_id;
+        $params['page_size'] = $this->getFromParams($params,"pageSize",3);
         $data = $this->getElementPage_list($data,$params,$user_info,$company_id);
         $available = $this->getElementPage_post($data,$params,$user_info,$company_id);
         $data['data']['available'] = $available['detail']['available']['result'];
