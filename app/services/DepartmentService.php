@@ -194,7 +194,7 @@ class DepartmentService extends BaseService
      * 获取公司所有部门
      */
     public function getCompanyDepartment($company_id){
-        $department = (new \HJ\Department())->find(['company_id ='.$company_id,'columns'=>'department_id,parent_id,department_name']);
+        $department = (new \HJ\Department())->find(['company_id ='.$company_id,'columns'=>'department_id,parent_id,department_name','order'=>"department_id"]);
         $tree = [];
         if($department) {
             $department = $department->toArray();
@@ -204,7 +204,7 @@ class DepartmentService extends BaseService
                 if($value['parent_id']==0)
                 {
                     $tree[] = &$department[$value['department_id']];
-                }else
+                }elseif(isset($tree[$value['parent_id']]))
                 {
                     $department[$value['parent_id']]['child'][] = &$department[$key];
                 }
