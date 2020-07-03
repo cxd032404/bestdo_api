@@ -94,7 +94,7 @@ class WechatService extends BaseService
     public function updateUserWithMiniProgram($user_id=0,$miniProgramUserInfo="")
     {
         $miniProgramUserInfo = json_decode($miniProgramUserInfo,true);
-        $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'],$this->key_config->wechat_mini_program, $miniProgramUserInfo['session_key'] );
+        $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'],$this->key_config->wechat_mini_program, $miniProgramUserInfo['code'] );
 
         $miniProgramUserInfo = json_decode($miniProgramUserInfo['data'],true);
         if(isset($miniProgramUserInfo['openId']))
@@ -294,6 +294,7 @@ class WechatService extends BaseService
         $output = curl_exec($ch);
         curl_close($ch);
         $log = ['url'=>$url,'return'=>json_decode($output,true)];
+        $log = ['url'=>$url,'return'=>json_decode($output,true)];
         $this->wechat_code_logger->info(json_encode($log));
         return json_decode($output, true);
     }
@@ -384,11 +385,12 @@ class WechatService extends BaseService
      *
      * @return int 成功0，失败返回对应的错误码
      */
-    public function decryptData( $encryptedData, $iv, $wechat, $sessionKey )
+    public function decryptData( $encryptedData, $iv, $wechat, $code )
     {
-        $decryptClass = new WXBizDataCrypt($wechat['appid'],$sessionKey);
+        $sessionKey = $this->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        $decryptClass = new WXBizDataCrypt($wechat['appid'],$sessionKey['session_key']??"");
         $errCode = $decryptClass->decryptData($encryptedData, $iv, $data );
-        $log = ['encryptedData'=>$encryptedData,'iv'=>$iv,'sessionKey'=>$sessionKey,'errorCode'=>$errCode,'data'=>$data];
+        $log = ['encryptedData'=>$encryptedData,'iv'=>$iv,'code'=>$code,'sessionKey'=>$sessionKey,'errorCode'=>$errCode,'data'=>$data];
         $this->wechat_decrypt_logger->info(json_encode($log));
         if ($errCode == 0)
         {

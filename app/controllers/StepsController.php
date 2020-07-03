@@ -43,11 +43,11 @@ class StepsController extends BaseController
         $userInfo = $return['data']['user_info'];
         //接收参数并格式化
         $data = $this->request->get();
-        $session_key = trim($data['session_key']??"");
+        $code = trim($data['code']??"");
         $iv = trim($data['iv']??"");
         $data = trim($data['encryptedData']??"");
         //解码
-        $stepsData = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
+        $stepsData = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$code);
         //更新步数
         $update = (new StepsService())->updateStepsForUser($userInfo, $stepsData);
         return $this->success($update);
