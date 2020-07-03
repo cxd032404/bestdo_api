@@ -94,11 +94,11 @@ class WechatController extends BaseController
     {
         //接收参数并格式化
         $data = $this->request->get();
-        $session_key = trim($data['session_key']??"");
+        $code = trim($data['code']??"");
         $iv = trim($data['iv']??"");
         $data = trim($data['encryptedData']??"");
         //解码
-        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
+        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$code);
         if($decrypt['result'])
         {
             $this->success($decrypt['data']??[],"",$decrypt['code']);
@@ -106,40 +106,6 @@ class WechatController extends BaseController
         else
         {
             $this->failure([],$decrypt['msg'],$decrypt['code']);
-        }
-    }
-    /*
-     * 小程序code登录
-     * 参数
-     * session_key
-     * encryptedData：密文
-     * iv：偏移量
-     * */
-    public function miniProgramLoginAction_old()
-    {
-        //接收参数并格式化
-        $data = $this->request->get();
-        $session_key = trim($data['session_key']??"");
-        $iv = trim($data['iv']??"");
-        $data = trim($data['encryptedData']??"");
-        //解码
-        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$session_key);
-
-        if($decrypt['unionId'])
-        {
-            $return  = (new UserService)->miniProgramLogin($decrypt['unionId']);
-            if($return['result'])
-            {
-                return $this->success($return['data']);
-            }
-            else
-            {
-                $this->failure([],$decrypt['msg'],$decrypt['code']);
-            }
-        }
-        else
-        {
-            return $this->failure([],"用户身份获取失败",403);
         }
     }
 }
