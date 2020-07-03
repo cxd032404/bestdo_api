@@ -293,6 +293,8 @@ class WechatService extends BaseService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $output = curl_exec($ch);
         curl_close($ch);
+        $log = ['url'=>$url,'return'=>json_decode($output,true)];
+        $this->wechat_code_logger->info(json_encode($log));
         return json_decode($output, true);
     }
 
@@ -337,7 +339,7 @@ class WechatService extends BaseService
     }
 
 
-    //根据code获取小程:q!序的用户身份信息
+    //根据code获取小程序的用户身份信息
     public function getUserInfoByCode_mini_program($wechat = [],$code="")
     {
         $wechat_cache = $this->config->cache_settings->mini_program_code;
@@ -386,6 +388,8 @@ class WechatService extends BaseService
     {
         $decryptClass = new WXBizDataCrypt($wechat['appid'],$sessionKey);
         $errCode = $decryptClass->decryptData($encryptedData, $iv, $data );
+        $log = ['encryptedData'=>$encryptedData,'iv'=>$iv,'sessionKey'=>$sessionKey,'errorCode'=>$errCode,'data'=>$data];
+        $this->wechat_decrypt_logger->info(json_encode($log));
         if ($errCode == 0)
         {
             return ["result"=>1,"data"=>$data,"code"=>200];

@@ -76,13 +76,21 @@ $config = [
         'path_services'  => ROOT_PATH . '/app/services/',
         'path_model'     => ROOT_PATH . '/app/models/'
     ],
-    'wechat_logger' => [
+    'wechat_decrypt_logger' => [
         'adapter' =>'logger',
-        'path'     => ROOT_PATH . '/runtime/wechat_log/',
+        'path'     => ROOT_PATH . '/runtime/logs/',
         'format'   => '%date% [%type%] %message%',
         'date'     => 'H:i:s',
         'logLevel' => Phalcon\Logger::DEBUG,
-        'filename' => 'wechat-'.date('Y-m-d') .'.log',
+        'filename' => 'wechat_decrypt-'.date('Y-m-d') .'.log',
+    ],
+    'wechat_code_logger' => [
+        'adapter' =>'logger',
+        'path'     => ROOT_PATH . '/runtime/logs/',
+        'format'   => '%date% [%type%] %message%',
+        'date'     => 'H:i:s',
+        'logLevel' => Phalcon\Logger::DEBUG,
+        'filename' => 'wechat_code-'.date('Y-m-d') .'.log',
     ],
     'logger' => [
         'adapter' =>'logger',
