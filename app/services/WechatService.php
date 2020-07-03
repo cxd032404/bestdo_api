@@ -293,6 +293,8 @@ class WechatService extends BaseService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $output = curl_exec($ch);
         curl_close($ch);
+        $log = ['url'=>$url,'return'=>json_decode($output,true)];
+        $this->wechat_code_logger->info(json_encode($log));
         return json_decode($output, true);
     }
 
@@ -346,14 +348,14 @@ class WechatService extends BaseService
         if($cache!= "")
         {
             $user_info = json_decode($cache,true);
-            if(isset($user_info['unionid']))
+            if(isset($user_info['openid']))
             {
             }
             else
             {
                 $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
                 $user_info = $this->getJson($url_get);
-                if(isset($user_info['unionid']))
+                if(isset($user_info['openid']))
                 {
                     //用户token存入redis缓存中
                     $this->redis->set($redis_key,json_encode($user_info));
@@ -365,7 +367,7 @@ class WechatService extends BaseService
         {
             $url_get = "https://api.weixin.qq.com/sns/jscode2session?appid=".$wechat['appid']."&secret=".$wechat['appsecret']."&js_code=".$code."&grant_type=authorization_code";
             $user_info = $this->getJson($url_get);
-            if(isset($user_info['unionid']))
+            if(isset($user_info['openid']))
             {
                 //用户token存入redis缓存中
                 $this->redis->set($redis_key,json_encode($user_info));
@@ -386,6 +388,8 @@ class WechatService extends BaseService
     {
         $decryptClass = new WXBizDataCrypt($wechat['appid'],$sessionKey);
         $errCode = $decryptClass->decryptData($encryptedData, $iv, $data );
+        $log = ['encryptedData'=>$encryptedData,'iv'=>$iv,'sessionKey'=>$sessionKey,'errorCode'=>$errCode,'data'=>$data];
+        $this->wechat_decrypt_logger->info(json_encode($log));
         if ($errCode == 0)
         {
             return ["result"=>1,"data"=>$data,"code"=>200];
