@@ -43,7 +43,7 @@ class ActivityService extends BaseService
     public function generateTimeForActivity($activityParams)
     {
         $oCommon = new Common();
-        $activityParams['weekly_rebuild'] = json_decode($activityParams['weekly_rebuild'],true);
+        //$activityParams['weekly_rebuild'] = json_decode($activityParams['weekly_rebuild'],true);
         $currentDay = date("w",time());
         if(!isset($activityParams['weekly_rebuild']['start_weekday'])
             || !isset($activityParams['weekly_rebuild']['start_weekday'])
@@ -70,15 +70,7 @@ class ActivityService extends BaseService
     public function createActivity($activityParams = [],$user_info)
     {
         $currentTime = time();
-        /*
-        $activityParams['activity_name'] = "测试活动";
-        $activityParams['weekly_rebuild'] = ["start_weekday"=>0,"end_weekday"=>5,
-            "start_time" => date("H:i:s",$currentTime),"end_time"=>date("H:i:s",$currentTime + 7200),
-            "apply_start_weekday"=>6,"apply_end_weekday"=>2,
-            "start_date"=>"2020-01-01","end_date"=>"2020-12-31"];
 
-        $activityParams['weekly_rebuild'] = json_encode($activityParams['weekly_rebuild']);
-        */
         //只有有重复参数且头部为0
         $nextList = [];
         if(isset($activityParams['weekly_rebuild']) && is_array($activityParams['weekly_rebuild']) && $activityParams['connect_activity_id'] == 0)
@@ -93,8 +85,8 @@ class ActivityService extends BaseService
                 $nextList = $this->generateNextActivityWeekly($activityParams);
             }
         }
-        //print_r($activityParams);die();
         //活动时间校验
+
         if($activityParams['start_time']=="" || $activityParams['end_time']=="")
         {
             $return  = ['result'=>0,"msg"=>"活动时间有误，请重新输入",'code'=>400];

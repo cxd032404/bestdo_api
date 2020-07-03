@@ -53,7 +53,7 @@ class ActivityController extends BaseController
         $activityData['member_limit'] = intval($data['member_limit']??100);
         $activityData['monthly_apply_limit'] = intval($data['monthly_apply_limit']??1);
         $activityData['club_id'] = intval($data['club_id']??0);
-        $activityData['weekly_rebuild'] = intval($data['weekly_rebuild']??-1);
+        $activityData['weekly_rebuild'] = $data['weekly_rebuild']??[];
         $activityData['connect_activity_id'] = intval($data['connect_activity_id']??0);
         $activityData['checkin'] = json_decode($data['checkin']??"",true);
 
