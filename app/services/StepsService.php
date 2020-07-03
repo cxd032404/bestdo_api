@@ -327,7 +327,7 @@ class StepsService extends BaseService
             $whereCondition,
             "columns"=>"date,sum(step) as totalStep",
             "group"=>"date",
-            "order"=>"date",
+            "order"=>"date DESC",
         ];
         $steps = (new \HJ\Steps())::find($params);
         return $steps->toArray();
