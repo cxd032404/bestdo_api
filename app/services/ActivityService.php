@@ -350,12 +350,12 @@ class ActivityService extends BaseService
     /*
      * 获取用户管理的活动列表
      */
-    public function getUserActivityListWithPermission($user_id,$club_id,$start = 0,$page=1,$pageSize =4){
+    public function getUserActivityListWithPermission($user_id,$club_id,$columns,$start = 0,$page=1,$pageSize =4){
         //查询用户是否有超级管理员权限
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
         {
-            $activity_list = $this->getActivityListByCompany($user_info->company_id,"activity_id,activity_name",$club_id,0);
+            $activity_list = $this->getActivityListByCompany($user_info->company_id,$columns,$club_id,0);
         }
         else
         {
@@ -364,6 +364,10 @@ class ActivityService extends BaseService
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time",$club_id,0);
         foreach($created_activity_list as $key => $created)
         {
+            if($created->club_id == 0)
+            {
+                continue;
+            }
             if(!$created)
             {
                 continue;

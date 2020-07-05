@@ -682,7 +682,8 @@ class PageElementService extends BaseService
         {
             $club_id = '';
         }
-        $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
+        $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,
+            'activity_id,activity_name,start_time,apply_start_time,club_id',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
         $managed_club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
         $managed_activity_list = $return['activity_list'];
         foreach ($managed_activity_list as $key=>$value)
