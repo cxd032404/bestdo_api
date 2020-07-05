@@ -834,7 +834,7 @@ class PageElementService extends BaseService
                 unset($activity_list[$key]);
                 continue;
             }
-            if((strtotime($activity_info->apply_start_time)<=$currentTime) && (strtotime($activity_info->apply_end_time)>=$currentTime))
+            if(($activity_info->status == 1) &&(strtotime($activity_info->apply_start_time)<=$currentTime) && (strtotime($activity_info->apply_end_time)>=$currentTime))
             {
                 $clubInfo = $clubService->getClubInfo($activity_info->club_id,"club_id,club_name,icon");
                 $activity_list[$key] = (object)array_merge((array)$activity_info,(array)$clubInfo);

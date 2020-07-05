@@ -8,6 +8,7 @@ class ActivityService extends BaseService
         "activity_apply_not_started"=>"活动尚未开启报名，请耐心等待！",
         "activity_ended"=>"活动已结束，不可报名！",
         "activity_expire"=>"当前时间不在报名时间内！",
+        "activity_cancelled"=>"活动已取消！",
         "activity_apply_success"=>"报名成功！",
         "activity_apply_fail"=>"报名失败！",
         "activity_checkin_success"=>"签到成功！",
@@ -259,8 +260,8 @@ class ActivityService extends BaseService
                     }
                     else
                     {
-                        $this->getActivityInfo($activityId,'*',0);
-                        $return  = ['result'=>1,"msg"=>$this->msgList["activity_update_success"],'data'=>$this->getActivityInfo($activity->activity_id),'code'=>200];
+                        $activityInfo  = $this->getActivityInfo($activityId,'*',0);
+                        $return  = ['result'=>1,"msg"=>$this->msgList["activity_update_success"],'data'=>$activityInfo,'code'=>200];
                     }
                 }
             }
@@ -368,16 +369,29 @@ class ActivityService extends BaseService
         {
             $activity_list = [];
         }
+        foreach($activity_list as $key => $activityInfo)
+        {
+            if(!$activityInfo || $activityInfo->club_id == 0 || $activityInfo->status!=1 )
+            {
+                unset($activity_list[$key]);
+            }
+        }
+        $activity_list = array_combine(array_column($activity_list,"activity_id"),array_values($activity_list));
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time,status",$club_id,0);
         foreach($created_activity_list as $key => $created)
         {
-
             if(!$created || $created->club_id == 0 || $created->status!=1 )
             {
-                unset($created_activity_list[$key]);
-                continue;
+                //unset($created_activity_list[$key]);
+                //continue;
             }else {
+                if(!isset($activity_list[$created->activity_id]))
+                {
+                    $activity_list[$created->activity_id] = $created;
+                }
+/*
                 $flag = 0;
+
                 foreach ($activity_list as $key2 => $manager) {
                     if (!$manager) {
                         continue;
@@ -391,7 +405,7 @@ class ActivityService extends BaseService
                     continue;
                 }
                 $activity_list[] = $created;
-            }
+*/            }
         }
         if($start>0)
         {
@@ -435,7 +449,11 @@ class ActivityService extends BaseService
             $is_member = (new ClubService())->checkUserIsClubMember($user_id,$activityInfo->club_id);
             if(!isset($activityInfo->activity_id)){
                 $return['msg']  = $this->msgList['activity_empty'];
-            }else if(time()<strtotime($activityInfo->apply_start_time)){
+            }
+            else if($activityInfo->status!=1){
+                $return['msg']  = $this->msgList['activity_cancelled'];
+            }
+            else if(time()<strtotime($activityInfo->apply_start_time)){
                 $return['msg']  = $this->msgList['activity_apply_not_started'];
             }else if(time()>strtotime($activityInfo->end_time)){
                 $return['msg']  = $this->msgList['activity_ended'];
@@ -490,7 +508,7 @@ class ActivityService extends BaseService
 
         if($club_id != -1)
         {
-            $conditions .= "and 'club_id' = ".$club_id.' and status = 1';
+            $conditions .= "and 'club_id' = ".$club_id;
         }
         $cacheSetting = $this->config->cache_settings->activity_list_by_company;
         $cacheName = $cacheSetting->name.$company_id;
@@ -541,7 +559,7 @@ class ActivityService extends BaseService
         foreach($activityList as $key => $value)
         {
             $activityInfo = $this->getActivityInfo($value->activity_id,$columns);
-            if(!$activityInfo)
+            if(!$activityInfo || $activityInfo->status!=1)
             {
                 unset($activityList[$key]);
             }else{
@@ -607,7 +625,7 @@ class ActivityService extends BaseService
         foreach($activityList as $key => $value)
         {
                 $activityInfo = $this->getActivityInfo($value->activity_id, $columns);
-                if(!$activityInfo)
+                if(!$activityInfo || $activityInfo->status!=1)
                 {
                     unset($activityList[$key]);
                 }else
@@ -671,51 +689,58 @@ class ActivityService extends BaseService
         $activityInfo = $this->getActivityInfo($activity_id,"*");
         if(isset($activityInfo->activity_id))
         {
-            $currentTime = time();
-            if((strtotime($activityInfo->apply_start_time)<=$currentTime) && (strtotime($activityInfo->apply_end_time)>=$currentTime))
+            if($activityInfo->status==1)
             {
-                $detail = json_decode($activityInfo->detail,true);
-                $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
-                //校验距离
-                if($distance <= $this->config->checkin_max_distance)
+                $currentTime = time();
+                if((strtotime($activityInfo->apply_start_time)<=$currentTime) && (strtotime($activityInfo->apply_end_time)>=$currentTime))
                 {
-                    //获取报名记录
-                    $activityLog = $this->getActivityLogByUser($user_id,$activity_id);
-                    //如果找到
-                    if(isset($activityLog->id))
+                    $detail = json_decode($activityInfo->detail,true);
+                    $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
+                    //校验距离
+                    if($distance <= $this->config->checkin_max_distance)
                     {
-                        //已经签到过了
-                        if($activityLog->checkin_status==1)
+                        //获取报名记录
+                        $activityLog = $this->getActivityLogByUser($user_id,$activity_id);
+                        //如果找到
+                        if(isset($activityLog->id))
                         {
-                            $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
-                        }
-                        else
-                        {
-                            $data = ["checkin_status"=>1];
-                            $update = $this->updateActivityLog($activityLog->id,$data);
-                            if($update)
+                            //已经签到过了
+                            if($activityLog->checkin_status==1)
                             {
                                 $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
                             }
                             else
                             {
-                                $return  = ['result'=>0,"msg"=>$this->msgList['activity_checkin_fail'],'data'=>[],'code'=>200];
+                                $data = ["checkin_status"=>1];
+                                $update = $this->updateActivityLog($activityLog->id,$data);
+                                if($update)
+                                {
+                                    $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
+                                }
+                                else
+                                {
+                                    $return  = ['result'=>0,"msg"=>$this->msgList['activity_checkin_fail'],'data'=>[],'code'=>200];
+                                }
                             }
+                        }
+                        else
+                        {
+                            $return  = ['result'=>0,"msg"=>$this->msgList["activity_log_not_found"],'code'=>400];
                         }
                     }
                     else
                     {
-                        $return  = ['result'=>0,"msg"=>$this->msgList["activity_log_not_found"],'code'=>400];
+                        $return  = ['result'=>0,"msg"=>$this->msgList["checkin_over_distance"],'code'=>400];
                     }
                 }
                 else
                 {
-                    $return  = ['result'=>0,"msg"=>$this->msgList["checkin_over_distance"],'code'=>400];
+                    $return  = ['result'=>0,"msg"=>$this->msgList['activity_expire'],'code'=>400];
                 }
             }
             else
             {
-                $return  = ['result'=>0,"msg"=>$this->msgList['activity_expire'],'code'=>400];
+                $return  = ['result'=>0,"msg"=>$this->msgList["activity_cancelled"],'code'=>400];
             }
         }
         else
@@ -778,15 +803,12 @@ class ActivityService extends BaseService
     public function activityCancel($user_id,$activity_id){
         //查询用户权限
         $permission = $this->getUserActivityPermission($user_id,$activity_id);
-        $connected = $this->getActivityByConnectedId($activity_id);
-
-        $connected = $this->getActivityByConnectedId($activity_id);
         if(!$permission) {
             $return = ['result' => 0, "msg" => "您没有此活动的权限", 'code' => 400];
             return $return;
         }
             $activityInfo = (new ActivityService())->getActivityInfo($activity_id,'activity_id,connect_activity_id,status,detail',"*",1);
-            if(!$activityInfo)
+            if(!$activityInfo || $activityInfo->status!=1)
             {
                 $return  = ['result'=>1,"msg"=>"取消成功",'code'=>200];
                 return $return;
@@ -823,17 +845,16 @@ class ActivityService extends BaseService
         {
             $activityInfo->$key = $value;
         }
-        $old = $activityInfo;
         $activityInfo->update_time = date("Y-m-d H:i:s");
         if ($activityInfo->update() === false) {
             $return['msg']  = '修改失败';
         }else {
             $activityInfo = $this->getActivityInfo($activityInfo->activity_id,'*',0);
-            if($old->club_id>0)
+            if($activityInfo->club_id>0)
             {
-                (new ActivityService())->getActivityListByCompany($old->company_id,'*',$old->club_id,0);
+                (new ActivityService())->getActivityListByCompany($activityInfo->company_id,'*',$activityInfo->club_id,0);
             }
-            (new ActivityService())->getActivityListByCreater($old->company_id,$old->create_user_id,'*',$old->club_id,0);
+            (new ActivityService())->getActivityListByCreater($activityInfo->company_id,$activityInfo->create_user_id,'*',$activityInfo->club_id,0);
             $return = ['result' => 1, 'msg' => '修改成功', 'code' => 200, 'data' => []];
         }
         return $return;
@@ -868,33 +889,37 @@ class ActivityService extends BaseService
         $date =$year.'-'.$month;
         $monthly_activities = [];
         $date_list = []; //日期下标数据
-        $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id.' and status = 1','columns'=>'activity_id,club_id,start_time,end_time,icon,comment']);
-        foreach ($activity_list as $key=>$activity_info)
-        {
-            $activity_start_time = '';
-            $activity_start_time = date('Y-m',strtotime($activity_info->start_time));
-            if($activity_start_time!=$date)
+        $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_time"]);
+        foreach ($activity_list as $key=>$activity_info) {
+            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,club_id,start_time,end_time,icon,comment");
+            $activity_info = json_decode(json_encode($activity_info), true);
+            if ($activity_info['status'] == 1)
             {
-                continue;
+                $activity_start_time = '';
+                $activity_start_time = date('Y-m',strtotime($activity_info->start_time));
+                if($activity_start_time!=$date)
+                {
+                    continue;
+                }
+                $activity_data = [];
+                $day = date('d',strtotime($activity_info->start_time));
+                $activity_data['activity_id'] = $activity_info->activity_id;
+                $activity_data['date'] = $day;
+                $monthly_activities[] = $activity_data;
+                $activity_data = [];
+                $activity_data['activity_id'] = $activity_info->activity_id;
+                $activity_data['comment'] = $activity_info->comment;
+                $activity_data['time'] = date('h:i',strtotime($activity_info->start_time));
+                $activity_data['club_icon'] = '';
+                $activity_data['club_name'] = '';
+                if($activity_info->club_id>0)
+                {
+                    $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
+                    $activity_data['club_icon'] = $club_info->icon;
+                    $activity_data['club_name'] = $club_info->club_name;
+                }
+                $date_list[$day] = $activity_data;
             }
-            $activity_data = [];
-            $day = date('d',strtotime($activity_info->start_time));
-            $activity_data['activity_id'] = $activity_info->activity_id;
-            $activity_data['date'] = $day;
-            $monthly_activities[] = $activity_data;
-            $activity_data = [];
-            $activity_data['activity_id'] = $activity_info->activity_id;
-            $activity_data['comment'] = $activity_info->comment;
-            $activity_data['time'] = date('h:i',strtotime($activity_info->start_time));
-            $activity_data['club_icon'] = '';
-            $activity_data['club_name'] = '';
-            if($activity_info->club_id>0)
-            {
-                $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
-                $activity_data['club_icon'] = $club_info->icon;
-                $activity_data['club_name'] = $club_info->club_name;
-            }
-            $date_list[$day] = $activity_data;
         }
         return ['month_activities'=>$monthly_activities,'date_data'=>$date_list];
     }
