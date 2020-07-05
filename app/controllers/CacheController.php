@@ -65,6 +65,8 @@ class CacheController extends BaseController
             $clubInfo = (new ClubService())->getClubInfo($id,"*",0);
             if(isset($clubInfo->club_id))
             {
+                $company_id = $clubInfo->company_id;
+                (new ClubService())->getClubListByCompany($company_id,"*",0);
                 $this->success($clubInfo,"ok",200);
             }
             else
