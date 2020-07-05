@@ -824,6 +824,10 @@ class ClubService extends BaseService
                     $userClubList[] = array_merge((array)($club_info),(array)$club_info);
                 }
             }
+            if(count($clubList)==0)
+            {
+                $userClubList[] = ["permission"=>9];
+            }
         }
         $userClubList = json_decode(json_encode($userClubList));
         return ($userClubList);

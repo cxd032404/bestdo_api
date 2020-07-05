@@ -20,32 +20,15 @@ class WechatService extends BaseService
     /*更新用户微信信息*/
     public function getOpenIdByCode($wechat = [],$code="")
     {
-        $wechat_cache = $this->config->cache_settings->wechat;
-        $redis_key = $wechat_cache->name.$code;
         $appid = $wechat['appid'];
-        $cache = $this->redis->get($redis_key);
-        if($cache!= "")
-        {
-            $oauth2 = json_decode($cache,true);
-        }
-        else
-        {
-            $appsecret = $wechat['appsecret'];
-            //第二步：获取网页授权access_token和openid
-            $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
-        }
-        //var_dump($oauth2);
+        $appsecret = $wechat['appsecret'];
+        //第二步：获取网页授权access_token和openid
+        $this->wechat_code_logger->info("openIdByCode");
+        $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
         $openId = "";
         if (!array_key_exists('errcode', $oauth2)) {
             $openId = $oauth2['openid'];
         }
-        if($openId != "")
-        {
-            //用户token存入redis缓存中
-            $this->redis->set($redis_key,json_encode($oauth2));
-            $this->redis->expire($redis_key,$wechat_cache->expire);//设置过期时间,不设置过去时间时，默认为永久保持
-        }
-
         return $openId;
     }
 
@@ -198,9 +181,37 @@ class WechatService extends BaseService
     //获取网页授权access_token
     public function getOauthAccessToken($appid="",$appsecret="",$code="")
     {
-        $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
-        $oauth_access_token = $this->getJson($url_get);
-        return $oauth_access_token;
+        $wechat_cache = $this->config->cache_settings->wechat;
+        $redis_key = $wechat_cache->name.$code;
+        $cache = $this->redis->get($redis_key);
+        if($cache!= "")
+        {
+            $this->wechat_code_logger->info("缓存获取到code的微信信息".$cache);
+            $oauth2 = json_decode($cache,true);
+        }
+        else
+        {
+            if($code == "")
+            {
+                $oauth2 = [];
+            }
+            else
+            {
+                $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
+                $oauth2 = $this->getJson($url_get);
+                if (isset($oauth2['errcode']))
+                {
+                    $oauth2 = [];
+                }
+                else
+                {
+                    //用户token存入redis缓存中
+                    $this->redis->set($redis_key,json_encode($oauth2));
+                    $this->redis->expire($redis_key,$wechat_cache->expire);//设置过期时间,不设置过去时间时，默认为永久保持
+                }
+            }
+        }
+        return $oauth2;
     }
 
     //获取全局access_token
