@@ -1078,7 +1078,7 @@ class PageElementService extends BaseService
         }
         $stepsData = (new StepsService())->getUserStepsDataByDate($dateRange,$user_info['data']['company_id'],$userInfo->user_id);
         $t  = [];
-        for($date = (!isset($dateRange['date'])?$dateRange['endDate']:$dateRange['date']);$date<=(!isset($dateRange['date'])?$dateRange['startDate']:$dateRange['date']);$date = date("Y-m-d",strtotime($date)-86400))
+        for($date = (!isset($dateRange['date'])?$dateRange['endDate']:$dateRange['date']);$date>=(!isset($dateRange['date'])?$dateRange['startDate']:$dateRange['date']);$date = date("Y-m-d",strtotime($date)-86400))
         {
             $t[$date] = ["date"=>$date,"totalStep"=>0];
         }
