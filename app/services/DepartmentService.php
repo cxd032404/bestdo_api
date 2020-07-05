@@ -203,7 +203,7 @@ class DepartmentService extends BaseService
             foreach ($department as $key => $value) {
                 if($value['parent_id']==0)
                 {
-                    $tree[] = &$department[$value['department_id']];
+                    $tree[$value['department_id']] = &$department[$value['department_id']];
                 }elseif(isset($tree[$value['parent_id']]))
                 {
                     $department[$value['parent_id']]['child'][] = &$department[$key];
