@@ -818,11 +818,11 @@ class ClubService extends BaseService
             $clubList = $this->getClubListByCompany($userInfo->company_id);
             foreach($clubList as $key => $clubInfo)
             {
-                $clubList[$key]->permission = 9;
+                $clubInfo->permission = 9;
                 if(!in_array($clubInfo->club_id,$currentClubList))
                 {
                     $club_info = $this->getClubInfo($clubInfo->club_id);
-                    $userClubList[] = array_merge((array)($club_info),(array)$club_info);
+                    $userClubList[] = array_merge((array)($clubInfo),(array)$club_info);
                 }
             }
             if(count($clubList)==0)
