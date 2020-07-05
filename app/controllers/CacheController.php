@@ -53,6 +53,11 @@ class CacheController extends BaseController
             $activityInfo = (new ActivityService())->getActivityInfo($id,"*",0);
             if(isset($activityInfo->activity_id))
             {
+                if($activityInfo->club_id>0)
+                {
+                    (new ActivityService())->getActivityListByCompany($activityInfo->company_id,'*',$activityInfo->club_id,0);
+                }
+                (new ActivityService())->getActivityListByCreater($activityInfo->company_id,$activityInfo->create_user_id,'*',$activityInfo->club_id,0);
                 $this->success($activityInfo,"ok",200);
             }
             else
