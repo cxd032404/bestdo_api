@@ -149,11 +149,13 @@ class UserService extends BaseService
                         }else{
                             if(!empty($miniProgramUserInfo))
                             {
+                                $this->wechat_code_logger->info("登录更新小程序信息");
                                 //完善用户小程序资料
                                 (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
                             }
                             if(!empty($code))
                             {
+                                $this->wechat_code_logger->info("登录更新微信信息");
                                 //完善用户微信资料
                                 (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
                             }
@@ -187,11 +189,13 @@ class UserService extends BaseService
                             }else{
                                 if(!empty($miniProgramUserInfo))
                                 {
+                                    $this->wechat_code_logger->info("入驻登录更新小程序信息");
                                     //完善用户小程序资料
                                     (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
                                 }
                                 if(!empty($code))
                                 {
+                                    $this->wechat_code_logger->info("入驻登录更新微信信息");
                                     //完善用户微信资料
                                     (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
                                 }
@@ -255,12 +259,14 @@ class UserService extends BaseService
                     }
                     if(!empty($miniProgramUserInfo))
                     {
-                        //完善用户微信资料
+                        $this->wechat_code_logger->info("注册更新小程序信息");
+                        //完善用户小程序资料
                         (new WechatService)->updateUserWithMiniProgram($user->user_id,$miniProgramUserInfo);
                     }
                     if(!empty($code))
                     {
-                        //完善用户小程序资料
+                        $this->wechat_code_logger->info("注册更新微信信息");
+                        //完善用户微信资料
                         (new WechatService)->updateUserWithWechat($this->key_config->wechat,$user->user_id,$code);
                     }
                     //修改验证码记录状态

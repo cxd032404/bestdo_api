@@ -682,7 +682,8 @@ class PageElementService extends BaseService
         {
             $club_id = '';
         }
-        $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
+        $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,
+            'activity_id,activity_name,start_time,apply_start_time,club_id',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
         $managed_club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
         $managed_activity_list = $return['activity_list'];
         foreach ($managed_activity_list as $key=>$value)
@@ -1032,7 +1033,12 @@ class PageElementService extends BaseService
             $stepsList[$key]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
             $stepsList[$key]['kcal'] = intval($detail['totalStep']/$stepsConfig->stepsPerKcal);
             $stepsList[$key]['time'] = intval($detail['totalStep']/$stepsConfig->stepsPerMinute);
-            $stepsList[$key]['userInfo'] = $userService->getUserInfo($detail['user_id'],"user_id,nick_name,true_name,user_img,department_id",1);
+            $userInfo = $userService->getUserInfo($detail['user_id'],"user_id,nick_name,true_name,user_img,department_id",1);
+            if(!isset($userInfo->user_id))
+            {
+                $userInfo = ["user_img"=>"","true_name"=>"未知用户","user_id"=>$userInfo];
+            }
+            $stepsList[$key]['userInfo'] = $userInfo;
             $stepsList[$key]['goal'] = $stepsGoal;
             $stepsList[$key]['achive'] = ($detail['totalStep']>=$stepsGoal)?1:0;
             $stepsList[$key]['achive_rate'] = intval(100*($detail['totalStep']/$stepsGoal));
@@ -1073,7 +1079,7 @@ class PageElementService extends BaseService
         }
         $stepsData = (new StepsService())->getUserStepsDataByDate($dateRange,$user_info['data']['company_id'],$userInfo->user_id);
         $t  = [];
-        for($date = (!isset($dateRange['date'])?$dateRange['startDate']:$dateRange['date']);$date<=(!isset($dateRange['date'])?$dateRange['endDate']:$dateRange['date']);$date = date("Y-m-d",strtotime($date)+86400))
+        for($date = (!isset($dateRange['date'])?$dateRange['endDate']:$dateRange['date']);$date>=(!isset($dateRange['date'])?$dateRange['startDate']:$dateRange['date']);$date = date("Y-m-d",strtotime($date)-86400))
         {
             $t[$date] = ["date"=>$date,"totalStep"=>0];
         }
