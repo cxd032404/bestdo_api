@@ -205,7 +205,7 @@ class DepartmentService extends BaseService
                 if ($value['parent_id'] == 0) {
                     $tree[$value['department_id']] = $value;
                 } elseif (isset($tree[$value['parent_id']])) {
-                    $tree[$value['parent_id']]['child'][$value['department_id']] = $value;
+                    $tree[$value['parent_id']]['child'] = array_values($tree[$value['parent_id']]['child']);
                 }
             }
         }
