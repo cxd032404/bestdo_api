@@ -355,44 +355,36 @@ class ActivityService extends BaseService
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
         {
-            $activity_list = $this->getActivityListByCompany($user_info->company_id,$columns,$club_id,0);
-            print_r($activity_list);die();
+            $activity_list = $this->getActivityListByCompany($user_info->company_id,'activity_id,activity_name,club_id,start_time,status',$club_id,0);
         }
         else
         {
             $activity_list = [];
         }
-        $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time",$club_id,0);
- //       print_r($created_activity_list);die();
+        $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time,status",$club_id,0);
         foreach($created_activity_list as $key => $created)
         {
 
-            if(!$created || $created->club_id == 0)
+            if(!$created || $created->club_id == 0 || $created->status!=1 )
             {
+                unset($created_activity_list[$key]);
                 continue;
-            }
-            if(!$created)
-            {
-                continue;
-            }
-            $flag = 0;
-            foreach($activity_list as $key2 => $manager)
-            {
-                if(!$manager)
-                {
+            }else {
+                $flag = 0;
+                foreach ($activity_list as $key2 => $manager) {
+                    if (!$manager) {
+                        continue;
+                    }
+                    if ($created->activity_id == $manager->activity_id) {
+                        $flag = 1;
+                        break;
+                    }
+                }
+                if ($flag == 1) {
                     continue;
                 }
-                if($created->activity_id == $manager->activity_id)
-                {
-                    $flag = 1;
-                    break;
-                }
-            }
-            if($flag == 1)
-            {
-                 continue;
-            }
                 $activity_list[] = $created;
+            }
         }
         if($start>0)
         {
@@ -559,7 +551,7 @@ class ActivityService extends BaseService
         $conditions = "company_id='".$company_id."' and create_user_id = '".$create_user_id."'";
         if($club_id != -1)
         {
-            $conditions .= " and club_id = ".$club_id.' and status = 1';
+            $conditions .= " and club_id = ".$club_id;
         }
        $params =             [
             $conditions,
@@ -607,8 +599,14 @@ class ActivityService extends BaseService
         }
         foreach($activityList as $key => $value)
         {
-            $activityInfo = $this->getActivityInfo($value->activity_id,$columns);
-            $activityList[$key] = $activityInfo;
+                $activityInfo = $this->getActivityInfo($value->activity_id, $columns);
+                if(!$activityInfo)
+                {
+                    unset($activityList[$key]);
+                }else
+                {
+                    $activityList[$key] = $activityInfo;
+                }
         }
         return $activityList;
     }
@@ -788,7 +786,7 @@ class ActivityService extends BaseService
             $detail['cancel_info']['cancel_user_id'] = $user_id;
             $detail['cancel_info']['cancel_time'] = date('Y-m-d h:i',time());
             $map['detail'] = json_encode($detail);
-            $map['status'] = 4;
+            $map['status'] = 0;
             //$map['icon'] = 'abc';
             //$map['activity_name'] = 'shishi';
             $res = $this->updateActivityInfo($map,$activity_id);
@@ -804,10 +802,9 @@ class ActivityService extends BaseService
     //更新用户信息
     public function updateActivityInfo($map,$activity_id=0)
     {
-        print_r($map);
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         //修改用户信息
-        $activityInfo = \HJ\Activity::findFirst(["activity_id = '".$activity_id."'"]);
+        $activityInfo = \HJ\Activity::findFirst(["activity_id =".$activity_id]);
         foreach($map as $key => $value)
         {
             if(!empty($value))
@@ -815,6 +812,8 @@ class ActivityService extends BaseService
                 $activityInfo->$key = $value;
             }
         }
+        die();
+        print_r($activityInfo->toArray());die();
 
         $activityInfo->update_time = date("Y-m-d H:i:s");
         //print_R($activityInfo);
@@ -823,8 +822,7 @@ class ActivityService extends BaseService
             print_R($activityInfo->getMessages());
         }else {
             $activityInfo = $this->getActivityInfo($activityInfo->activity_id,'*',0);
-            print_R($activityInfo);
-            die();
+            print_R($activityInfo);die();
             (new ActivityService())->getActivityListByCompany($activityInfo->company_id,'*',$activityInfo->club_id,0);
             (new ActivityService())->getActivityListByCreater($activityInfo->company_id,$activityInfo->create_user_id,'*',$activityInfo->club_id,0);
             $return = ['result' => 1, 'msg' => '修改成功', 'code' => 200, 'data' => []];
