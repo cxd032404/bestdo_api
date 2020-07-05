@@ -356,14 +356,17 @@ class ActivityService extends BaseService
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
         {
             $activity_list = $this->getActivityListByCompany($user_info->company_id,$columns,$club_id,0);
+            print_r($activity_list);die();
         }
         else
         {
             $activity_list = [];
         }
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time",$club_id,0);
+ //       print_r($created_activity_list);die();
         foreach($created_activity_list as $key => $created)
         {
+
             if(!$created || $created->club_id == 0)
             {
                 continue;
@@ -375,6 +378,10 @@ class ActivityService extends BaseService
             $flag = 0;
             foreach($activity_list as $key2 => $manager)
             {
+                if(!$manager)
+                {
+                    continue;
+                }
                 if($created->activity_id == $manager->activity_id)
                 {
                     $flag = 1;
@@ -407,7 +414,6 @@ class ActivityService extends BaseService
             }
             $activity_list = array_slice($activity_list,$offset,$pageSize,true);
             $return = ['residuals'=>$residuals,'activity_list'=>$activity_list];
-
         }
         return $return;
 
@@ -479,13 +485,13 @@ class ActivityService extends BaseService
         ]);
     }
     //获取企业下的所有活动列表
-    public function getActivityListByCompany($company_id,$columns = 'activity_id,activity_name',$club_id = '',$cache = 1)
+    public function getActivityListByCompany($company_id,$columns = 'activity_id,activity_name',$club_id = -1,$cache = 1)
     {
         $conditions = "company_id='".$company_id."'";
 
-        if(strlen($club_id)!=0)
+        if($club_id != -1)
         {
-            $conditions .= "and 'club_id' = ".$club_id;
+            $conditions .= "and 'club_id' = ".$club_id.' and status = 1';
         }
         $cacheSetting = $this->config->cache_settings->activity_list_by_company;
         $cacheName = $cacheSetting->name.$company_id;
@@ -536,21 +542,26 @@ class ActivityService extends BaseService
         foreach($activityList as $key => $value)
         {
             $activityInfo = $this->getActivityInfo($value->activity_id,$columns);
-            $activityList[$key] = $activityInfo;
+            if(!$activityInfo)
+            {
+                unset($activityList[$key]);
+            }else{
+                $activityList[$key] = $activityInfo;
+            }
         }
         return $activityList;
     }
     //获取企业下的特定用户创建的所有活动列表
-    public function getActivityListByCreater($company_id,$create_user_id,$columns = 'activity_id,activity_name',$club_id='',$cache = 1)
+    public function getActivityListByCreater($company_id,$create_user_id,$columns = 'activity_id,activity_name',$club_id= -1,$cache = 1)
     {
         $cacheSetting = $this->config->cache_settings->activity_list_by_company;
         $cacheName = $cacheSetting->name.$company_id;
         $conditions = "company_id='".$company_id."' and create_user_id = '".$create_user_id."'";
-        if(strlen($club_id)!=0)
+        if($club_id != -1)
         {
-            $conditions .= "and club_id = ".$club_id;
+            $conditions .= " and club_id = ".$club_id.' and status = 1';
         }
-        $params =             [
+       $params =             [
             $conditions,
             'columns'=>'activity_id',
             'order' => 'activity_id DESC'
@@ -736,7 +747,7 @@ class ActivityService extends BaseService
      * 查询用户活动权限
      */
     public function getUserActivityPermission($user_id,$activity_id){
-        $user_info = (new UserService())->getUserInfo($user_id);
+        $user_info = (new UserService())->getUserInfo($user_id,'*',0);
         if(isset($user_info->manager_id)&&$user_info->manager_id>0)
         {
           return 1;
@@ -767,22 +778,59 @@ class ActivityService extends BaseService
             $return = ['result' => 0, "msg" => "您没有此活动的权限", 'code' => 400];
             return $return;
         }
-            $activityInfo = (new Activity())->findFirst(['activity_id ='.$activity_id]);
-            $activityInfo->status = 0;
+            $activityInfo = (new ActivityService())->getActivityInfo($activity_id,'activity_id,detail');
+            if(!$activityInfo)
+            {
+                $return  = ['result'=>1,"msg"=>"取消成功",'code'=>200];
+                return $return;
+            }
             $detail = json_decode($activityInfo->detail,true);
             $detail['cancel_info']['cancel_user_id'] = $user_id;
             $detail['cancel_info']['cancel_time'] = date('Y-m-d h:i',time());
-            $activityInfo->detail = json_encode($detail);
-            $update_res = $activityInfo->save();
-            if($update_res)
+            $map['detail'] = json_encode($detail);
+            $map['status'] = 4;
+            //$map['icon'] = 'abc';
+            //$map['activity_name'] = 'shishi';
+            $res = $this->updateActivityInfo($map,$activity_id);
+            if($res['result'])
             {
-                $this->getActivityInfo($activity_id,'*',0);
                 $return  = ['result'=>1,"msg"=>"取消成功",'code'=>400];
             }else
             {
                 $return  = ['result'=>0,"msg"=>"取消失败",'code'=>400];
             }
             return $return;
+    }
+    //更新用户信息
+    public function updateActivityInfo($map,$activity_id=0)
+    {
+        print_r($map);
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
+        //修改用户信息
+        $activityInfo = \HJ\Activity::findFirst(["activity_id = '".$activity_id."'"]);
+        foreach($map as $key => $value)
+        {
+            if(!empty($value))
+            {
+                $activityInfo->$key = $value;
+            }
+        }
+
+        $activityInfo->update_time = date("Y-m-d H:i:s");
+        //print_R($activityInfo);
+        if ($activityInfo->save() === false) {
+            $return['msg']  = '修改失败';
+            print_R($activityInfo->getMessages());
+        }else {
+            $activityInfo = $this->getActivityInfo($activityInfo->activity_id,'*',0);
+            print_R($activityInfo);
+            die();
+            (new ActivityService())->getActivityListByCompany($activityInfo->company_id,'*',$activityInfo->club_id,0);
+            (new ActivityService())->getActivityListByCreater($activityInfo->company_id,$activityInfo->create_user_id,'*',$activityInfo->club_id,0);
+            $return = ['result' => 1, 'msg' => '修改成功', 'code' => 200, 'data' => []];
+        }
+        print_R($return);
+        return $return;
     }
 
     //更新报名记录

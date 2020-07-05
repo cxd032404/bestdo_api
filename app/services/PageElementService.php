@@ -680,7 +680,7 @@ class PageElementService extends BaseService
         }
         if(strlen($club_id) == 0)
         {
-            $club_id = '';
+            $club_id = -1;
         }
         $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,
             'activity_id,activity_name,start_time,apply_start_time,club_id',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
