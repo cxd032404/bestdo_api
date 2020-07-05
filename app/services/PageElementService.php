@@ -824,6 +824,7 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
+        $already_applied = $this->getFromParams($params,'already_applied',0); //已参加的活动 0未参加
         $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,club_id,activity_name,comment,icon,apply_start_time,apply_end_time,start_time,end_time',$club_id = -1);
         $currentTime = time();
         $clubService = new ClubService();
@@ -835,15 +836,23 @@ class PageElementService extends BaseService
                 continue;
             }
             if(($activity_info->status == 1) &&(strtotime($activity_info->apply_start_time)<=$currentTime) && (strtotime($activity_info->apply_end_time)>=$currentTime))
-            {
-                $clubInfo = $clubService->getClubInfo($activity_info->club_id,"club_id,club_name,icon");
-                $activity_list[$key] = (object)array_merge((array)$activity_info,(array)$clubInfo);
-                $chinese_start_date = date('m月d日',strtotime($activity_info->start_time))." 周".$this->weekarray[date('w',strtotime($activity_info->start_time))];
-                $chinese_end_date = date('m月d日',strtotime($activity_info->end_time))." 周".$this->weekarray[date('w',strtotime($activity_info->end_time))];
+            { //用户已报名的进行中的活动列表
+                if($already_applied) {
+                    $user_activity_log = (new ActivityService())->getActivityLogByUser($user_info['data']['user_id'],$activity_info->activity_id);
+                    if(!isset($user_activity_log->id))
+                    {
+                        unset($activity_list[$key]);
+                        continue;
+                    }
+                }
+                $clubInfo = $clubService->getClubInfo($activity_info->club_id, "club_id,club_name,icon");
+                $activity_list[$key] = (object)array_merge((array)$activity_info, (array)$clubInfo);
+                $chinese_start_date = date('m月d日', strtotime($activity_info->start_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->start_time))];
+                $chinese_end_date = date('m月d日', strtotime($activity_info->end_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->end_time))];
                 $activity_list[$key]->chinese_start_date = $chinese_start_date;
                 $activity_list[$key]->chinese_end_date = $chinese_end_date;
-                $activity_list[$key]->activity_name = mb_substr( $activity_info->activity_name, 0, 12, 'utf-8' );
-                $activity_list[$key]->comment = mb_substr( $activity_info->comment, 0, 12, 'utf-8' );
+                $activity_list[$key]->activity_name = mb_substr($activity_info->activity_name, 0, 12, 'utf-8');
+                $activity_list[$key]->comment = mb_substr($activity_info->comment, 0, 12, 'utf-8');
             }
             else
             {

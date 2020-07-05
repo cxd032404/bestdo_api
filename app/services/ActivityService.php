@@ -345,7 +345,7 @@ class ActivityService extends BaseService
     /*
      *获取用户参加的活动列表
      */
-    public function getActivityList($user_id,$order = 'id DESC'){
+    public function getActivityList($user_id,$activity_list = [],$order = 'id DESC'){
         $conditions = 'user_id ='.$user_id;
         $params = [
             $conditions,
