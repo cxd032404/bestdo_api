@@ -364,7 +364,7 @@ class ActivityService extends BaseService
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time",$club_id,0);
         foreach($created_activity_list as $key => $created)
         {
-            if($created->club_id == 0)
+            if(!$created || $created->club_id == 0)
             {
                 continue;
             }
