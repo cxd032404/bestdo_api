@@ -286,7 +286,6 @@ class ActivityService extends BaseService
         ];
         if($cache == 1)
         {
-
             $activityCache = $this->redis->get($cacheName);
             $activityCache = json_decode($activityCache);
             if(isset($activityCache->activity_id))
@@ -332,6 +331,14 @@ class ActivityService extends BaseService
             }
         }
         return $activity;
+    }
+    public function getActivityByConnectedId($connected_id)
+    {
+        $params =             [
+            "connect_activity_id = ".$connected_id,
+            "columns" => '*',
+        ];
+        return (new \HJ\Activity())->findFirst($params);
     }
 
     /*
@@ -771,12 +778,14 @@ class ActivityService extends BaseService
     public function activityCancel($user_id,$activity_id){
         //查询用户权限
         $permission = $this->getUserActivityPermission($user_id,$activity_id);
+        $connected = $this->getActivityByConnectedId($activity_id);
 
+        $connected = $this->getActivityByConnectedId($activity_id);
         if(!$permission) {
             $return = ['result' => 0, "msg" => "您没有此活动的权限", 'code' => 400];
             return $return;
         }
-            $activityInfo = (new ActivityService())->getActivityInfo($activity_id,'activity_id,detail');
+            $activityInfo = (new ActivityService())->getActivityInfo($activity_id,'activity_id,connect_activity_id,status,detail',"*",1);
             if(!$activityInfo)
             {
                 $return  = ['result'=>1,"msg"=>"取消成功",'code'=>200];
@@ -787,11 +796,16 @@ class ActivityService extends BaseService
             $detail['cancel_info']['cancel_time'] = date('Y-m-d h:i',time());
             $map['detail'] = json_encode($detail);
             $map['status'] = 0;
-            //$map['icon'] = 'abc';
-            //$map['activity_name'] = 'shishi';
             $res = $this->updateActivityInfo($map,$activity_id);
             if($res['result'])
             {
+                $connected = $this->getActivityByConnectedId($activity_id);
+                if(isset($connected->activity_id))
+                {
+                    $map = $connected->toArray();
+                    $map['connect_activity_id'] = $activityInfo->connect_activity_id;
+                    $this->updateActivityInfo($map,$connected->activity_id);
+                }
                 $return  = ['result'=>1,"msg"=>"取消成功",'code'=>400];
             }else
             {
@@ -807,27 +821,21 @@ class ActivityService extends BaseService
         $activityInfo = \HJ\Activity::findFirst(["activity_id =".$activity_id]);
         foreach($map as $key => $value)
         {
-            if(!empty($value))
-            {
-                $activityInfo->$key = $value;
-            }
+            $activityInfo->$key = $value;
         }
-        die();
-        print_r($activityInfo->toArray());die();
-
+        $old = $activityInfo;
         $activityInfo->update_time = date("Y-m-d H:i:s");
-        //print_R($activityInfo);
-        if ($activityInfo->save() === false) {
+        if ($activityInfo->update() === false) {
             $return['msg']  = '修改失败';
-            print_R($activityInfo->getMessages());
         }else {
             $activityInfo = $this->getActivityInfo($activityInfo->activity_id,'*',0);
-            print_R($activityInfo);die();
-            (new ActivityService())->getActivityListByCompany($activityInfo->company_id,'*',$activityInfo->club_id,0);
-            (new ActivityService())->getActivityListByCreater($activityInfo->company_id,$activityInfo->create_user_id,'*',$activityInfo->club_id,0);
+            if($old->club_id>0)
+            {
+                (new ActivityService())->getActivityListByCompany($old->company_id,'*',$old->club_id,0);
+            }
+            (new ActivityService())->getActivityListByCreater($old->company_id,$old->create_user_id,'*',$old->club_id,0);
             $return = ['result' => 1, 'msg' => '修改成功', 'code' => 200, 'data' => []];
         }
-        print_R($return);
         return $return;
     }
 
