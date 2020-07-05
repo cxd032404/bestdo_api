@@ -363,7 +363,7 @@ class ActivityService extends BaseService
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
         {
-            $activity_list = $this->getActivityListByCompany($user_info->company_id,'activity_id,activity_name,club_id,start_time,status',$club_id,0);
+            $activity_list = $this->getActivityListByCompany($user_info->company_id,$columns,$club_id,0);
         }
         else
         {
@@ -377,7 +377,7 @@ class ActivityService extends BaseService
             }
         }
         $activity_list = array_combine(array_column($activity_list,"activity_id"),array_values($activity_list));
-        $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,"activity_id,activity_name,club_id,start_time,status",$club_id,0);
+        $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,$columns,$club_id,0);
         foreach($created_activity_list as $key => $created)
         {
             if(!$created || $created->club_id == 0 || $created->status!=1 )
