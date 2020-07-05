@@ -638,7 +638,7 @@ class ActivityService extends BaseService
     //获取用户最近创建的活动关联的签到地址
     public function getPositionListByCreater($company_id = 0,$create_user_id = 0)
     {
-        $userCreatedAcitvityList = $this->getActivityListByCreater($company_id,$create_user_id,"activity_id,detail");
+        $userCreatedAcitvityList = $this->getActivityListByCreater($company_id,$create_user_id,"activity_id,detail,status");
         $positionList = [];
         foreach($userCreatedAcitvityList as $key => $activityDetail)
         {
@@ -889,11 +889,11 @@ class ActivityService extends BaseService
         $date =$year.'-'.$month;
         $monthly_activities = [];
         $date_list = []; //日期下标数据
-        $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_time"]);
+        $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_start_time"]);
         foreach ($activity_list as $key=>$activity_info) {
-            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,club_id,start_time,end_time,icon,comment");
+            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,status,club_id,start_time,end_time,icon,comment");
             $activity_info = json_decode(json_encode($activity_info), true);
-            if ($activity_info['status'] == 1)
+            if (isset($activity_info->activity_id) && $activity_info->status == 1)
             {
                 $activity_start_time = '';
                 $activity_start_time = date('Y-m',strtotime($activity_info->start_time));

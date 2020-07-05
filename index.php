@@ -10,8 +10,11 @@
 |
 */
 
-//register_shutdown_function(function(){ var_dump(error_get_last()); });
-define('APP_NAME', 'Phalcon');
+register_shutdown_function(
+    function(){
+        if(error_get_last()){var_dump(error_get_last()); }
+
+    });define('APP_NAME', 'Phalcon');
 
 date_default_timezone_set('Asia/Shanghai');
 
