@@ -636,6 +636,10 @@ class PageElementService extends BaseService
         $chinese_end_date = date('m月d日',strtotime($activity_info->end_time)).date('H:i',strtotime($activity_info->apply_end_time));
         $activity_info->chinese_start_time = $chinese_start_date;
         $activity_info->chinese_end_time = $chinese_end_date;
+        $activity_info->format_apply_start_time = date('Y/m/d',strtotime($activity_info->apply_start_time));
+        $activity_info->format_apply_end_time = date('Y/m/d',strtotime($activity_info->apply_end_time));
+        $activity_info->format_start_time = date('Y/m/d',strtotime($activity_info->start_time));
+        $activity_info->format_end_time = date('Y/m/d',strtotime($activity_info->end_time));
         //$data['detail']['address'] = isset($detail['checkin']['address'])?$detail['checkin']['address']:'';
         $user_count = (new ActivityService())->getActivityMemberCount($activity_id);
         $data['detail']['userCount'] = $user_count;
@@ -763,6 +767,8 @@ class PageElementService extends BaseService
         }
         $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
         $data['detail']['activity_info'] = $activity_info;
+//        $data['detail']['activity_info']->format = date('Y/m/d H:i',strtotime($activity_info->apply_start_time));
+//        $data['detail']['activity_info'] = date('Y/m/d H:i',strtotime($activity_info->apply_start_time));
         $detail = json_decode($activity_info->detail);
         $data['detail']['activity_info']->checkin = $detail->checkin;
         $data['detail']['activity_info']->monthly_apply_limit = $detail->monthly_apply_limit;
@@ -844,7 +850,7 @@ class PageElementService extends BaseService
         $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
         {
-            if(!$activity_info)
+            if(!$activity_info && $activity_info->club<=0)
             {
                 unset($activity_list[$key]);
                 continue;

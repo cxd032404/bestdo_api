@@ -10,11 +10,13 @@
 |
 */
 
-register_shutdown_function(
-    function(){
-        if(error_get_last()){var_dump(error_get_last()); }
-
-    });define('APP_NAME', 'Phalcon');
+//register_shutdown_function(
+//    function(){
+//        if(error_get_last()){var_dump(error_get_last());
+//        }
+//
+//    });
+//define('APP_NAME', 'Phalcon');
 
 date_default_timezone_set('Asia/Shanghai');
 
@@ -34,7 +36,7 @@ define('ROOT_PATH', dirname(__FILE__));
 try {
 	header('Content-Type: application/json; charset=utf-8');
 
-	error_reporting(E_ALL);
+	error_reporting(0);
     require_once ROOT_PATH . "/vendor/autoload.php";
 
 	require_once ROOT_PATH . "/configs/bootstrap.php";
