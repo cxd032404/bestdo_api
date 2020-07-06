@@ -824,9 +824,7 @@ class ActivityService extends BaseService
                 $connected = $this->getActivityByConnectedId($activity_id);
                 if(isset($connected->activity_id))
                 {
-                    $map = $connected->toArray();
-                    $map['connect_activity_id'] = $activityInfo->connect_activity_id;
-                    $this->updateActivityInfo($map,$connected->activity_id);
+                    $this->activityCancel($user_id,$connected->activity_id);
                 }
                 $return  = ['result'=>1,"msg"=>"取消成功",'code'=>400];
             }else
