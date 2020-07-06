@@ -486,6 +486,7 @@ class ActivityService extends BaseService
                     if ($useractivitylog->create() === false) {
                         $return['msg']  = $this->msgList['activity_apply_fail'];
                     }else{
+                        (new ActivityService())->getActivityMemberCount($activity_id,0);
                         $return  = ['result'=>1, 'msg'=>$this->msgList['activity_apply_success'], 'code'=>200, 'data'=>$useractivitylog];
                     }
                 }
@@ -755,9 +756,26 @@ class ActivityService extends BaseService
     /*
      * 活动人数
      */
-    public function getActivityMemberCount($activity_id){
-        $count = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id,'columns'=>'count(activity_id)']);
-        $count = $count->{0};
+    public function getActivityMemberCount($activity_id,$cache = 1){
+        $redis_settings = $this->config->cache_settings->activity_member_count;
+        $redis_key = $redis_settings->name.'id'.$activity_id;
+        if ($cache)
+        {
+            $count = $this->redis->get($redis_key);
+            if(substr($count) == 0)
+            {
+                $activity_info = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id,'columns'=>'count(activity_id)']);
+                $count = $activity_info->{0};
+                $this->redis->set($redis_key,$count);
+                $this->redis->expire($redis_key,$redis_settings->expire);
+            }
+        }else
+        {
+            $activity_info = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id,'columns'=>'count(activity_id)']);
+            $count = $activity_info->{0};
+            $this->redis->set($redis_key,$count);
+            $this->redis->expire($redis_key,$redis_settings->expire);
+        }
         return $count;
     }
 

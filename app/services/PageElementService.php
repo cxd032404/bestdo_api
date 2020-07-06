@@ -837,10 +837,12 @@ class PageElementService extends BaseService
                         unset($activity_list[$key]);
                         continue;
                     }
-                }
-                if (!$activity_info || $activity_info->club_id<=0) {
-                    unset($activity_list[$key]);
-                    continue;
+                }else
+                {
+                    if (!$activity_info || $activity_info->club_id<=0) {
+                        unset($activity_list[$key]);
+                        continue;
+                    }
                 }
                 if (($activity_info->status == 1) && (strtotime($activity_info->apply_start_time) <= $currentTime) && (strtotime($activity_info->apply_end_time) >= $currentTime)) { //用户已报名的进行中的活动列表
                     if ($already_applied) {
