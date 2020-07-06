@@ -1067,6 +1067,7 @@ class PageElementService extends BaseService
         }
         $level= array_column($stepsList,'totalStep');
         array_multisort($level,SORT_DESC,$stepsList);
+        $data['detail']['dateRange'] = $dateRange;
         $data['detail']['steps'] = $stepsList;
         $data['detail']['mine'] = $stepsData['mine'];
         $data['detail']['mine']['user_info'] = (new UserService())->getUserInfo($user_info['data']['user_id'],'user_id,nick_name,true_name,user_img');

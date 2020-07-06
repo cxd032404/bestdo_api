@@ -363,22 +363,22 @@ class StepsService extends BaseService
         {
             $rangeStartDate = $dateRange->start_date;
             $rangeEndDate = $dateRange->end_date;
-            $return = ["day"=>["date"=>$date,"days"=>1],"week"=>[],"month"=>[]];
+            $return = ["dateRange"=>["start_date"=>$dateRange->start_date,"end_date"=>$dateRange->end_date],"data"=>["day"=>["date"=>$date,"days"=>1],"week"=>[],"month"=>[]]];
             $days = ["week"=>7,"month"=>30];
             foreach($days as $key => $value)
             {
                 $d = $rangeStartDate;
                 $lag = intval((strtotime($date)-strtotime($rangeStartDate))/( $value * 86400 ));
-                $return[$key]['startDate'] = date("Y-m-d",strtotime($rangeStartDate) + $value * $lag * 86400);
-                $return[$key]['endDate'] = min($rangeEndDate,date("Y-m-d",strtotime($rangeStartDate) + $value * ($lag+1) * 86400));
-                $return[$key]['endDate'] = date("Y-m-d",strtotime($return[$key]['endDate'])-86400);
-                $return[$key]['days'] = intval((strtotime($return[$key]['endDate'])-strtotime($return[$key]['startDate']))/86400)+1;
+                $return['data'][$key]['startDate'] = date("Y-m-d",strtotime($rangeStartDate) + $value * $lag * 86400);
+                $return['data'][$key]['endDate'] = min($rangeEndDate,date("Y-m-d",strtotime($rangeStartDate) + $value * ($lag+1) * 86400));
+                $return['data'][$key]['endDate'] = date("Y-m-d",strtotime($return[$key]['endDate'])-86400);
+                $return['data'][$key]['days'] = intval((strtotime($return[$key]['endDate'])-strtotime($return[$key]['startDate']))/86400)+1;
             }
         }
         else
         {
             $week = (new Common())->processDateRange("week",1);
-            $return = ["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=>date("Y-m-t",strtotime($date))]];
+            $return = ["dateRange"=>["start_date"=>$dateRange->start_date,"end_date"=>$dateRange->end_date],'data'=>["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=>date("Y-m-t",strtotime($date))]]];
         }
         foreach($return as $key => $value)
         {
