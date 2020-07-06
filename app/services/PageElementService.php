@@ -622,6 +622,7 @@ class PageElementService extends BaseService
         {
             $activity_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
+//        $res = (new ActivityService())->
         $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
         $data['detail']['activity_info'] = $activity_info;
         //活动剩余名额
@@ -643,7 +644,7 @@ class PageElementService extends BaseService
             $data['detail']['activity_info']->remain = $activity_info->member_limit - $user_count;
         }else
         {
-            $data['detail']['activity_info']->remain = '不限';
+            $data['detail']['activity_info']->remain = '无限';
         }
 
         $data['detail']['activity_info']->activity_name = mb_substr($activity_info->activity_name,0,20);
@@ -858,7 +859,12 @@ class PageElementService extends BaseService
                         continue;
                     }
                 }
-                $clubInfo = $clubService->getClubInfo($activity_info->club_id, "club_id,club_name,icon");
+                $clubInfo = $clubService->getClubInfo($activity_info->club_id, "club_id,club_name,icon,detail");
+                $detail = json_decode($clubInfo->detail);
+                if(isset($detail['banner']))
+                {
+                    $banner = $detail['banner'][0];
+                }
                 $activity_list[$key] = (object)array_merge((array)$activity_info, (array)$clubInfo);
                 $chinese_start_date = date('m月d日', strtotime($activity_info->start_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->start_time))];
                 $chinese_end_date = date('m月d日', strtotime($activity_info->end_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->end_time))];
@@ -866,6 +872,7 @@ class PageElementService extends BaseService
                 $activity_list[$key]->chinese_end_date = $chinese_end_date;
                 $activity_list[$key]->activity_name = mb_substr($activity_info->activity_name, 0, 12, 'utf-8');
                 $activity_list[$key]->comment = mb_substr($activity_info->comment, 0, 12, 'utf-8');
+                $activity_list[$key]->banner = $banner;
             }
             else
             {
@@ -1067,7 +1074,6 @@ class PageElementService extends BaseService
         }
         $level= array_column($stepsList,'totalStep');
         array_multisort($level,SORT_DESC,$stepsList);
-        $data['detail']['dateRange'] = $dateRange;
         $data['detail']['steps'] = $stepsList;
         $data['detail']['mine'] = $stepsData['mine'];
         $data['detail']['mine']['user_info'] = (new UserService())->getUserInfo($user_info['data']['user_id'],'user_id,nick_name,true_name,user_img');
@@ -1185,28 +1191,39 @@ class PageElementService extends BaseService
         $currentDate = date("Y-m-d",$currentTime);
         $currentDateRange = (new StepsService())->getStepsDateRange($user_info['data']['company_id'],$currentDate);
         $dataArr = [];
-        foreach($currentDateRange as $key => $dateRange)
+        foreach($currentDateRange['data'] as $key => $dateRange)
         {
             //$dataArr[$key] = ['dateRange'=>$dateRange,'list'=>[]];
             $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],0,"department_id_1",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
             $stepsList = $stepsData['list'];
-            foreach($stepsList as $detail)
-            {
-                $detail['days'] = $dateRange['days'];
+            foreach($stepsList as $detail) {
+                if (isset($dateRange['days']))
+                {
+                    $detail['days'] = $dateRange['days'];
+                }else
+                {
+                    $detail['days'] = null;
+                }
                 $dataArr[$detail['department_id_1']]['list'][$key] = $detail;
             }
         }
         $total = ["list"=>[]];
         $total['department_name'] = "全员总达成率";//$company_info->company_name;
         $total['user_count'] = $userService->getUserCountByDepartment($company_info->company_id,0);
-        foreach($currentDateRange as $key => $dateRange)
+        foreach($currentDateRange['data'] as $key => $dateRange)
         {
             $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],0,"",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
             $stepsList = $stepsData['list'];
             if(count($stepsList)>=1)
             {
                 $total['list'][$key] = $stepsList['0'];
-                $total['list'][$key]['days'] = $dateRange['days'];
+                if (isset($dateRange['days']))
+                {
+                    $total['list'][$key]['days'] = $dateRange['days'];
+                }else
+                {
+                    $total['list'][$key]['days'] = null;
+                }
             }
             else
             {
@@ -1219,9 +1236,9 @@ class PageElementService extends BaseService
         {
             if (!isset($dataArr[$departmentInfo->department_id]))
             {
-                foreach ($currentDateRange as $range => $dateRange)
+                foreach ($currentDateRange['data'] as $range => $dateRange)
                 {
-                    $list[$range] = array_merge(['totalStep' => 0, 'total_daily_step' => 0,'achives'=>0 ], ['days' => $dateRange['days']]);
+                    $list[$range] = array_merge(['totalStep' => 0, 'total_daily_step' => 0,'achives'=>0 ], ['days' => $dateRange['days']??null]);
                 }
                 $dataArr[$departmentInfo->department_id] = ["list" => $list];
             }
@@ -1240,7 +1257,8 @@ class PageElementService extends BaseService
                 }
             }
             ksort($dataArr);
-        $data['detail']= $dataArr;
+        $data['detail']['data']= $dataArr;
+        $data['detail']['dateRange']= $currentDateRange['dateRange'];
         /*
         foreach($currentDateRange as $key => $dateRange)
         {

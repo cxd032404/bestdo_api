@@ -378,7 +378,7 @@ class StepsService extends BaseService
         else
         {
             $week = (new Common())->processDateRange("week",1);
-            $return = ["dateRange"=>["start_date"=>$dateRange->start_date,"end_date"=>$dateRange->end_date],'data'=>["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=>date("Y-m-t",strtotime($date))]]];
+            $return = ["dateRange"=>[],'data'=>["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=>date("Y-m-t",strtotime($date))]]];
         }
         foreach($return as $key => $value)
         {
