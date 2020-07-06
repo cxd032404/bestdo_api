@@ -22,8 +22,16 @@ class CacheController extends BaseController
     public function refreshAction()
     {
         $data = $this->request->get();
-        $id = isset($data['id'])?intval($data['id']):0;
         $type = isset($data['type'])?($data['type']):"user";
+        if($type=="config")
+        {
+            $id = trim($data['id'])?trim($data['id']):"";
+        }
+        else
+        {
+            $id = intval($data['id'])?intval($data['id']):0;
+        }
+
         if($type=="user")
         {
             $userInfo = (new UserService())->getUserInfo($id,"*",0);
@@ -123,6 +131,18 @@ class CacheController extends BaseController
                 $pageInfo = (new PageService())->getPageInfoBySign($pageInfo->company_id,$pageInfo->page_sign,"*",0);
                 $pageElementList = (new PageService())->getPageElementByPage($pageInfo->page_id,"*",[],$order = "element_type DESC",0);
                 $this->success([$pageInfo,$pageElementList],"ok",200);
+            }
+            else
+            {
+                $this->failure([],"not found","400");
+            }
+        }
+        elseif($type=="config")
+        {
+            $config = (new ConfigService())->getConfig($id,"*",0);
+            if(isset($config->config_sign))
+            {
+                $this->success([$config],"ok",200);
             }
             else
             {
