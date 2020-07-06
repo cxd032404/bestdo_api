@@ -762,7 +762,7 @@ class ActivityService extends BaseService
         if ($cache)
         {
             $count = $this->redis->get($redis_key);
-            if(substr($count) == 0)
+            if(strlen($count) == 0)
             {
                 $activity_info = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id,'columns'=>'count(activity_id)']);
                 $count = $activity_info->{0};

@@ -940,16 +940,16 @@ class PageElementService extends BaseService
      */
 
     public function getElementPage_attendActivityListToCheckin($data,$params,$user_info,$company_id){
-        $activity = (new ActivityService())->getActivityList($user_info['data']['user_id'])->toArray();
+        $activity = (new ActivityService())->getActivityList($user_info['data']['user_id']);
         $activity_list = [];
         foreach ($activity as $key=>$value)
         {
-            if($value->checkin_status || $value->status==0 )
+
+            $activity_info = (new ActivityService())->getActivityInfo($value->activity_id,'*');
+            if($value->checkin_status || $activity_info->status== 0)
             {
-                unset($activity[$key]);
                 continue;
             }
-            $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
             if(!$activity_info)
             {
                 continue;
@@ -961,7 +961,7 @@ class PageElementService extends BaseService
             $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,club_name,icon');
             $detail = json_decode($activity_info->detail);
             $address = $detail->checkin->address??'';
-            $activity_member_count = (new ActivityService())->getActivityMemberCount($value['activity_id']);
+            $activity_member_count = (new ActivityService())->getActivityMemberCount($value->activity_id);
             //活动已签到人数
             $checkin_count = (new ActivityService())->getActivityCheckinCount($activity_info->activity_id);
             $activity_list[$key]['activity_id'] = $activity_info->activity_id;
@@ -986,7 +986,7 @@ class PageElementService extends BaseService
             $activity_list[$key]['time'] = $time;
             $activity_list[$key]['chinese_start_time'] = date('m月d日',strtotime($activity_info->start_time));
             $activity_list[$key]['chinese_end_time'] = date('m月d日',strtotime($activity_info->end_time));
-            $activity_list[$key]['checkin_status'] = $value['checkin_status'];
+            $activity_list[$key]['checkin_status'] = $value->checkin_status;
             $activity_list[$key]['address'] = $address;
             if(time()<$activity_info->start_time)
             {
