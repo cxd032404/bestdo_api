@@ -892,8 +892,9 @@ class ActivityService extends BaseService
         $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_start_time"]);
         foreach ($activity_list as $key=>$activity_info) {
             $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,status,club_id,start_time,end_time,icon,comment");
-            $activity_info = json_decode(json_encode($activity_info), true);
-            if (isset($activity_info->activity_id) && $activity_info->status == 1)
+            $activity_info = json_decode(json_encode($activity_info));
+
+            if (isset($activity_info->activity_id) && ($activity_info->status == 1))
             {
                 $activity_start_time = '';
                 $activity_start_time = date('Y-m',strtotime($activity_info->start_time));
@@ -908,7 +909,7 @@ class ActivityService extends BaseService
                 $monthly_activities[] = $activity_data;
                 $activity_data = [];
                 $activity_data['activity_id'] = $activity_info->activity_id;
-                $activity_data['comment'] = $activity_info->comment;
+                $activity_data['comment'] = mb_substr($activity_info->comment,0,15);
                 $activity_data['time'] = date('h:i',strtotime($activity_info->start_time));
                 $activity_data['club_icon'] = '';
                 $activity_data['club_name'] = '';

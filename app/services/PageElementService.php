@@ -416,6 +416,8 @@ class PageElementService extends BaseService
                $activity_list[$key]['icon'] = $activity_info->icon;
                $activity_list[$key]['start_time'] = $activity_info->start_time;
                $activity_list[$key]['end_time'] = $activity_info->end_time;
+               $activity_list[$key]['apply_start_time'] = $activity_info->apply_start_time;
+               $activity_list[$key]['apply_end_time'] = $activity_info->apply_end_time;
                $detail = json_decode($activity_info->detail,true);
                if(isset($detail['checkin'])&&$detail['checkin'])
                {
@@ -432,10 +434,10 @@ class PageElementService extends BaseService
                    $club_info = (new ClubService())->getClubInfo($activity_info->club_id);
                    $activity_list[$key]['club_name'] = $club_info->club_name;
                }
-               if(time()<$activity_info->start_time)
+               if(time()<strtotime($activity_info->apply_start_time))
                {
                    $status = 0; //未开始的活动
-               }elseif(time()>$activity_info->end_time)
+               }elseif(time()>strtotime($activity_info->apply_end_time))
                {
                    $status = 2;//已结束
                }else
@@ -649,6 +651,7 @@ class PageElementService extends BaseService
         $detail = json_decode($club_info->detail);
         $data['detail']['club_info'] = $club_info;
         unset($data['detail']['club_info']->detail);
+        //需默认banner
         if(isset($detail->banner))
         {
             $data['detail']['club_info']->banner= $detail->banner;
@@ -811,6 +814,7 @@ class PageElementService extends BaseService
         $company_info = (new  CompanyService())->getCompanyInfo($user_info['data']['company_id'],'company_id,detail');
         $detail = json_decode($company_info->detail,true);
         $bannerList = [];
+        //需默认Banner
         if(isset($detail['clubBanner']))
         {
             $bannerList = $detail['clubBanner'];
@@ -1134,7 +1138,7 @@ class PageElementService extends BaseService
         return $data;
     }
     /*
-    * 用户当月参加的活动列表
+    * 公司下正在进行的活动列表
     * user_info 用户信息
     * company_id 公司id
     * data 用户包含的element信息
