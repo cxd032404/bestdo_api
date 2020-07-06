@@ -638,7 +638,14 @@ class PageElementService extends BaseService
         //$data['detail']['address'] = isset($detail['checkin']['address'])?$detail['checkin']['address']:'';
         $user_count = (new ActivityService())->getActivityMemberCount($activity_id);
         $data['detail']['userCount'] = $user_count;
-        $data['detail']['activity_info']->remain = $activity_info->member_limit - $user_count;
+        if($activity_info->member_limit)
+        {
+            $data['detail']['activity_info']->remain = $activity_info->member_limit - $user_count;
+        }else
+        {
+            $data['detail']['activity_info']->remain = '不限';
+        }
+
         $data['detail']['activity_info']->activity_name = mb_substr($activity_info->activity_name,0,20);
         $club_info = (new ClubService())->getClubInfo($activity_info->club_id,"club_id,icon,detail");
         if($club_info)
