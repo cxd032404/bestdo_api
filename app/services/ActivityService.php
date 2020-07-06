@@ -932,6 +932,17 @@ class ActivityService extends BaseService
         return $activity_count->{0};
     }
 
+    /*
+     * 查询用户是否参加某个活动
+     */
+    public function checkUserActivity($user_id,$activity_id){
+           $params = [
+             'user_id ='.$user_id.' and activity_id = '.$activity_id,
+             'columns'=>'id'
+           ];
+           return (new \HJ\UserActivityLog())->findFirst($params);
+    }
+
 
 
 

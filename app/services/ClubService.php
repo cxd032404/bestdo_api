@@ -53,7 +53,7 @@ class ClubService extends BaseService
           'columns'=>'log_id,result',
           'order' => 'log_id desc',
       ];
-      $club_member_log = (new \hj\ClubMemberLog())->findfirst($select_params);
+      $club_member_log = (new \HJ\ClubMemberLog())->findfirst($select_params);
       if(isset($club_member_log->log_id)&&$club_member_log->result == 0)
       {
           $return = ['result'=> 0,'data'=>$club_member_log,'msg'=>'已经提交过无须重复申请'];
@@ -68,7 +68,7 @@ class ClubService extends BaseService
       $update_time = date("Y-m-d H:i:s",$current_time);
       $process_time = date("Y-m-d H:i:s",$current_time);
       $user_info = (new UserService())->getUserInfo($user_id,"user_id,company_id");
-      $insert = new \hj\ClubMemberLog();
+      $insert = new \HJ\ClubMemberLog();
       $insert->club_id = $club_id;
       $insert->user_id = $user_id;
       $insert->company_id = $user_info->company_id;
@@ -107,7 +107,7 @@ class ClubService extends BaseService
             'result'=>0,   //未处理的申请
             ],
         ];
-        $club_member_log = (new \hj\ClubMemberLog())->findfirst($select_params);
+        $club_member_log = (new \HJ\ClubMemberLog())->findfirst($select_params);
         if(!isset($club_member_log->log_id))
         {
             $return = ['result'=> 1,'msg'=>'取消失败'];
@@ -190,7 +190,7 @@ class ClubService extends BaseService
                 'result'=>0
             ],
         ];
-        $club_member_log = (new \hj\ClubMemberLog())->findFirst($select_params);
+        $club_member_log = (new \HJ\ClubMemberLog())->findFirst($select_params);
         if(!isset($club_member_log->log_id))
         {
             return true;  //修改过跳回无处理
@@ -239,7 +239,7 @@ class ClubService extends BaseService
                'result'=>0
            ],
        ];
-       $club_member_log = (new \hj\ClubMemberLog())->findFirst($select_params);
+       $club_member_log = (new \HJ\ClubMemberLog())->findFirst($select_params);
        if(!isset($club_member_log->log_id))
        {
            return true;  //修改过跳回无处理
@@ -312,7 +312,7 @@ class ClubService extends BaseService
             $update_time = date("Y-m-d H:i:s",$current_time);
             $process_time = date("Y-m-d H:i:s",$current_time);
             $user_info = (new UserService())->getUserInfo($user_id,"user_id,company_id");
-            $insert = new \hj\ClubMemberLog();
+            $insert = new \HJ\ClubMemberLog();
             $insert->club_id = $club_id;
             $insert->user_id = $user_id;
             $insert->company_id = $user_info->company_id;
@@ -346,7 +346,7 @@ class ClubService extends BaseService
      * 添加用户到俱乐部
      */
     public function addClubMember($params){
-        $insert = (new \hj\ClubMember())->create($params);
+        $insert = (new \HJ\ClubMember())->create($params);
         return $insert;
     }
 
@@ -355,7 +355,7 @@ class ClubService extends BaseService
             "log_id=".$log_id,
             'columns'=>'*'
         ];
-        $club_member_log = (new \hj\ClubMemberLog())->findFirst($params);
+        $club_member_log = (new \HJ\ClubMemberLog())->findFirst($params);
         return $club_member_log;
     }
 

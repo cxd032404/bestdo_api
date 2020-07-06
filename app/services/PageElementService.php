@@ -622,7 +622,7 @@ class PageElementService extends BaseService
         {
             $activity_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
-//        $res = (new ActivityService())->
+        $res = (new ActivityService())->checkUserActivity($user_info['data']['user_id'],$activity_id);
         $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
         $data['detail']['activity_info'] = $activity_info;
         //活动剩余名额
@@ -652,6 +652,7 @@ class PageElementService extends BaseService
         }
 
         $data['detail']['activity_info']->activity_name = mb_substr($activity_info->activity_name,0,20);
+        $data['detail']['aplied'] = isset($res->id)?1:0;
         $club_info = (new ClubService())->getClubInfo($activity_info->club_id,"club_id,icon,detail");
         if($club_info)
         {
@@ -767,12 +768,12 @@ class PageElementService extends BaseService
         }
         $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
         $data['detail']['activity_info'] = $activity_info;
-//        $data['detail']['activity_info']->format = date('Y/m/d H:i',strtotime($activity_info->apply_start_time));
-//        $data['detail']['activity_info'] = date('Y/m/d H:i',strtotime($activity_info->apply_start_time));
         $detail = json_decode($activity_info->detail);
         $data['detail']['activity_info']->checkin = $detail->checkin;
         $data['detail']['activity_info']->monthly_apply_limit = $detail->monthly_apply_limit;
         $data['detail']['activity_info']->weekly_rebuild = $detail->weekly_rebuild;
+        $data['detail']['activity_info']->format_apply_start_time = date('m/d H:i',strtotime($activity_info->apply_start_time)).'-'.date('m/d H:i',strtotime($activity_info->apply_end_time));
+        $data['detail']['activity_info']->format_start_time = date('Y/m/d H:i',strtotime($activity_info->start_time)).'-'.date('H:i',strtotime($activity_info->end_time));
         $data['detail']['member_limit'] = [100,10,3];
         $data['detail']['monthly_apply_limit'] = [1,2,3];
         return $data;
@@ -844,46 +845,46 @@ class PageElementService extends BaseService
     * params 页面标识和company_id
     */
     public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
+        $culture = $this->getFromParams($params,'culture',0);
         $already_applied = $this->getFromParams($params,'already_applied',0); //已参加的活动 0未参加
-        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,club_id,activity_name,comment,icon,apply_start_time,apply_end_time,start_time,end_time',$club_id = -1);
+        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,club_id,activity_name,comment,icon,apply_start_time,apply_end_time,start_time,end_time',$club_id = -1,0);
         $currentTime = time();
         $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
         {
-            if(!$activity_info && $activity_info->club<=0)
-            {
-                unset($activity_list[$key]);
-                continue;
-            }
-            if(($activity_info->status == 1) &&(strtotime($activity_info->apply_start_time)<=$currentTime) && (strtotime($activity_info->apply_end_time)>=$currentTime))
-            { //用户已报名的进行中的活动列表
-                if($already_applied) {
-                    $user_activity_log = (new ActivityService())->getActivityLogByUser($user_info['data']['user_id'],$activity_info->activity_id);
-                    if(!isset($user_activity_log->id))
+                if($culture)
+                {
+                    //文体汇活动
+                    if($activity_info->club_id>0)
                     {
                         unset($activity_list[$key]);
                         continue;
                     }
                 }
-                $clubInfo = $clubService->getClubInfo($activity_info->club_id, "club_id,club_name,icon,detail");
-                $detail = json_decode($clubInfo->detail);
-                if(isset($detail->banner))
-                {
-                    $banner = $detail->banner[0];
+                if (!$activity_info && $activity_info->club_id<=0) {
+                    unset($activity_list[$key]);
+                    continue;
                 }
-                $activity_list[$key] = (object)array_merge((array)$activity_info, (array)$clubInfo);
-                $chinese_start_date = date('m月d日', strtotime($activity_info->start_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->start_time))];
-                $chinese_end_date = date('m月d日', strtotime($activity_info->end_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->end_time))];
-                $activity_list[$key]->chinese_start_date = $chinese_start_date;
-                $activity_list[$key]->chinese_end_date = $chinese_end_date;
-                $activity_list[$key]->activity_name = mb_substr($activity_info->activity_name, 0, 12, 'utf-8');
-                $activity_list[$key]->comment = mb_substr($activity_info->comment, 0, 12, 'utf-8');
-                $activity_list[$key]->banner = $banner;
-            }
-            else
-            {
-                unset($activity_list[$key]);
-            }
+                if (($activity_info->status == 1) && (strtotime($activity_info->apply_start_time) <= $currentTime) && (strtotime($activity_info->apply_end_time) >= $currentTime)) { //用户已报名的进行中的活动列表
+                    if ($already_applied) {
+                        $user_activity_log = (new ActivityService())->getActivityLogByUser($user_info['data']['user_id'], $activity_info->activity_id);
+                        if (!isset($user_activity_log->id)) {
+                            unset($activity_list[$key]);
+                            continue;
+                        }
+                    }
+                    $clubInfo = $clubService->getClubInfo($activity_info->club_id, "club_id,club_name,icon,detail");
+                    $activity_list[$key] = (object)array_merge((array)$activity_info, (array)$clubInfo);
+                    $chinese_start_date = date('m月d日', strtotime($activity_info->start_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->start_time))];
+                    $chinese_end_date = date('m月d日', strtotime($activity_info->end_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->end_time))];
+                    $activity_list[$key]->chinese_start_date = $chinese_start_date;
+                    $activity_list[$key]->chinese_end_date = $chinese_end_date;
+                    $activity_list[$key]->activity_name = mb_substr($activity_info->activity_name, 0, 12, 'utf-8');
+                    $activity_list[$key]->comment = mb_substr($activity_info->comment, 0, 12, 'utf-8');
+                } else {
+                    unset($activity_list[$key]);
+                }
+
         }
         $activity_list = array_values($activity_list);
         $page = $this->getFromParams($params,'page',1);
