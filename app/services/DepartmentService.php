@@ -200,15 +200,15 @@ class DepartmentService extends BaseService
         if ($department) {
             $department = $department->toArray();
             $department = array_column($department, null, 'department_id');
-            //print_r($department);die();
             foreach ($department as $key => $value) {
                 if ($value['parent_id'] == 0) {
                     $tree[$value['department_id']] = $value;
                 } elseif (isset($tree[$value['parent_id']])) {
-                    $tree[$value['parent_id']]['child'] = array_values($tree[$value['parent_id']]['child']);
+                    $tree[$value['parent_id']]['child'][]= $value;
+                    array_values($tree[$value['parent_id']]['child']);
                 }
             }
         }
-        return $tree;
+        return array_values($tree);
     }
 }
