@@ -510,8 +510,8 @@ class PageElementService extends BaseService
         $userClubListWithPermission = json_decode(json_encode($userClubListWithPermission),true);
         $positionList = (new ActivityService())->getPositionListByCreater($user_info['data']['company_id'],$user_info['data']['user_id']);
         $data['detail']['user_club_list'] =array_values($userClubListWithPermission);
-        $data['detail']['member_limit'] = [100,10,3];
-        $data['detail']['monthly_apply_limit'] = [1,2,3];
+        $data['detail']['member_limit'] = [100,10,3,'不限'];
+        $data['detail']['monthly_apply_limit'] = [1,2,3,'不限'];
         $data['detail']['recent_position_list'] = array_values($positionList);
 
         return $data;
@@ -531,7 +531,7 @@ class PageElementService extends BaseService
             $club_id = $data['detail']['club_id'];
         } else//页面获取
         {
-            $club_id = $this->getFromParams($params, $data['detail']['from_params'], 0);
+            $club_id = $this->getFromParams($params, $data['detail']['from_params'], -1);
         }
         //管理的俱乐部列表
         $club_list_permission = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
@@ -544,12 +544,18 @@ class PageElementService extends BaseService
             $club_ids [] = $value->club_id;
         }
         $club_list = array_values($club_list);
+        $all = [
+            'club_id'=>-1,
+            'club_name'=>'全部'
+        ];
+        array_push($club_list,$all);
         $data['detail']['club_list'] = $club_list;
         //默认第一个俱乐部
         $result = $this->getFromParams($params, 'result', 0);
         $member_log_list = [];
-        if ($result == 3) {
+        if ($result == 3 || $club_id == -1) {
             $club_id = $club_ids;
+        }
             $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id, 'log_id,club_id,create_time,user_id,result', $this->getFromParams($params, 'start', 0), $this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3), $this->getFromParams($params, 'result', 0));
             foreach ($club_member_logs as $key => $value) {
                 $user_info = (new UserService())->getUserInfo($value->user_id ?? 0, 'user_id,nick_name,true_name,user_img');
@@ -559,7 +565,6 @@ class PageElementService extends BaseService
                 }
 
                 $user_count = (new ClubService())->getClubMemberCount($value->club_id);
-
                 $member_log_list[$key]['user_id'] = $user_info->user_id;
                 $member_log_list[$key]['user_count'] = $user_count;
                 $member_log_list[$key]['nick_name'] = $user_info->nick_name;
@@ -574,38 +579,9 @@ class PageElementService extends BaseService
             }
         $data['detail']['member_log_list'] = $member_log_list;
         return $data;
-    }
 
-        if(!$club_id)
-        {
-            $club_id = current($club_list)['club_id'];
-        }
-        if($club_id) {
-            $club_info = (new ClubService())->getClubInfo($club_id, 'club_name,icon');
-            $data['detail']['club_id'] = $club_id;
-            $data['detail']['club_member_count'] = (new ClubService())->getClubMemberCount($club_id);
-            $data['detail']['club_name'] = $club_info->club_name;
-            $data['detail']['icon'] = $club_info->icon;
-            $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id, 'log_id,club_id,create_time,user_id,result', $this->getFromParams($params, 'start', 0), $this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 4), $this->getFromParams($params, 'result', 0));
-            foreach ($club_member_logs as $key => $value) {
-                $user_info = (new UserService())->getUserInfo($value->user_id ?? 0, 'user_id,nick_name,true_name,user_img');
-                if(!$user_info)
-                {
-                    continue;
-                }
-                $member_log_list[$key]['user_id'] = $user_info->user_id;
-                $member_log_list[$key]['nick_name'] = $user_info->nick_name;
-                $member_log_list[$key]['true_name'] = $user_info->true_name;
-                $member_log_list[$key]['user_img'] = $user_info->user_img;
-                $member_log_list[$key]['log_id'] = $value->log_id;
-                $member_log_list[$key]['result'] = $value->result;
-                $member_log_list[$key]['club_id'] = $value->club_id;
-                $member_log_list[$key]['apply_club_name'] = $club_info->club_name;
-                $member_log_list[$key]['create_time'] = date('Y/m/d h:i', strtotime($value->create_time));
-            }
-        }
-        $data['detail']['member_log_list']= $member_log_list;
-        return $data;
+
+
     }
 
 
@@ -694,11 +670,7 @@ class PageElementService extends BaseService
         }
         else//页面获取
         {
-            $club_id = $this->getFromParams($params,$data['detail']['from_params'],'');
-        }
-        if(strlen($club_id) == 0)
-        {
-            $club_id = -1;
+            $club_id = $this->getFromParams($params,$data['detail']['from_params'],-1);
         }
         $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,
             'activity_id,activity_name,start_time,apply_start_time,club_id,status',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
@@ -717,6 +689,11 @@ class PageElementService extends BaseService
             $managed_activity_list[$key] = (object)array_merge((array)$managed_activity_list[$key],(array)$managed_activity_list[$key]->club_info);
         }
         $managed_club_list = json_decode(json_encode($managed_club_list),true);
+        $all = [
+            'club_id'=>-1,
+            'club_name'=>'全部'
+        ];
+        array_push($managed_club_list,$all);
         $data['detail']['managed_club_list'] = array_values($managed_club_list);
         $data['detail']['residuals'] = $return['residuals'];
         $data['detail']['managed_activity_list'] = array_values($managed_activity_list);
@@ -861,7 +838,7 @@ class PageElementService extends BaseService
                         continue;
                     }
                 }
-                if (!$activity_info && $activity_info->club_id<=0) {
+                if (!$activity_info || $activity_info->club_id<=0) {
                     unset($activity_list[$key]);
                     continue;
                 }
@@ -879,8 +856,11 @@ class PageElementService extends BaseService
                     $chinese_end_date = date('m月d日', strtotime($activity_info->end_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->end_time))];
                     $activity_list[$key]->chinese_start_date = $chinese_start_date;
                     $activity_list[$key]->chinese_end_date = $chinese_end_date;
+                    $activity_list[$key]->chinese_end_date = $chinese_end_date;
+                    $activity_list[$key]->format_apply_time = date('m/d :H:i',strtotime($activity_info->apply_start_time)).'-'.date('m/d :H:i',strtotime($activity_info->apply_end_time));
                     $activity_list[$key]->activity_name = mb_substr($activity_info->activity_name, 0, 12, 'utf-8');
                     $activity_list[$key]->comment = mb_substr($activity_info->comment, 0, 12, 'utf-8');
+                    $activity_list[$key]->club_name = $clubInfo->club_name;
                 } else {
                     unset($activity_list[$key]);
                 }
@@ -962,6 +942,10 @@ class PageElementService extends BaseService
         $activity_list = [];
         foreach ($activity as $key=>$value)
         {
+            if($activity_list->checkin_status)
+            {
+              continue;
+            }
             $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
             if(!$activity_info)
             {

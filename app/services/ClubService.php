@@ -555,7 +555,7 @@ class ClubService extends BaseService
         if($result == 4)
         {
             $conditions = "club_id = ".$club_id;
-        }elseif($result == 3)
+        }elseif(is_array($club_id))
         {
             $club_ids = '';
             foreach ($club_id as $key =>$value)
