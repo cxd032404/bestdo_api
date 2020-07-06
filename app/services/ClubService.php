@@ -575,6 +575,9 @@ class ClubService extends BaseService
             $club_ids =substr($club_ids,1);
             $club_ids ='('.$club_ids.')';
             $conditions = "club_id in ".$club_ids.' and  result ='.$result;
+        }else
+        {
+            $conditions = "club_id = ".$club_id.'and redult ='.$result;
         }
 
 

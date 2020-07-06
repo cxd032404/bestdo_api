@@ -946,7 +946,8 @@ class PageElementService extends BaseService
         {
             if($activity_list->checkin_status)
             {
-              continue;
+                unset($activity[$key]);
+                continue;
             }
             $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
             if(!$activity_info)
