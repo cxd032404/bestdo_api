@@ -861,9 +861,9 @@ class PageElementService extends BaseService
                 }
                 $clubInfo = $clubService->getClubInfo($activity_info->club_id, "club_id,club_name,icon,detail");
                 $detail = json_decode($clubInfo->detail);
-                if(isset($detail['banner']))
+                if(isset($detail->banner))
                 {
-                    $banner = $detail['banner'][0];
+                    $banner = $detail->banner[0];
                 }
                 $activity_list[$key] = (object)array_merge((array)$activity_info, (array)$clubInfo);
                 $chinese_start_date = date('m月d日', strtotime($activity_info->start_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->start_time))];
