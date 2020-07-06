@@ -61,6 +61,7 @@ class CacheController extends BaseController
             $activityInfo = (new ActivityService())->getActivityInfo($id,"*",0);
             if(isset($activityInfo->activity_id))
             {
+                (new ActivityService())->getActivityMemberCount($id,0);
                 if($activityInfo->club_id>0)
                 {
                     (new ActivityService())->getActivityListByCompany($activityInfo->company_id,'*',$activityInfo->club_id,0);
