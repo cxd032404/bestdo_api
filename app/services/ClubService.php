@@ -555,7 +555,7 @@ class ClubService extends BaseService
         if($result == 4)
         {
             $conditions = "club_id = ".$club_id;
-        }elseif(is_array($club_id))
+        }elseif($result==3)
         {
             $club_ids = '';
             foreach ($club_id as $key =>$value)
@@ -565,10 +565,19 @@ class ClubService extends BaseService
             $club_ids =substr($club_ids,1);
             $club_ids ='('.$club_ids.')';
             $conditions = "club_id in ".$club_ids.' and ( result = 1 or result =2)';
-        }else
+        }elseif(is_array($club_id))
         {
-            $conditions = "club_id = ".$club_id.' and result ='.$result;
+            $club_ids = '';
+            foreach ($club_id as $key =>$value)
+            {
+                $club_ids .=','.$value;
+            }
+            $club_ids =substr($club_ids,1);
+            $club_ids ='('.$club_ids.')';
+            $conditions = "club_id in ".$club_ids.' and  result ='.$result;
         }
+
+
         if($start)
         {
             $conditions.= ' and log_id >'.$start;
