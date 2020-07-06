@@ -944,7 +944,7 @@ class PageElementService extends BaseService
         $activity_list = [];
         foreach ($activity as $key=>$value)
         {
-            if($activity_list->checkin_status)
+            if($value->checkin_status || $value->status==0 )
             {
                 unset($activity[$key]);
                 continue;
