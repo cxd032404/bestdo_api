@@ -647,12 +647,14 @@ class PageElementService extends BaseService
             $data['detail']['icon'] = '';
         }
         $detail = json_decode($club_info->detail);
+        $data['detail']['club_info'] = $club_info;
+        unset($data['detail']['club_info']->detail);
         if(isset($detail->banner))
         {
-            $data['detail']['club_info'] = $detail->banner;
+            $data['detail']['club_info']->banner= $detail->banner;
         }else
         {
-            $data['detail']['club_info'] = [];
+            $data['detail']['club_info']->banner = [];
         }
         $member_list = (new ActivityService())->getActivityMemberList($activity_id);
         $activity_member_list = [];
