@@ -1109,11 +1109,12 @@ class UserService extends BaseService
                 "last_update_time"=>date("Y-m-d H:i:s"),
                 "last_login_time"=>date("Y-m-d H:i:s"),
                 "last_login_source"=>"test",
+                "password"=>"",
+                "is_delete"=>0,
             ];
             $department = $departmentService->getDepartment($userInfo['department_id']);
             unset($department['current_level']);
             $userInfo = array_merge($userInfo,$department);
-            print_R($userInfo);
             $user = new \HJ\UserInfo();
             foreach($userInfo as $key => $value)
             {
@@ -1121,13 +1122,17 @@ class UserService extends BaseService
             }
             try{
                 //print_R($user);
-                if ($user->create() === false) {
+                if ($user->create() === true) {
                     echo "success\n";
                     $success++;
                 }
                 else
                 {
-                    print_R($user->getMessages());
+                    foreach($user->getMessages() as $message)
+                    {
+                        echo "message";
+                        print_R($message);
+                    }
                     echo "fail\n";
                     $fail++;
                 }
@@ -1135,9 +1140,7 @@ class UserService extends BaseService
             }
             catch (\Phalcon\Exception $e) {
                 echo "<pre>"; print_r( $e->getMessage() );exit;
-            }
-
-            //echo $mobile;
+            }//echo $mobile;
         }
     }
 }
