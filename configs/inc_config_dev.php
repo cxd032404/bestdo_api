@@ -168,7 +168,7 @@ $config = [
         'defaultDailyStep' => 6000,
     ],
     'activity'=>[
-        'activity_checkin_time'=>3600
+        'activity_checkin_time'=>3600//距活动开始前有效签到时间
     ]
 
 
