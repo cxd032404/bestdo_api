@@ -608,8 +608,8 @@ class PageElementService extends BaseService
         $chinese_apply_end_date = date('m月d日',strtotime($activity_info->apply_end_time)).date('H:i',strtotime($activity_info->apply_end_time));
         $activity_info->chinese_apply_start_time = $chinese_apply_start_date;
         $activity_info->chinese_apply_end_time = $chinese_apply_end_date;
-        $chinese_start_date = date('m月d日',strtotime($activity_info->start_time)).date('H:i',strtotime($activity_info->apply_start_time));
-        $chinese_end_date = date('m月d日',strtotime($activity_info->end_time)).date('H:i',strtotime($activity_info->apply_end_time));
+        $chinese_start_date = date('m月d日',strtotime($activity_info->start_time)).date('H:i',strtotime($activity_info->start_time));
+        $chinese_end_date = date('m月d日',strtotime($activity_info->end_time)).date('H:i',strtotime($activity_info->end_time));
         $activity_info->chinese_start_time = $chinese_start_date;
         $activity_info->chinese_end_time = $chinese_end_date;
         $activity_info->format_apply_start_time = date('Y/m/d',strtotime($activity_info->apply_start_time));
