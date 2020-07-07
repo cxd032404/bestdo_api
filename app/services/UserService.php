@@ -1140,7 +1140,7 @@ class UserService extends BaseService
             }
             catch (\Phalcon\Exception $e) {
                 echo "<pre>"; print_r( $e->getMessage() );exit;
-            }//echo $mobile;
+            }
         }
     }
 }
