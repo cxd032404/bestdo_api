@@ -970,21 +970,21 @@ class PageElementService extends BaseService
             }elseif(time()>=strtotime($activity_info->end_time) && $value->status == 0)
             {//已结束的活动且未签到
                 $activity_status = 2;
-                $activity_name = '已过期';
+                $activity_status_name = '已过期';
                 $activity_color = '#DDDDDD';
             }elseif($value->checkin_status == 1)
             {
                 $activity_status = 1; //已签到
-                $activity_name = '已签到';
+                $activity_status_name = '已签到';
                 $activity_color = '#444054';
             }elseif($value->checkin_staus == 0)
             {
                 $activity_status = 0; //去签到
-                $activity_name = '去签到';
+                $activity_status_name = '去签到';
                 $activity_color = '#3678E1';
             }
             $activity_list[$key]['activity_status'] = $activity_status;
-            $activity_list[$key]['activity_name'] = $activity_name;
+            $activity_list[$key]['activity_status_name'] = $activity_status_name;
             $activity_list[$key]['activity_color'] = $activity_color;
 
             $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,club_name,icon');
