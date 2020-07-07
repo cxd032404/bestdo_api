@@ -938,7 +938,10 @@ class ActivityService extends BaseService
                 $date_list[$day] = $activity_data;
             }
         }
-        return ['month_activities'=>$monthly_activities,'date_data'=>$date_list];
+        //每月第一天的活动
+        ksort($date_list);
+        $first_activity_info = current($date_list);
+        return ['month_activities'=>$monthly_activities,'date_data'=>$date_list,'first_activity_info'=>$first_activity_info];
     }
     /*
      * 获取活动已签到人数
