@@ -166,10 +166,7 @@ $config = [
         'distancePerStep' => 0.6,
         'stepsPerMinute' => 30,
         'defaultDailyStep' => 6000,
-    ]
-
-
-
-
+    ],
+    'testMoblie'=>['18550306937','18365285403','17621822661','13472871514','17082170787','18621758237','15150731278']
 ];
 return $config;
