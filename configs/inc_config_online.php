@@ -166,7 +166,11 @@ $config = [
         'distancePerStep' => 0.6,
         'stepsPerMinute' => 30,
         'defaultDailyStep' => 6000,
+    ],
+    'activity'=>[
+        'activity_checkin_time'=>3600
     ]
+
 
 
 
