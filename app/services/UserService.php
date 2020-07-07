@@ -118,7 +118,7 @@ class UserService extends BaseService
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
-        if(in_array($mobile,$this->config->testMoblie)){
+        if(in_array($mobile,(array)$this->config->testMoblie)){
             $login_code = json_encode(['code'=>123456]);
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
@@ -253,7 +253,6 @@ class UserService extends BaseService
                     $user->last_login_time = date("Y-m-d H:i:s",$currentTime);
                     $user->last_update_time = date("Y-m-d H:i:s",$currentTime);
                     $user->last_login_source = "Mobile";
-
                     if ($user->create() === false) {
                         $transaction->rollback($this->msgList['register_fail']);
                     }

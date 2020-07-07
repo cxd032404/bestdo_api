@@ -37,7 +37,6 @@ class SendCodeService extends BaseService
     //注册发送短信验证码方法
     public function sendRegisterCode($mobile,$code_name)
     {
-        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         $register_code = $this->redis->get($code_name.$mobile);
         $common = new Common();
         if(!isset($mobile) || !$common->check_mobile($mobile)){
@@ -76,6 +75,14 @@ class SendCodeService extends BaseService
     //登录发送短信验证码方法
     public function sendLoginCode($mobile,$code_name)
     {
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
+        $test_mobile = (array)$this->config->testMoblie;
+        if(in_array($mobile,$test_mobile))
+        {
+            $return  = ['result'=>1,'msg'=>'发送成功',"data"=>'','code'=>200];
+            return $return;
+        }
+
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
         $login_code = $this->redis->get($code_name.$mobile);
         $login_code = json_decode($login_code,true);
