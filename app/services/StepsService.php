@@ -340,7 +340,8 @@ class StepsService extends BaseService
 
     public function generateTestSteps($company_id = 1,$month = 1)
     {
-        $userList = (new \HJ\UserInfo())::find(["department_id>0 and company_id = ".$company_id,"columns"=>"user_id,department_id,company_id"]);
+        $userList = (new \HJ\UserInfo())::find(["department_id>0 and company_id = ".$company_id." and last_login_source = 'test'","columns"=>"user_id,department_id,company_id"]);
+        echo "\nget User:".count($userList)."\n";
         for($i = 1;$i<=$month;$i++)
         {
             $month = date("m")-$i+1;
