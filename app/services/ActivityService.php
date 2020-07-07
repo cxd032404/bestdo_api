@@ -371,7 +371,7 @@ class ActivityService extends BaseService
         }
         foreach($activity_list as $key => $activityInfo)
         {
-            if(!$activityInfo || $activityInfo->club_id == 0 || $activityInfo->status!=1 )
+            if(!$activityInfo || $activityInfo->club_id == 0 || $activityInfo->status==0 )
             {
                 unset($activity_list[$key]);
             }
@@ -380,7 +380,7 @@ class ActivityService extends BaseService
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,$columns,$club_id,0);
         foreach($created_activity_list as $key => $created)
         {
-            if(!$created || $created->club_id == 0 || $created->status!=1 )
+            if(!$created || $created->club_id == 0 || $created->status==0 )
             {
                 //unset($created_activity_list[$key]);
                 //continue;
@@ -509,7 +509,7 @@ class ActivityService extends BaseService
 
         if($club_id != -1)
         {
-            $conditions .= "and 'club_id' = ".$club_id;
+            $conditions .= " and club_id = ".$club_id;
         }
         $cacheSetting = $this->config->cache_settings->activity_list_by_company;
         $cacheName = $cacheSetting->name.$company_id;

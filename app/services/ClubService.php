@@ -577,7 +577,7 @@ class ClubService extends BaseService
             $conditions = "club_id in ".$club_ids.' and  result ='.$result;
         }else
         {
-            $conditions = "club_id = ".$club_id.'and redult ='.$result;
+            $conditions = "club_id = ".$club_id.' and result ='.$result;
         }
 
 
