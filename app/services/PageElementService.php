@@ -407,13 +407,13 @@ class PageElementService extends BaseService
                    continue;
                }
                $activity_member_count = (new ActivityService())->getActivityMemberCount($value['activity_id']);
-
+               $club_info = (new ClubService())->getClubInfo($activity_info->club_id);
                //活动人数
                $activity_list[$key]['Usercount'] = $activity_member_count;
                $activity_list[$key]['activity_id'] = $value['activity_id'];
                $activity_list[$key]['activity_name'] = $activity_info->activity_name;
                $activity_list[$key]['club_id'] = $activity_info->club_id;
-               $activity_list[$key]['icon'] = $activity_info->icon;
+               $activity_list[$key]['icon'] = $club_info->icon;
                $activity_list[$key]['start_time'] = $activity_info->start_time;
                $activity_list[$key]['end_time'] = $activity_info->end_time;
                $activity_list[$key]['apply_start_time'] = $activity_info->apply_start_time;
@@ -940,13 +940,14 @@ class PageElementService extends BaseService
      */
 
     public function getElementPage_attendActivityListToCheckin($data,$params,$user_info,$company_id){
+        $checkin_time = $this->config->activity->activity_checkin_time;
         $activity = (new ActivityService())->getActivityList($user_info['data']['user_id']);
         $activity_list = [];
         foreach ($activity as $key=>$value)
         {
 
             $activity_info = (new ActivityService())->getActivityInfo($value->activity_id,'*');
-            if($value->checkin_status == 1 || $activity_info->status== 0)
+            if( $activity_info->status== 0)
             {
                 continue;
             }
@@ -958,6 +959,34 @@ class PageElementService extends BaseService
             {
                 continue;
             }
+            //可以签到的时间
+            $checkin_doing_time =strtotime($activity_info->start_time)-$checkin_time;
+            $activity_status = 0;
+            $activity_name = '未签到';
+            $activity_color = '#cccccc';
+            if(time()<$checkin_doing_time)
+            { //活动开始前一小时的活动剔除
+                continue;
+            }elseif(time()>=strtotime($activity_info->end_time) && $value->status == 0)
+            {//已结束的活动且未签到
+                $activity_status = 2;
+                $activity_name = '已过期';
+                $activity_color = '#DDDDDD';
+            }elseif($value->checkin_status == 1)
+            {
+                $activity_status = 1; //已签到
+                $activity_name = '已签到';
+                $activity_color = '#444054';
+            }elseif($value->checkin_staus == 0)
+            {
+                $activity_status = 0; //去签到
+                $activity_name = '去签到';
+                $activity_color = '#3678E1';
+            }
+            $activity_list[$key]['activity_status'] = $activity_status;
+            $activity_list[$key]['activity_name'] = $activity_name;
+            $activity_list[$key]['activity_color'] = $activity_color;
+
             $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,club_name,icon');
             $detail = json_decode($activity_info->detail);
             $address = $detail->checkin->address??'';
@@ -988,18 +1017,11 @@ class PageElementService extends BaseService
             $activity_list[$key]['chinese_end_time'] = date('m月d日',strtotime($activity_info->end_time));
             $activity_list[$key]['checkin_status'] = $value->checkin_status;
             $activity_list[$key]['address'] = $address;
-            if(time()<$activity_info->start_time)
-            {
-                $status = 0; //未开始的活动
-            }elseif(time()>$activity_info->end_time)
-            {
-                $status = 2;//已结束
-            }else
-            {
-                $status = 1; //正在进行中
-            }
-            $activity_list[$key]['status'] = $status;
+
         }
+        $checkin_status = array_column($activity_list,'activity_status');
+        $start_time = array_column($activity_list,'start_time');
+        array_multisort($activity_list,SORT_ASC,$checkin_status,$start_time);
         $page = $this->getFromParams($params,'page',1);
         $pageSize = $this->getFromParams($params,'pageSize',4);
         $offset = ($page-1)*$pageSize;
@@ -1011,7 +1033,6 @@ class PageElementService extends BaseService
             $residuals = 1;
         }
         $activity_list = array_slice($activity_list,$offset,$pageSize);
-
         $data['detail']['activity_list'] = $activity_list;
         $data['detail']['residuals'] = $residuals;
         return $data;
@@ -1350,7 +1371,6 @@ class PageElementService extends BaseService
         $data = $this->getElementPage_list($data,$params,$user_info,$company_id);
         $available = $this->getElementPage_post($data,$params,$user_info,$company_id);
         $data['data']['available'] = $available['detail']['available']['result'];
-        $data['data']['userinfo'] = (new UserService())->getUserInfo($user_info['data']['user_id'],'*',0);
         return $data;
     }
 }

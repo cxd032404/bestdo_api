@@ -443,6 +443,28 @@ class UserController extends BaseController
 		}
 		return $this->success($return['data'],$return['msg']);
 	}
+	/*
+	 * 获取用户信息
+	 */
+    public function getUserInfoAction(){
+        //接收参数并格式化
+        $data = $this->request->get();
+        /*验证token开始*/
+        $return  = (new UserService)->getDecrypt();
+        if($return['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        /*验证token结束*/
+        $user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+        $userInfo  = (new UserService())->getUserInfo($user_id,'user_id,user_img,nick_name,true_name');
+        if(!$userInfo->user_id)
+        {
+            return $this->failure([],'请求失败',$return['code']);
+        }
+        return $this->success($userInfo,'请求成功');
+
+
+    }
 
 
 
