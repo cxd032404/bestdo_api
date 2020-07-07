@@ -150,7 +150,6 @@ class ClubService extends BaseService
             return $return;
         }elseif($operation == 'reject')
         {
-
             $success = 0;
             foreach ($log_ids as $log_id)
             {
@@ -176,7 +175,7 @@ class ClubService extends BaseService
      */
     public function applicationReject($user_id,$log_id = 0){
         $club_member_log_info = $this->getClubMemberLog($log_id);
-        $club_id = isset($club_member_log_info->club_id)??0;
+        $club_id = $club_member_log_info->club_id??0;
         $permission = $this->getUserClubPermission($user_id,$club_id,0);
         if($permission == 0)
         {
@@ -455,6 +454,7 @@ class ClubService extends BaseService
                     //如果指定俱乐部
                     if($club_id>0)
                     {
+
                         //查询成员列表
                         $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
                         $permission = $userClubMemberShip->permission??0;
@@ -476,6 +476,7 @@ class ClubService extends BaseService
         {
             //获取用户信息
             $userInfo = (new UserService())->getUserInfo($user_id,"user_id,manager_id");
+
             //超级管理员
             if($userInfo->manager_id>0)
             {
@@ -487,7 +488,7 @@ class ClubService extends BaseService
                 if($club_id>0)
                 {
                     //查询成员列表
-                    $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,1);
+                    $userClubMemberShip = $this->getUserClubMembership($user_id,$club_id,0);
                     $permission = $userClubMemberShip->permission??0;
                 }
                 else
@@ -801,8 +802,12 @@ class ClubService extends BaseService
      * 查询俱乐部人数
      */
     public function getClubMemberCount($club_id = 0){
-        $number = (new HJ\ClubMember())->query()->where("club_id =".$club_id)->andWhere('status = 1')->execute()->count();
-        return $number;
+        $params = [
+            'club_id = '.$club_id.' and status = 1',
+            'columns'=>'count(member_id)'
+        ];
+        $number = (new HJ\ClubMember())->findfirst($params);
+        return $number->{0};
     }
 
     /*
