@@ -1344,12 +1344,27 @@ class PageElementService extends BaseService
         {
             if($value['department_id'] == $department['department_id_1'])
             {
+                foreach ($value['child'] as $k=>$v)
+                {
+                    if($v['department_id'] == $department['department_id_2'])
+                    {
+                        $department_data[$key]['child'][$k]['checked'] = 1;
+                    }else
+                    {
+                        $department_data[$key]['child'][$k]['checked'] = 0;
+                    }
+                }
                 $department_data[$key]['checked'] = 1;
             }else
             {
+                foreach ($value['child'] as $k=>$v)
+                {
+                        $department_data[$key]['child'][$k]['checked'] = 0;
+                }
                 $department_data[$key]['checked'] = 0;
             }
         }
+        print_r($department_data);die();
         $data['detail']['department'] = $department_data;
         return $data;
     }
