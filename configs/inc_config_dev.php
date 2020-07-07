@@ -168,12 +168,7 @@ $config = [
         'defaultDailyStep' => 6000,
     ],
     'activity'=>[
-        'activity_checkin_time'=>3600//距活动开始前有效签到时间
-    ]
-
-
-
-
-
-];
+        'activity_checkin_time'=>3600,//距活动开始前有效签到时间
+         'testMoblie'=>['18550306937','18365285403','17621822661','13472871514','17082170787','18621758237','15150731278']
+]];
 return $config;

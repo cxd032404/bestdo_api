@@ -211,4 +211,11 @@ class DepartmentService extends BaseService
         }
         return array_values($tree);
     }
+
+    public function getDepartmentByCompany($company_id = 1)
+    {
+        echo "compay_id:".$company_id;
+        $department = (new \HJ\Department())->find(['company_id =' . $company_id, 'columns' => 'department_id,parent_id,department_name', 'order' => "department_id"]);
+        return $department;
+    }
 }
