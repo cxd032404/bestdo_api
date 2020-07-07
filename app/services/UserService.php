@@ -118,7 +118,7 @@ class UserService extends BaseService
     {
         $common = new Common();
         $login_code = $this->redis->get('login_'.$mobile);
-        if(in_array($mobile,['18550306937','18365285403','17621822661','13472871514','17082170787','18621758237','15150731278']) ){
+        if(in_array($mobile,$this->config->testMoblie)){
             $login_code = json_encode(['code'=>123456]);
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
@@ -1079,5 +1079,68 @@ class UserService extends BaseService
             }
         }
         return $userCount->userCount;
+    }
+
+    public function generateTestUser($company_id = 1,$count = 100)
+    {
+        $departmentService = new DepartmentService();
+        $configService = new ConfigService();
+        $departmentList = $departmentService->getDepartmentByCompany($company_id)->toArray();
+        $currentTime = time();
+        $userImg = $configService->getConfig("default_user_img");
+        $userImg->content = json_decode($userImg->content,true);
+        $userImg = $userImg->content['0']['img_url']??"";
+        $success = $fail = 0;
+        for($i = 1;$i<=$count;$i++)
+        {
+            $randName = date("YmdHis",$currentTime).sprintf("%05d",$i);
+            $randMobile = "1".sprintf("%010d",rand(1,9999999999));
+            $randDepartment = $departmentList[array_rand($departmentList)];
+            $userInfo = [
+            "company_id"=>$company_id,
+            "true_name"=>"姓名".$randName,
+            "nick_name"=>"昵称".$randName,
+            "department_id" => $departmentList[array_rand($departmentList)]['department_id'],
+            "mobile" => $randMobile,
+            "username"=>$randMobile,
+            "sex"=>rand(1,99)%3,
+                "user_img"=>$userImg,
+                "reg_time"=>date("Y-m-d H:i:s"),
+                "last_update_time"=>date("Y-m-d H:i:s"),
+                "last_login_time"=>date("Y-m-d H:i:s"),
+                "last_login_source"=>"test",
+                "password"=>"",
+                "is_delete"=>0,
+            ];
+            $department = $departmentService->getDepartment($userInfo['department_id']);
+            unset($department['current_level']);
+            $userInfo = array_merge($userInfo,$department);
+            $user = new \HJ\UserInfo();
+            foreach($userInfo as $key => $value)
+            {
+                $user->$key = $value;
+            }
+            try{
+                //print_R($user);
+                if ($user->create() === true) {
+                    echo "success\n";
+                    $success++;
+                }
+                else
+                {
+                    foreach($user->getMessages() as $message)
+                    {
+                        echo "message";
+                        print_R($message);
+                    }
+                    echo "fail\n";
+                    $fail++;
+                }
+                echo "success:".$success."fail:".$fail;
+            }
+            catch (\Phalcon\Exception $e) {
+                echo "<pre>"; print_r( $e->getMessage() );exit;
+            }
+        }
     }
 }

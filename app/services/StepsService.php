@@ -18,8 +18,11 @@ use Phalcon\Mvc\Model\Transaction\Manager as TxManager;
 
 class StepsService extends BaseService
 {
+    //update是否更新
+    //0存在就不更新
+    //1不同就更新
     //更新用户的步数
-    public function updateStepsForUser($user_info,$steps = [])
+    public function updateStepsForUser($user_info,$steps = [],$update = 1)
     {
         $create = $update = 0;
         $steps = json_decode($steps['data'],true);
@@ -37,13 +40,15 @@ class StepsService extends BaseService
                 }
                 else
                 {
-                    $updateLog = $this->updateUserSteps($stepsInfo->log_id,$step['step'],$department);
-                    if($updateLog)
+                    if($update == 1)
                     {
-                        $update ++;
+                        $updateLog = $this->updateUserSteps($stepsInfo->log_id,$step['step'],$department);
+                        if($updateLog)
+                        {
+                            $update ++;
+                        }
                     }
                 }
-
             }
             else
             {
@@ -333,25 +338,33 @@ class StepsService extends BaseService
         return $steps->toArray();
     }
 
-    public function generateTestSteps($month = 1)
+    public function generateTestSteps($company_id = 1,$month = 1)
     {
-        $start_date = "2020-".$month."-01";
-        $end_date = date("Y-m-t",strtotime($start_date));
-        $userList = (new \HJ\UserInfo())::find(["department_id>0 and company_id = 1","columns"=>"user_id,department_id,company_id"]);
-        foreach($userList  as $userInfo)
+        $userList = (new \HJ\UserInfo())::find(["department_id>0 and company_id = ".$company_id,"columns"=>"user_id,department_id,company_id"]);
+        for($i = 1;$i<=$month;$i++)
         {
-            $steps = ['data'=>["stepInfoList"=>[]]];
-            for($i=0;$i<date("t",strtotime($end_date));$i++)
+            $month = date("m")-$i+1;
+            $start_date = "2020-".$month."-01";
+            echo $start_date;
+            $end_date = date("Y-m-t",strtotime($start_date));
+            echo $end_date;
+            foreach($userList  as $userInfo)
             {
-                $timeStamp = strtotime($start_date)+$i*86400;
-                $steps['data']['stepInfoList'][] = ['timestamp' => $timeStamp,"step"=>rand(1,9999)];
+                $steps = ['data'=>["stepInfoList"=>[]]];
+                for($i=0;$i<date("t",strtotime($end_date));$i++)
+                {
+                    $timeStamp = strtotime($start_date)+$i*86400;
+                    $steps['data']['stepInfoList'][] = ['timestamp' => $timeStamp,"step"=>rand(1,9999)];
+                }
+                $steps['data'] = json_encode($steps['data']);
+                $update = $this->updateStepsForUser($userInfo,$steps,0);
+                echo $userInfo->user_id."\n";
+                print_R($update);
+                //$department = (new DepartmentService())->getDepartment($userInfo['department_id']);
+                //print_R($department);
             }
-            $steps['data'] = json_encode($steps['data']);
-            $update = $this->updateStepsForUser($userInfo,$steps);
-            print_R($update);
-            //$department = (new DepartmentService())->getDepartment($userInfo['department_id']);
-            //print_R($department);
         }
+
     }
     //获取当前匹配的健步走日期段
     //如果匹配不上，就是当前月
