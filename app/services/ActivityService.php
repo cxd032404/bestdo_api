@@ -408,7 +408,7 @@ class ActivityService extends BaseService
 */            }
         }
         //已结束活动
-        $finish = [];
+        $finish_activity= [];
         //本月后六个月内的活动
         $current_month = date('m',time());  //本月
         $current_year = date('Y',time()); //本年
@@ -428,7 +428,7 @@ class ActivityService extends BaseService
             //去掉不在当月六个月内的活动
             if(strtotime($activity_info->start_time) >= $activity_time)
             {
-                unset($activity_list);
+                unset($activity_list[$key]);
                 continue;
             }
             //已结束的活动
