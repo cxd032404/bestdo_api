@@ -678,15 +678,17 @@ class PageElementService extends BaseService
         $managed_activity_list = $return['activity_list'];
         foreach ($managed_activity_list as $key=>$value)
         {
-            $managed_activity_list[$key]->chinese_start_time = date('m月d日',strtotime($value->start_time));
-            if($value->club_id>0)
+            $managed_activity_list[$key]['chinese_start_time'] = date('m月d日',strtotime($value['start_time']));
+            if($value['club_id']>0)
             {
-                $managed_activity_list[$key]->club_info = (new ClubService())->getClubInfo($value->club_id,'club_id,club_name,icon');
+                $club_info = (new ClubService())->getClubInfo($value['club_id'],'club_id,club_name,icon');
+                $club_info = json_decode(json_encode($club_info),true);
+                $managed_activity_list[$key]['club_info'] = $club_info;
             }else
             {
-                $managed_activity_list[$key]->club_info = [];
+                $managed_activity_list[$key]['club_info'] = [];
             }
-            $managed_activity_list[$key] = (object)array_merge((array)$managed_activity_list[$key],(array)$managed_activity_list[$key]->club_info);
+            $managed_activity_list[$key] = (object)array_merge($managed_activity_list[$key],$managed_activity_list[$key]['club_info']);
         }
         $managed_club_list = json_decode(json_encode($managed_club_list),true);
         $all = [
