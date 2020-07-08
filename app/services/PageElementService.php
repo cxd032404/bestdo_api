@@ -414,10 +414,10 @@ class PageElementService extends BaseService
                $activity_list[$key]['activity_name'] = $activity_info->activity_name;
                $activity_list[$key]['club_id'] = $activity_info->club_id;
                $activity_list[$key]['icon'] = $club_info->icon;
-               $activity_list[$key]['start_time'] = date('Y-m-d H:i',$activity_info->start_time);
-               $activity_list[$key]['end_time'] = date('Y-m-d H:i',$activity_info->end_time);
-               $activity_list[$key]['apply_start_time'] = date('Y-m-d H:i',$activity_info->apply_start_time);
-               $activity_list[$key]['apply_end_time'] = date('Y-m-d H:i',$activity_info->apply_end_time);
+               $activity_list[$key]['start_time'] = date('Y-m-d H:i',strtotime($activity_info->start_time));
+               $activity_list[$key]['end_time'] = date('Y-m-d H:i',strtotime($activity_info->end_time));
+               $activity_list[$key]['apply_start_time'] = date('Y-m-d H:i',strtotime($activity_info->apply_start_time));
+               $activity_list[$key]['apply_end_time'] = date('Y-m-d H:i',strtotime($activity_info->apply_end_time));
                $detail = json_decode($activity_info->detail,true);
                if(isset($detail['checkin'])&&$detail['checkin'])
                {
