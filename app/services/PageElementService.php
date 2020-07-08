@@ -688,7 +688,7 @@ class PageElementService extends BaseService
             {
                 $managed_activity_list[$key]['club_info'] = [];
             }
-            $managed_activity_list[$key] = (object)array_merge($managed_activity_list[$key],$managed_activity_list[$key]['club_info']);
+            $managed_activity_list[$key] = array_merge($managed_activity_list[$key],$managed_activity_list[$key]['club_info']);
         }
         $managed_club_list = json_decode(json_encode($managed_club_list),true);
         $all = [
