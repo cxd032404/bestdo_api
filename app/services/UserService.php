@@ -697,6 +697,13 @@ class UserService extends BaseService
         else
         {
             $return['data']  = json_decode($user_info,true);
+            if(trim($return['data']['user_img'])=="")
+            {
+                $userImg = (new ConfigService())->getConfig("default_user_img");
+                $userImg->content = json_decode($userImg->content,true);
+                $userImg = $userImg->content['0']['img_url']??"";
+                $return['data']['user_img'] = $userImg;
+            }
         }
         return $return;
     }

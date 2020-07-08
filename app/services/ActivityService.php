@@ -407,6 +407,51 @@ class ActivityService extends BaseService
                 $activity_list[] = $created;
 */            }
         }
+        //已结束活动
+        $finish = [];
+        //本月后六个月内的活动
+        $current_month = date('m',time());  //本月
+        $current_year = date('Y',time()); //本年
+        if($current_month+6>12)
+        { //超过本年
+            $year = $current_year+1; //年份加1
+            $month = $current_month-6;
+        }else
+        { //没超过本年
+            $year = $current_year;
+            $month = $current_month+6;
+        }
+        $activity_time = strtotime($year.'/'.$month.'/00');
+        //按活动开始时间排序处理
+        foreach($activity_list as $key=>$activity_info)
+        {
+            //去掉不在当月六个月内的活动
+            if(strtotime($activity_info->start_time) >= $activity_time)
+            {
+                unset($activity_list);
+                continue;
+            }
+            //已结束的活动
+            if(strtotime($activity_info->end_time)<time())
+            {
+                $activity_info->timeout = 1;//已过期标记
+                $activity_info->time_sort = strtotime($activity_info->start_time);//已过期标记
+                $finish_activity[] = $activity_info;
+                unset($activity_list[$key]);
+                continue;
+            }
+            $activity_list[$key]->time_sort = strtotime($activity_info->start_time);
+        }
+        //已过期活动排序
+        $finish_activity = json_decode(json_encode($finish_activity),true);
+        $last_names = array_column($finish_activity,'time_sort');
+        array_multisort($last_names,SORT_ASC,$finish_activity);
+        //未过期根据时间正序排序
+        $activity_list = json_decode(json_encode($activity_list),true);
+        $start_time_sort = array_column($activity_list,'time_sort');
+        array_multisort($start_time_sort,SORT_ASC,$activity_list);
+        //合并数组
+        $activity_list = array_merge($activity_list,$finish_activity);
         if($start>0)
         {
             $residuals = 1;

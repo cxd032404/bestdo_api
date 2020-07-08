@@ -414,10 +414,10 @@ class PageElementService extends BaseService
                $activity_list[$key]['activity_name'] = $activity_info->activity_name;
                $activity_list[$key]['club_id'] = $activity_info->club_id;
                $activity_list[$key]['icon'] = $club_info->icon;
-               $activity_list[$key]['start_time'] = date('Y-m-d H:i',$activity_info->start_time);
-               $activity_list[$key]['end_time'] = date('Y-m-d H:i',$activity_info->end_time);
-               $activity_list[$key]['apply_start_time'] = date('Y-m-d H:i',$activity_info->apply_start_time);
-               $activity_list[$key]['apply_end_time'] = date('Y-m-d H:i',$activity_info->apply_end_time);
+               $activity_list[$key]['start_time'] = date('Y-m-d H:i',strtotime($activity_info->start_time));
+               $activity_list[$key]['end_time'] = date('Y-m-d H:i',strtotime($activity_info->end_time));
+               $activity_list[$key]['apply_start_time'] = date('Y-m-d H:i',strtotime($activity_info->apply_start_time));
+               $activity_list[$key]['apply_end_time'] = date('Y-m-d H:i',strtotime($activity_info->apply_end_time));
                $detail = json_decode($activity_info->detail,true);
                if(isset($detail['checkin'])&&$detail['checkin'])
                {
@@ -673,7 +673,7 @@ class PageElementService extends BaseService
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],-1);
         }
         $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,
-            'activity_id,activity_name,start_time,apply_start_time,club_id,status',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
+            'activity_id,activity_name,start_time,apply_start_time,end_time,club_id,status',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
         $managed_club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
         $managed_activity_list = $return['activity_list'];
         foreach ($managed_activity_list as $key=>$value)
@@ -693,6 +693,7 @@ class PageElementService extends BaseService
             'club_id'=>-1,
             'club_name'=>'全部'
         ];
+
         array_push($managed_club_list,$all);
         $data['detail']['managed_club_list'] = array_values($managed_club_list);
         $data['detail']['residuals'] = $return['residuals'];
@@ -1021,7 +1022,7 @@ class PageElementService extends BaseService
         }
         $checkin_status = array_column($activity_list,'activity_status');
         $start_time = array_column($activity_list,'start_time');
-        array_multisort($activity_list,SORT_ASC,$checkin_status,$start_time);
+        array_multisort($checkin_status,SORT_ASC,$start_time,SORT_ASC,$activity_list);
         $page = $this->getFromParams($params,'page',1);
         $pageSize = $this->getFromParams($params,'pageSize',4);
         $offset = ($page-1)*$pageSize;
