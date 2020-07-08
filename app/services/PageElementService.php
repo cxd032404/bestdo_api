@@ -1364,7 +1364,6 @@ class PageElementService extends BaseService
                 $department_data[$key]['checked'] = 0;
             }
         }
-        print_r($department_data);die();
         $data['detail']['department'] = $department_data;
         return $data;
     }
