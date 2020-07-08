@@ -414,10 +414,10 @@ class PageElementService extends BaseService
                $activity_list[$key]['activity_name'] = $activity_info->activity_name;
                $activity_list[$key]['club_id'] = $activity_info->club_id;
                $activity_list[$key]['icon'] = $club_info->icon;
-               $activity_list[$key]['start_time'] = $activity_info->start_time;
-               $activity_list[$key]['end_time'] = $activity_info->end_time;
-               $activity_list[$key]['apply_start_time'] = $activity_info->apply_start_time;
-               $activity_list[$key]['apply_end_time'] = $activity_info->apply_end_time;
+               $activity_list[$key]['start_time'] = date('Y-m-d H:i',$activity_info->start_time);
+               $activity_list[$key]['end_time'] = date('Y-m-d H:i',$activity_info->end_time);
+               $activity_list[$key]['apply_start_time'] = date('Y-m-d H:i',$activity_info->apply_start_time);
+               $activity_list[$key]['apply_end_time'] = date('Y-m-d H:i',$activity_info->apply_end_time);
                $detail = json_decode($activity_info->detail,true);
                if(isset($detail['checkin'])&&$detail['checkin'])
                {
@@ -859,7 +859,7 @@ class PageElementService extends BaseService
                     $activity_list[$key]->chinese_start_date = $chinese_start_date;
                     $activity_list[$key]->chinese_end_date = $chinese_end_date;
                     $activity_list[$key]->chinese_end_date = $chinese_end_date;
-                    $activity_list[$key]->format_apply_time = date('m/d :H:i',strtotime($activity_info->apply_start_time)).'-'.date('m/d :H:i',strtotime($activity_info->apply_end_time));
+                    $activity_list[$key]->format_apply_time = date('m/d H:i',strtotime($activity_info->apply_start_time)).'-'.date('m/d H:i',strtotime($activity_info->apply_end_time));
                     $activity_list[$key]->activity_name = mb_substr($activity_info->activity_name, 0, 12, 'utf-8');
                     $activity_list[$key]->comment = mb_substr($activity_info->comment, 0, 12, 'utf-8');
                     $activity_list[$key]->club_name = $clubInfo->club_name;
@@ -1361,7 +1361,7 @@ class PageElementService extends BaseService
                 {
                         $department_data[$key]['child'][$k]['checked'] = 0;
                 }
-                $department_data[$key]['checked'] = 0;
+                    $department_data[$key]['checked'] = 0;
             }
         }
         $data['detail']['department'] = $department_data;
