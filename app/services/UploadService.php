@@ -2,7 +2,7 @@
 class UploadService extends BaseService
 {
 	private $msg = 'success';
-    private $file_type = ['video'=>['list'=>['mp4'],'name'=>"视频"],
+    private $file_type = ['video'=>['list'=>['mp4','MOV'],'name'=>"视频"],
         'pic'=>['list'=>['jpg','jpeg','png','bmp'],'name'=>"图片"],
         'txt'=>['list'=>['txt','doc'],'name'=>"文本"],
         ];

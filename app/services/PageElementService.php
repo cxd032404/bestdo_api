@@ -434,10 +434,10 @@ class PageElementService extends BaseService
                    $club_info = (new ClubService())->getClubInfo($activity_info->club_id);
                    $activity_list[$key]['club_name'] = $club_info->club_name;
                }
-               if(time()<strtotime($activity_info->apply_start_time))
+               if(time()<strtotime($activity_info->start_time))
                {
                    $status = 0; //未开始的活动
-               }elseif(time()>strtotime($activity_info->apply_end_time))
+               }elseif(time()>strtotime($activity_info->end_time))
                {
                    $status = 2;//已结束
                }else
@@ -446,6 +446,10 @@ class PageElementService extends BaseService
                }
                $activity_list[$key]['status'] = $status;
            }
+           //对状态进行排序 已结束的排最后
+           $sort = array_column($activity_list,'status');
+           array_multisort($sort,SORT_ASC,$activity_list);
+
            $page = $this->getFromParams($params,'page',1);
            $pageSize = $this->getFromParams($params,'pageSize',4);
            $offset = ($page-1)*$pageSize;
@@ -789,6 +793,7 @@ class PageElementService extends BaseService
             $activity_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
         $member_list = (new ActivityService())->getActivityMemberList($activity_id);
+
         $activity_member_list = [];
         foreach ($member_list as $value)
         {

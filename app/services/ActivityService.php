@@ -380,7 +380,7 @@ class ActivityService extends BaseService
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,$columns,$club_id,0);
         foreach($created_activity_list as $key => $created)
         {
-            if(!$created || $created->club_id == 0 || $created->status==0 )
+            if(!$created || $created->club_id == 0)
             {
                 //unset($created_activity_list[$key]);
                 //continue;
@@ -407,6 +407,8 @@ class ActivityService extends BaseService
                 $activity_list[] = $created;
 */            }
         }
+        //已取消活动
+        $cancel_activity =[];
         //已结束活动
         $finish_activity= [];
         //本月后六个月内的活动
@@ -431,6 +433,13 @@ class ActivityService extends BaseService
                 unset($activity_list[$key]);
                 continue;
             }
+            //挑出已取消的活动
+            if($activity_info->status == 0)
+            {
+                $cancel_activity[] = $activity_info;
+                unset($activity_list[$key]);
+                continue;
+            }
             //已结束的活动
             if(strtotime($activity_info->end_time)<time())
             {
@@ -440,18 +449,22 @@ class ActivityService extends BaseService
                 unset($activity_list[$key]);
                 continue;
             }
+            $activity_info->timeout = 0;//未过期标记
             $activity_list[$key]->time_sort = strtotime($activity_info->start_time);
         }
+        print_r($cancel_activity);die();
         //已过期活动排序
         $finish_activity = json_decode(json_encode($finish_activity),true);
+        $activity_list = json_decode(json_encode($activity_list),true);
+        $cancel_activity = json_decode(json_encode($cancel_activity),true);
+
         $last_names = array_column($finish_activity,'time_sort');
         array_multisort($last_names,SORT_ASC,$finish_activity);
         //未过期根据时间正序排序
-        $activity_list = json_decode(json_encode($activity_list),true);
         $start_time_sort = array_column($activity_list,'time_sort');
         array_multisort($start_time_sort,SORT_ASC,$activity_list);
         //合并数组
-        $activity_list = array_merge($activity_list,$finish_activity);
+        $activity_list = array_merge($activity_list,$finish_activity,$cancel_activity);
         if($start>0)
         {
             $residuals = 1;
@@ -605,7 +618,7 @@ class ActivityService extends BaseService
         foreach($activityList as $key => $value)
         {
             $activityInfo = $this->getActivityInfo($value->activity_id,$columns);
-            if(!$activityInfo || $activityInfo->status!=1)
+            if(!$activityInfo)
             {
                 unset($activityList[$key]);
             }else{
@@ -671,7 +684,7 @@ class ActivityService extends BaseService
         foreach($activityList as $key => $value)
         {
                 $activityInfo = $this->getActivityInfo($value->activity_id, $columns);
-                if(!$activityInfo || $activityInfo->status!=1)
+                if(!$activityInfo)
                 {
                     unset($activityList[$key]);
                 }else
@@ -827,9 +840,9 @@ class ActivityService extends BaseService
     /*
      * 活动成员列表
      */
-    public function getActivityMemberList($activity_log){
+    public function getActivityMemberList($activity_id){
         $params = [
-            'activity_id ='.$activity_log,
+            'activity_id ='.$activity_id,
             'columns'=>'user_id'
         ];
         $member_list = (new \HJ\UserActivityLog())->find($params);
