@@ -341,9 +341,9 @@ class UserService extends BaseService
                     }
                 }
             }
-            if(isset($return))
+            if($available['result']==0)
             {
-                print_R($return);
+                return $return;
             }
              //查询用户数据
             $userinfo = $available['mobileUser'];
