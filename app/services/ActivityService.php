@@ -452,7 +452,6 @@ class ActivityService extends BaseService
             $activity_info->timeout = 0;//未过期标记
             $activity_list[$key]->time_sort = strtotime($activity_info->start_time);
         }
-        print_r($cancel_activity);die();
         //已过期活动排序
         $finish_activity = json_decode(json_encode($finish_activity),true);
         $activity_list = json_decode(json_encode($activity_list),true);
