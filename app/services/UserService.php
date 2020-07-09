@@ -83,6 +83,7 @@ class UserService extends BaseService
 
         "activity_not_no"=>"活动尚未开启，请耐心等待！",
         "activity_ended"=>"活动已结束，不可报名！",
+        "wechat_used"=>"您所使用微信账号已经绑定了其他的手机号码",
     ];
 
 
@@ -315,10 +316,27 @@ class UserService extends BaseService
             $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
             if(isset($WechatUserInfo->openid))
             {
+                //查找当前微信信息绑定的用户
                 $currentUser = $this->getUserInfoByWechat($WechatUserInfo->openid);
-                print_R($currentUser);
+                if(!isset($currentUser->user_id))
+                {
+                    //手机号匹配
+                    if($currentUser->mobile == $mobile)
+                    {
+
+                    }
+                    else//不匹配，拒绝登录
+                    {
+                        $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList['wechat_used'],'code'=>400];
+                    }
+                }
+            }
+            if(isset($return))
+            {
+                print_R($return);
             }
             die();
+
             //查询用户数据
             $userinfo = \HJ\UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id','last_login_time']]);
             if(isset($userinfo->user_id))
@@ -1085,7 +1103,7 @@ class UserService extends BaseService
         //获取列表作者信息
         $userInfo = \HJ\UserInfo::findFirst([
             "wechatid='".$openId."'",
-            'columns'=>'user_id,wechat_id',
+            'columns'=>'user_id,wechatid,mobile',
         ]);
         if(isset($userInfo->user_id))
         {
