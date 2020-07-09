@@ -988,7 +988,7 @@ class PageElementService extends BaseService
                 $activity_color = '#444054';
                 //已签到过获取签到时间
                 $detail = json_decode($value->detail);
-                $activity_checkin_time = date('Y-m-d H:i:s',strtotime($detail->checkin_time));
+                $activity_checkin_time = date('Y-m-d H:i:s',$detail->checkin_time);
             }elseif($value->checkin_status == 0)
             {
                 $activity_status = 0; //去签到
@@ -1035,19 +1035,19 @@ class PageElementService extends BaseService
         $checkin_status = array_column($activity_list,'activity_status');
         $start_time = array_column($activity_list,'start_time');
         array_multisort($checkin_status,SORT_ASC,$start_time,SORT_ASC,$activity_list);
-        $page = $this->getFromParams($params,'page',1);
-        $pageSize = $this->getFromParams($params,'pageSize',4);
-        $offset = ($page-1)*$pageSize;
-        if($offset+$pageSize >= count($activity_list))
-        {
-            $residuals = 0;
-        }else
-        {
-            $residuals = 1;
-        }
-        $activity_list = array_slice($activity_list,$offset,$pageSize);
+//        $page = $this->getFromParams($params,'page',1);
+//        $pageSize = $this->getFromParams($params,'pageSize',4);
+//        $offset = ($page-1)*$pageSize;
+//        if($offset+$pageSize >= count($activity_list))
+//        {
+//            $residuals = 0;
+//        }else
+//        {
+//            $residuals = 1;
+//        }
+//        $activity_list = array_slice($activity_list,$offset,$pageSize);
         $data['detail']['activity_list'] = $activity_list;
-        $data['detail']['residuals'] = $residuals;
+//        $data['detail']['residuals'] = $residuals;
         return $data;
     }
     /*
