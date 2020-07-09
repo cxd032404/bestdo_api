@@ -199,9 +199,7 @@ class WechatService extends BaseService
             else
             {
                 $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
-                echo $url_get;
                 $oauth2 = $this->getJson($url_get);
-                print_R($oauth2);
                 if (isset($oauth2['errcode']))
                 {
                     $oauth2 = [];
