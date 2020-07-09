@@ -323,14 +323,15 @@ class UserService extends BaseService
                     $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
                 }
             }
-            if(isset($return))
+            if(!isset($return))
             {
                 print_R($return);
+                die();
             }
-            die();
-
             //查询用户数据
-            $userinfo = \HJ\UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id','last_login_time']]);
+            $userinfo = $available['mobileUser'];
+            print_R($userinfo);
+            die();
             if(isset($userinfo->user_id))
             {
                 if($companyuser_id==0)
@@ -1374,13 +1375,15 @@ class UserService extends BaseService
     public function checkWechatMobileAvailable($openid,$mobile)
     {
         //查找当前微信信息绑定的用户
-        $currentUser = $this->getUserInfoByWechat($openid);
-        if(isset($currentUser->user_id))
+        $currentWechatUser = $this->getUserInfoByWechat($openid);
+        if(isset($currentWechatUser->user_id))
         {
             //手机号匹配
-            if($currentUser->mobile == $mobile)
+            if($currentWechatUser->mobile == $mobile)
             {
-                //pass
+                $currentMobileUser = $this->getUserInfoByMobile($mobile);
+                $return = ['result'=>1,"mobileUser"=>$currentMobileUser];
+
             }
             else//不匹配，拒绝登录
             {
@@ -1389,12 +1392,12 @@ class UserService extends BaseService
         }
         else
         {
-            $currentUser = $this->getUserInfoByMobile($mobile);
+            $currentMobileUser = $this->getUserInfoByMobile($mobile);
             {
                 //微信号为空
-                if($currentUser->wehchatid == "")
+                if($currentMobileUser->wehchatid == "")
                 {
-                    //pass
+                    $return = ['result'=>1,"mobileUser"=>$currentMobileUser];
                 }
                 else//不匹配，拒绝登录
                 {
