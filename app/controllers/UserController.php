@@ -279,6 +279,8 @@ class UserController extends BaseController
 		$company_id = isset($data['company_id'])?preg_replace('# #','',$data['company_id']):0;
         $privacy = isset($data['privacy'])?preg_replace('# #','',$data['privacy']):0;
         $user = isset($data['user'])?preg_replace('# #','',$data['user']):0;
+        $privacy_m = isset($data['privacy_m'])?preg_replace('# #','',$data['privacy_m']):0;
+        $user_m = isset($data['user_m'])?preg_replace('# #','',$data['user_m']):0;
 		//调用公司查询方法
         $company_info  = $companyService->getCompanyInfo($company_id);
         if($company_info)
@@ -298,6 +300,22 @@ class UserController extends BaseController
                 if($protocal)
                 {
                     $company_info['protocal']['user'] = $protocal?$protocal->toArray():[];
+                }
+            }
+            if($privacy_m)
+            {
+                $protocal = $companyService->getCompanyProtocal($company_id,"privacy_m");
+                if($protocal)
+                {
+                    $company_info['protocal']['privacy_m'] = $protocal?$protocal->toArray():[];
+                }
+            }
+            if($user_m)
+            {
+                $protocal = $companyService->getCompanyProtocal($company_id,"user_m");
+                if($protocal)
+                {
+                    $company_info['protocal']['user_m'] = $protocal?$protocal->toArray():[];
                 }
             }
             return $this->success($company_info);
