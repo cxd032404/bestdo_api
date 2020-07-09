@@ -74,6 +74,7 @@ class UserService extends BaseService
         "company_user_success"=>"企业用户身份验证成功！",
 
         "mobile_prohibit"=>"手机号已被禁用！",
+        "wechat_prohibit"=>"微信号已被禁用！",
         "activity_signin"=>"您已报名本次活动，无法重复报名，请选择正确的活动！",
         "activity_expire"=>"当前时间不在报名时间内！",
         "posts_kudo_exist"=>"您今天已点赞过此内容，不可重复点赞！",
@@ -311,8 +312,12 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['sendcode_error'];
         }
         else{
-            $WechatUserInf = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
-            print_R($WechatUserInf);
+            $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
+            if(isset($WechatUserInfo->openid))
+            {
+                $currentUser = $this->getUserInfoByWechat($WechatUserInfo->openid);
+                print_R($currentUser);
+            }
             die();
             //查询用户数据
             $userinfo = \HJ\UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id','last_login_time']]);
@@ -1079,8 +1084,8 @@ class UserService extends BaseService
     {
         //获取列表作者信息
         $userInfo = \HJ\UserInfo::findFirst([
-            "wechatid='".$openId."' and is_del=0",
-            'columns'=>'*',
+            "wechatid='".$openId."'",
+            'columns'=>'user_id,wechat_id',
         ]);
         if(isset($userInfo->user_id))
         {
@@ -1137,7 +1142,14 @@ class UserService extends BaseService
             $return = [];
             $return['result'] = 0;
             $return['msg']  = $this->msgList['user_openid_valid'];
-        }else {
+        }
+        elseif($userinfo->is_del==1)
+        {
+            $return = [];
+            $return['result'] = 0;
+            $return['msg']  = $this->msgList['wechat_prohibit'];
+        }
+        else {
             $currentTime = time();
             //修改用户登录时间
             $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', $currentTime),
