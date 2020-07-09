@@ -64,7 +64,7 @@ class UserController extends BaseController
 		$code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
         //调用手机号验证码登录方法
-		$return  = (new UserService)->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo);
+		$return  = (new UserService)->mobileCodeLoginNew($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo);
 		//返回值判断
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
