@@ -84,6 +84,7 @@ class UserService extends BaseService
         "activity_not_no"=>"活动尚未开启，请耐心等待！",
         "activity_ended"=>"活动已结束，不可报名！",
         "wechat_used"=>"您所使用微信账号已经绑定了其他的手机号码",
+        "mobile_used"=>"您所使用手机号码已经绑定了其他的微信账号",
     ];
 
 
@@ -314,21 +315,12 @@ class UserService extends BaseService
         }
         else{
             $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
-            if(isset($WechatUserInfo->openid))
+            if(isset($WechatUserInfo['openid']))
             {
-                //查找当前微信信息绑定的用户
-                $currentUser = $this->getUserInfoByWechat($WechatUserInfo->openid);
-                if(!isset($currentUser->user_id))
+                $available = $this->checkWechatMobileAvailable($WechatUserInfo['openid'],$mobile);
+                if($available['result']==0)
                 {
-                    //手机号匹配
-                    if($currentUser->mobile == $mobile)
-                    {
-
-                    }
-                    else//不匹配，拒绝登录
-                    {
-                        $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList['wechat_used'],'code'=>400];
-                    }
+                    $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
                 }
             }
             if(isset($return))
@@ -1098,12 +1090,12 @@ class UserService extends BaseService
         $userInfo = json_decode(json_encode($userInfo));
         return $userInfo;
     }
-    public function getUserInfoByWechat($openId = "")
+    public function getUserInfoByMobile($mobile = "")
     {
         //获取列表作者信息
         $userInfo = \HJ\UserInfo::findFirst([
-            "wechatid='".$openId."'",
-            'columns'=>'user_id,wechatid,mobile',
+            "mobile='".$mobile."'",
+            'columns'=>'*',
         ]);
         if(isset($userInfo->user_id))
         {
@@ -1114,6 +1106,23 @@ class UserService extends BaseService
             return [];
         }
     }
+    public function getUserInfoByWechat($openId = "")
+    {
+        //获取列表作者信息
+        $userInfo = \HJ\UserInfo::findFirst([
+            "wechatid='".$openId."'",
+            'columns'=>'*',
+        ]);
+        if(isset($userInfo->user_id))
+        {
+            return $userInfo;
+        }
+        else
+        {
+            return [];
+        }
+    }
+    //根据微信的unionid获取用户信息
     public function getUserInfoByUnionId($unionId = "")
     {
         if($unionId=="")
@@ -1134,6 +1143,7 @@ class UserService extends BaseService
             return [];
         }
     }
+    //根据小程序的openid获取用户信息
     public function getUserInfoByMiniprogramId($miniprogramId = "")
     {
         //获取列表作者信息
@@ -1359,5 +1369,39 @@ class UserService extends BaseService
                 echo "<pre>"; print_r( $e->getMessage() );exit;
             }
         }
+    }
+
+    public function checkWechatMobileAvailable($openid,$mobile)
+    {
+        //查找当前微信信息绑定的用户
+        $currentUser = $this->getUserInfoByWechat($openid);
+        if(isset($currentUser->user_id))
+        {
+            //手机号匹配
+            if($currentUser->mobile == $mobile)
+            {
+                //pass
+            }
+            else//不匹配，拒绝登录
+            {
+                $return = ['result'=>0,"msg"=>"wechat_used"];
+            }
+        }
+        else
+        {
+            $currentUser = $this->getUserInfoByMobile($mobile);
+            {
+                //微信号为空
+                if($currentUser->wehchatid == "")
+                {
+                    //pass
+                }
+                else//不匹配，拒绝登录
+                {
+                    $return = ['result'=>0,"msg"=>"mobile_used"];
+                }
+            }
+        }
+        return $return;
     }
 }
