@@ -903,13 +903,17 @@ class UserService extends BaseService
         $user_info = $oJwt::getUserId($user_token);
         if(!isset($user_info) || (isset($user_info) && json_decode($user_info)->expire_time<time())){
             $page_info = (new PageService)->getPageInfoBySign($company,$page_sign,"page_id,need_login");
-            if(isset($page_info['need_login']) && $page_info['need_login']==1){
+            if(isset($page_info->need_login) && $page_info->need_login ==1){
                 $return  = ['result'=>0, 'msg'=>$this->msgList['decrypt_fail'], 'code'=>403, 'data'=>[]];
             }
         }
         else
         {
-            $return['data']  = json_decode($user_info,true);
+            $user_info = json_decode($user_info);
+            //缓存数据
+            $user_cache_info = $this->getUserInfo($user_info->user_id,'*');
+            //合并
+            $return['data']  = array_merge((array)$user_info,(array)$user_cache_info);
             if(trim($return['data']['user_img'])=="")
             {
                 $userImg = (new ConfigService())->getConfig("default_user_img");
