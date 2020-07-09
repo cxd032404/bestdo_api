@@ -988,8 +988,8 @@ class PageElementService extends BaseService
                 $activity_color = '#444054';
                 //已签到过获取签到时间
                 $detail = json_decode($value->detail);
-                $activity_checkin_time = date('Y-m-d H:i:s',$detail->checkin_time);
-            }elseif($value->checkin_staus == 0)
+                $activity_checkin_time = date('Y-m-d H:i:s',strtotime($detail->checkin_time));
+            }elseif($value->checkin_status == 0)
             {
                 $activity_status = 0; //去签到
                 $activity_status_name = '去签到';
