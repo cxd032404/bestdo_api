@@ -321,7 +321,7 @@ class UserService extends BaseService
                 $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
                 if(isset($WechatUserInfo['openid']))
                 {
-                    $available = $this->checkWechatMobileAvailable($WechatUserInfo['openid'],$mobile);
+                    $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile);
                     if($available['result']==0)
                     {
                         $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
@@ -331,7 +331,9 @@ class UserService extends BaseService
             elseif(!empty($miniProgramUserInfo))
             {
                 $code = json_decode($miniProgramUserInfo,true)['code'];
-                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->wechat,$miniProgramUserInfo);
+                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$miniProgramUserInfo);
+                print_R($miniProgramUserInfo);
+                die();
                 if(isset($miniProgramUserInfo['openid']))
                 {
                     $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
@@ -345,12 +347,8 @@ class UserService extends BaseService
             {
                 print_R($return);
             }
-
-            echo "//查到手机对应用户：";
-                //查询用户数据
+             //查询用户数据
             $userinfo = $available['mobileUser'];
-            print_R($userinfo);
-            die();
             if(isset($userinfo->user_id))
             {
                 if($companyuser_id==0)
