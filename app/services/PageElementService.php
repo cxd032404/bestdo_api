@@ -970,8 +970,9 @@ class PageElementService extends BaseService
             //可以签到的时间
             $checkin_doing_time =strtotime($activity_info->start_time)-$checkin_time;
             $activity_status = 0;
-            $activity_name = '未签到';
+            $activity_status_name = '未签到';
             $activity_color = '#cccccc';
+            $activity_checkin_time ='';
             if(time()<$checkin_doing_time)
             { //活动开始前一小时的活动剔除
                 continue;
@@ -985,6 +986,9 @@ class PageElementService extends BaseService
                 $activity_status = 1; //已签到
                 $activity_status_name = '已签到';
                 $activity_color = '#444054';
+                //已签到过获取签到时间
+                $detail = json_decode($value->detail);
+                $activity_checkin_time = date('Y-m-d H:i:s',$detail->checkin_time);
             }elseif($value->checkin_staus == 0)
             {
                 $activity_status = 0; //去签到
@@ -994,6 +998,7 @@ class PageElementService extends BaseService
             $activity_list[$key]['activity_status'] = $activity_status;
             $activity_list[$key]['activity_status_name'] = $activity_status_name;
             $activity_list[$key]['activity_color'] = $activity_color;
+            $activity_list[$key]['activity_checkin_time'] = $activity_checkin_time;
 
             $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,club_name,icon');
             $detail = json_decode($activity_info->detail);

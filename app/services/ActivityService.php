@@ -769,7 +769,10 @@ class ActivityService extends BaseService
                             }
                             else
                             {
-                                $data = ["checkin_status"=>1];
+                                //添加签到时间和经纬度信息
+                                $detail['position'] = $position;
+                                $detail['checkin_time'] = time();
+                                $data = ["checkin_status"=>1,"detail"=>$detail];
                                 $update = $this->updateActivityLog($activityLog->id,$data);
                                 if($update)
                                 {
