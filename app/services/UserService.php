@@ -85,8 +85,8 @@ class UserService extends BaseService
         "activity_ended"=>"活动已结束，不可报名！",
         "wechat_used"=>"您所使用微信账号已经绑定了其他的手机号码",
         "wechat_mobile_used"=>"您所使用手机号码已经绑定了其他的微信账号",
-        "miniprogram_used"=>"您所使用公众号账号已经绑定了其他的手机号码",
-        "miniprogram_mobile_used"=>"您所使用手机号码已经绑定了其他的公众号账号",
+        "miniprogram_used"=>"您所使用小程序账号已经绑定了其他的手机号码",
+        "miniprogram_mobile_used"=>"您所使用手机号码已经绑定了其他的小程序账号",
     ];
 
 
@@ -331,9 +331,7 @@ class UserService extends BaseService
             elseif(!empty($miniProgramUserInfo))
             {
                 $code = json_decode($miniProgramUserInfo,true)['code'];
-                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$miniProgramUserInfo);
-                print_R($miniProgramUserInfo);
-                die();
+                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
                 if(isset($miniProgramUserInfo['openid']))
                 {
                     $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
