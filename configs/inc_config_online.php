@@ -140,6 +140,8 @@ $config = [
         'wechat'=>['name'=>'wechat_token_','expire'=>3600],//微信token
         'accessToken'=>['name'=>'wechat_access_token','expire'=>7200],//微信access_token
         'wechat_code'=>['name'=>'wechat_code_','expire'=>3600*24*30],//微信code缓存
+        'wechat_openid'=>['name'=>'wechat_openid_','expire'=>3600*24*30],//微信openid用户信息缓存
+        'mini_program_openid'=>['name'=>'mini_program_openid_','expire'=>3600*24*30],//小程序openid用户信息缓存
         'mini_program_code'=>['name'=>'mini_program_code_','expire'=>3600*24*30],//小程序code缓存
         'user_club_permission'=>['name'=>'user_club_permission_','expire'=>3600],//用户对特定俱乐部的权限
         'user_info'=>['name'=>'user_info_','expire'=>3600],//用户信息
