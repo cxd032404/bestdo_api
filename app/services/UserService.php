@@ -84,7 +84,9 @@ class UserService extends BaseService
         "activity_not_no"=>"活动尚未开启，请耐心等待！",
         "activity_ended"=>"活动已结束，不可报名！",
         "wechat_used"=>"您所使用微信账号已经绑定了其他的手机号码",
-        "mobile_used"=>"您所使用手机号码已经绑定了其他的微信账号",
+        "wechat_mobile_used"=>"您所使用手机号码已经绑定了其他的微信账号",
+        "miniprogram_used"=>"您所使用公众号账号已经绑定了其他的手机号码",
+        "miniprogram_mobile_used"=>"您所使用手机号码已经绑定了其他的公众号账号",
     ];
 
 
@@ -314,21 +316,38 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['sendcode_error'];
         }
         else{
-            $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
-            if(isset($WechatUserInfo['openid']))
+            if(!empty($code))
             {
-                $available = $this->checkWechatMobileAvailable($WechatUserInfo['openid'],$mobile);
-                if($available['result']==0)
+                $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
+                if(isset($WechatUserInfo['openid']))
                 {
-                    $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                    $available = $this->checkWechatMobileAvailable($WechatUserInfo['openid'],$mobile);
+                    if($available['result']==0)
+                    {
+                        $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                    }
                 }
             }
-            if(!isset($return))
+            elseif(!empty($miniProgramUserInfo))
+            {
+                $code = json_decode($miniProgramUserInfo,true)['code'];
+                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->wechat,$miniProgramUserInfo);
+                if(isset($miniProgramUserInfo['openid']))
+                {
+                    $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
+                    if($available['result']==0)
+                    {
+                        $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                    }
+                }
+            }
+            if(isset($return))
             {
                 print_R($return);
-                die();
             }
-            //查询用户数据
+
+            echo "//查到手机对应用户：";
+                //查询用户数据
             $userinfo = $available['mobileUser'];
             print_R($userinfo);
             die();
@@ -662,6 +681,7 @@ class UserService extends BaseService
             //查询点赞记录
             $postskudos_info = (new PostsService())->checkKudos($sender_id??0,"",$post_id);
 
+            $this->logger->info("点赞".json_encode($listInfo->detail));
             if(isset($postskudos_info->id)){
                 $transaction->rollback($this->msgList['posts_'.($listInfo->detail['type']??"kudo").'_exist']);
             }
@@ -1149,7 +1169,7 @@ class UserService extends BaseService
     {
         //获取列表作者信息
         $userInfo = \HJ\UserInfo::findFirst([
-            "mini_program_id='".$miniprogramId."' and is_del=0",
+            "mini_program_id='".$miniprogramId."'",
             'columns'=>'*',
         ]);
         if(isset($userInfo->user_id))
@@ -1372,10 +1392,18 @@ class UserService extends BaseService
         }
     }
 
-    public function checkWechatMobileAvailable($openid,$mobile)
+    public function checkMobileAvailable($openid,$mobile,$type="wechat")
     {
-        //查找当前微信信息绑定的用户
-        $currentWechatUser = $this->getUserInfoByWechat($openid);
+        if($type=="wechat")
+        {
+            //查找当前微信信息绑定的用户
+            $currentWechatUser = $this->getUserInfoByWechat($openid);
+        }
+        else
+        {
+            //查找当前小程序信息绑定的用户
+            $currentWechatUser = $this->getUserInfoByMiniprogramId($openid);
+        }
         if(isset($currentWechatUser->user_id))
         {
             //手机号匹配
@@ -1387,7 +1415,7 @@ class UserService extends BaseService
             }
             else//不匹配，拒绝登录
             {
-                $return = ['result'=>0,"msg"=>"wechat_used"];
+                $return = ['result'=>0,"msg"=>$type."_used"];
             }
         }
         else
@@ -1401,7 +1429,7 @@ class UserService extends BaseService
                 }
                 else//不匹配，拒绝登录
                 {
-                    $return = ['result'=>0,"msg"=>"mobile_used"];
+                    $return = ['result'=>0,"msg"=>$type."_mobile_used"];
                 }
             }
         }
