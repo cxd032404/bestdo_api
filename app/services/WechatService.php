@@ -32,6 +32,7 @@ class WechatService extends BaseService
         return $openId;
     }
 
+    //根据code获取用户微信信息
     /*更新用户微信信息*/
     public function updateUserWithWechat($wechat=[],$user_id=0,$code="")
     {
@@ -198,7 +199,9 @@ class WechatService extends BaseService
             else
             {
                 $url_get = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
+                echo $url_get;
                 $oauth2 = $this->getJson($url_get);
+                print_R($oauth2);
                 if (isset($oauth2['errcode']))
                 {
                     $oauth2 = [];
@@ -350,6 +353,58 @@ class WechatService extends BaseService
         return $value;
     }
 
+
+    //根据code获取用户微信信息
+    /*更新用户微信信息*/
+    public function getUserInfoByCode_Wechat($wechat=[],$code="")
+    {
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
+        //第二步：获取网页授权access_token和openid
+        $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+        print_R($oauth2);
+        if (!array_key_exists('errcode', $oauth2)) {
+            $openid = $oauth2['openid'];
+            $wechat_openid_cache = $this->config->cache_settings->wechat_openid;
+            $redis_key = $wechat_openid_cache->name.$openid;
+            $cache = $this->redis->get($redis_key);
+            if($cache!= "")
+            {
+                $oauth_userinfo = json_decode($cache,true);
+            }
+            else
+            {
+                //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
+                $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
+                if (!array_key_exists('errcode', $oauth_userinfo))
+                {
+                    //用户token存入redis缓存中
+                    $this->redis->set($redis_key,json_encode($oauth_userinfo));
+                    $this->redis->expire($redis_key,$wechat_openid_cache->expire);//设置过期时间,不设置过去时间时，默认为永久保持
+                }
+            }
+
+
+        }
+        //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
+        $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
+        //var_dump($oauth_userinfo);
+        if (!array_key_exists('errcode', $oauth_userinfo)) {
+            //修改用户信息
+            $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
+            //var_dump($userinfo);
+            if($userinfo){
+                $userinfo->wechatid = $oauth_userinfo['openid'];
+                $userinfo->unionid = $oauth_userinfo['unionid']??"";
+                $userinfo->nick_name = $oauth_userinfo['nickname'];
+                $userinfo->sex = $oauth_userinfo['sex'];
+                $userinfo->user_img = $oauth_userinfo['headimgurl'];
+                $userinfo->wechatinfo = json_encode($oauth_userinfo);
+                $userinfo->update();
+            }
+        }
+        return true;
+    }
 
     //根据code获取小程序的用户身份信息
     public function getUserInfoByCode_mini_program($wechat = [],$code="")

@@ -291,7 +291,188 @@ class UserService extends BaseService
         }
         return $return;
     }
-
+    //手机号验证码登录方法
+    public function mobileCodeLoginNew($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "")
+    {
+        $common = new Common();
+        $oWechatService = (new WechatService());
+        $login_code = $this->redis->get('login_'.$mobile);
+        if(in_array($mobile,(array)$this->config->testMoblie)){
+            $login_code = json_encode(['code'=>123456]);
+        }
+        $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
+        if( empty($mobile) || !$common->check_mobile($mobile) ) {
+            $return['msg']  = $this->msgList['mobile_empty'];
+        }else if(empty($logincode)){
+            $return['msg']  = $this->msgList['sendcode_empty'];
+        }else if(!$login_code){
+            $return['msg']  = $this->msgList['sendcode_error'];
+        }else if($logincode != json_decode($login_code)->code){
+            $return['msg']  = $this->msgList['sendcode_error'];
+        }
+        else{
+            $WechatUserInf = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
+            print_R($WechatUserInf);
+            die();
+            //查询用户数据
+            $userinfo = \HJ\UserInfo::findFirst(["username = '".$mobile."'","columns"=>['user_id','is_del','username','user_img','company_id','last_login_time']]);
+            if(isset($userinfo->user_id))
+            {
+                if($companyuser_id==0)
+                {
+                    //用户存在只修改验证码状态及生产token
+                    if($userinfo->is_del==1){
+                        $return['msg']  = $this->msgList['mobile_prohibit'];
+                    }else{
+                        //修改验证码记录状态
+                        $sendcode = $this->setMobileCode($mobile,$logincode);
+                        if(!$sendcode){
+                            $return['msg']  = $this->msgList['code_status_error'];
+                        }else{
+                            if(!empty($miniProgramUserInfo))
+                            {
+                                $this->wechat_code_logger->info("登录更新小程序信息");
+                                //完善用户小程序资料
+                                (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
+                            }
+                            if(!empty($code))
+                            {
+                                $this->wechat_code_logger->info("登录更新微信信息");
+                                //完善用户微信资料
+                                (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
+                            }
+                            //生成token
+                            $tokeninfo = $this->getToken($userinfo->user_id);
+                            $currentTime = time();
+                            //修改用户登录时间
+                            $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
+                                'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
+                                'last_login_source'=>"Mobile"],$userinfo->user_id);
+                            $this->redis->expire('login_'.$mobile,0);
+                            $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
+                        }
+                    }
+                }
+                else
+                {
+                    //查找企业名单
+                    $companyUserInfo = \HJ\CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$companyuser_id]]);
+                    //如果已经绑定且和当前用户一致
+                    if(isset($companyUserInfo->user_id) && $companyUserInfo->user_id == $userinfo->user_id)
+                    {
+                        //用户存在只修改验证码状态及生产token
+                        if($userinfo->is_del==1){
+                            $return['msg']  = $this->msgList['mobile_prohibit'];
+                        }else{
+                            //修改验证码记录状态
+                            $sendcode = $this->setMobileCode($mobile,$logincode);
+                            if(!$sendcode){
+                                $return['msg']  = $this->msgList['code_status_error'];
+                            }else{
+                                if(!empty($miniProgramUserInfo))
+                                {
+                                    $this->wechat_code_logger->info("入驻登录更新小程序信息");
+                                    //完善用户小程序资料
+                                    (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
+                                }
+                                if(!empty($code))
+                                {
+                                    $this->wechat_code_logger->info("入驻登录更新微信信息");
+                                    //完善用户微信资料
+                                    (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
+                                }
+                                //生成token
+                                $tokeninfo = $this->getToken($userinfo->user_id);
+                                $currentTime = time();
+                                //修改用户登录时间
+                                $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
+                                    'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
+                                    'last_login_source'=>"Mobile"],$userinfo->user_id);
+                                $this->redis->expire('login_'.$mobile,0);
+                                $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        $return['msg']  = $this->msgList['company_user_existed'];
+                    }
+                }
+            }else{//用户不存在 需创建用户+修改验证码状态+修改企业名单状态+生成token
+                try {
+                    //启用事务
+                    $manager = new TxManager();
+                    //指定你需要的数据库
+                    $manager->setDbService("hj_user");
+                    // Request a transaction
+                    $transaction = $manager->get();
+                    //查询企业导入名单
+                    $companyuserlist = \HJ\CompanyUserList::findFirst([
+                        "id=:companyuser_id:",
+                        'bind'=>[
+                            'companyuser_id'=>$companyuser_id,
+                        ],
+                        'order'=>'id desc'
+                    ]);
+                    if(!isset($companyuserlist->id)){
+                        $transaction->rollback($this->msgList['companyuser_empty']);
+                    }
+                    $currentTime = time();
+                    $department = (new DepartmentService())->getDepartment($companyuserlist->department_id);
+                    //创建用户
+                    $user = new \HJ\UserInfo();
+                    $user->setTransaction($transaction);
+                    $user->username = $mobile;
+                    $user->mobile = $mobile;
+                    $user->company_id = $companyuserlist->company_id;
+                    $user->department_id = $companyuserlist->department_id;
+                    $user->department_id_1 = $department['department_id_1'];
+                    $user->department_id_2 = $department['department_id_2'];
+                    $user->department_id_3 = $department['department_id_3'];
+                    $user->worker_id = $companyuserlist->worker_id;
+                    $user->true_name = $companyuserlist->name;
+                    $user->nick_name = $companyuserlist->name;
+                    $user->last_login_time = date("Y-m-d H:i:s",$currentTime);
+                    $user->last_update_time = date("Y-m-d H:i:s",$currentTime);
+                    $user->last_login_source = "Mobile";
+                    if ($user->create() === false) {
+                        $transaction->rollback($this->msgList['register_fail']);
+                    }
+                    if(!empty($miniProgramUserInfo))
+                    {
+                        $this->wechat_code_logger->info("注册更新小程序信息");
+                        //完善用户小程序资料
+                        (new WechatService)->updateUserWithMiniProgram($user->user_id,$miniProgramUserInfo);
+                    }
+                    if(!empty($code))
+                    {
+                        $this->wechat_code_logger->info("注册更新微信信息");
+                        //完善用户微信资料
+                        (new WechatService)->updateUserWithWechat($this->key_config->wechat,$user->user_id,$code);
+                    }
+                    //修改验证码记录状态
+                    $sendcode = $this->setMobileCode($mobile,$logincode);
+                    if(!$sendcode){
+                        $transaction->rollback($this->msgList['code_status_error']);
+                    }
+                    //修改企业用户名单状态
+                    $companyuser = $this->setCompanyUser($companyuserlist->id,$user->user_id);
+                    if(!$companyuser){
+                        $transaction->rollback($this->msgList['companyuser_update_fail']);
+                    }
+                    //生成token
+                    $tokeninfo = $this->getToken($user->user_id);
+                    $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token'] ]];
+                    $this->redis->expire('login_'.$mobile,0);
+                    $transaction->commit($return);
+                } catch (TxFailed $e) {
+                    // 捕获失败回滚的错误
+                    $return['msg']  = $e->getMessage();
+                }
+            }
+        }
+        return $return;
+    }
     //手机号忘记密码方法
     public function mobileForgetPwd($mobile="",$code="",$newpassword="")
     {
