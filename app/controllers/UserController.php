@@ -64,7 +64,7 @@ class UserController extends BaseController
 		$code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
         //调用手机号验证码登录方法
-		$return  = (new UserService)->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo);
+		$return  = (new UserService)->mobileCodeLoginNew($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo);
 		//返回值判断
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);
@@ -76,6 +76,35 @@ class UserController extends BaseController
         $this->redis->expire($cacheName,$cacheSetting->expire);//设置过期时间,不设置过去时间时，默认为永久保持
 		return $this->success($return['data']);
 	}
+    /*
+ * 手机号验证码登录
+ * 参数
+ * mobile（必填）：账号
+ * logincode（必填）：验证码
+ * companyuser_id （必填）企业导入名单id
+ * */
+    public function mobileCodeLoginNewAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
+        $logincode = isset($data['logincode'])?preg_replace('# #','',$data['logincode']):"";
+        $companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
+        $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
+        //调用手机号验证码登录方法
+        $return  = (new UserService)->mobileCodeLoginNew($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo);
+        //返回值判断
+        if($return['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        //用户token存入redis缓存中
+        $cacheSetting = $this->config->cache_settings->wechat_code;
+        $cacheName = $cacheSetting->name.$return['data']['user_info']['user_id'];
+        $this->redis->set($cacheName,$return['data']['user_token']);
+        $this->redis->expire($cacheName,$cacheSetting->expire);//设置过期时间,不设置过去时间时，默认为永久保持
+        return $this->success($return['data']);
+    }
     /*
      * 微信code登录
      * 参数
@@ -250,6 +279,8 @@ class UserController extends BaseController
 		$company_id = isset($data['company_id'])?preg_replace('# #','',$data['company_id']):0;
         $privacy = isset($data['privacy'])?preg_replace('# #','',$data['privacy']):0;
         $user = isset($data['user'])?preg_replace('# #','',$data['user']):0;
+        $privacy_m = isset($data['privacy_m'])?preg_replace('# #','',$data['privacy_m']):0;
+        $user_m = isset($data['user_m'])?preg_replace('# #','',$data['user_m']):0;
 		//调用公司查询方法
         $company_info  = $companyService->getCompanyInfo($company_id);
         if($company_info)
@@ -269,6 +300,22 @@ class UserController extends BaseController
                 if($protocal)
                 {
                     $company_info['protocal']['user'] = $protocal?$protocal->toArray():[];
+                }
+            }
+            if($privacy_m)
+            {
+                $protocal = $companyService->getCompanyProtocal($company_id,"privacy_m");
+                if($protocal)
+                {
+                    $company_info['protocal']['privacy_m'] = $protocal?$protocal->toArray():[];
+                }
+            }
+            if($user_m)
+            {
+                $protocal = $companyService->getCompanyProtocal($company_id,"user_m");
+                if($protocal)
+                {
+                    $company_info['protocal']['user_m'] = $protocal?$protocal->toArray():[];
                 }
             }
             return $this->success($company_info);

@@ -32,6 +32,7 @@ class WechatService extends BaseService
         return $openId;
     }
 
+    //根据code获取用户微信信息
     /*更新用户微信信息*/
     public function updateUserWithWechat($wechat=[],$user_id=0,$code="")
     {
@@ -350,6 +351,40 @@ class WechatService extends BaseService
         return $value;
     }
 
+
+    //根据code获取用户微信信息
+    /*更新用户微信信息*/
+    public function getUserInfoByCode_Wechat($wechat=[],$code="")
+    {
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
+        //第二步：获取网页授权access_token和openid
+        $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+        $oauth_userinfo = [];
+        if (!array_key_exists('errcode', $oauth2))
+        {
+            $openid = $oauth2['openid'];
+            $wechat_openid_cache = $this->config->cache_settings->wechat_openid;
+            $redis_key = $wechat_openid_cache->name.$openid;
+            $cache = $this->redis->get($redis_key);
+            if($cache!= "")
+            {
+                $oauth_userinfo = json_decode($cache,true);
+            }
+            else
+            {
+                //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
+                $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
+                if (!array_key_exists('errcode', $oauth_userinfo))
+                {
+                    //用户token存入redis缓存中
+                    $this->redis->set($redis_key,json_encode($oauth_userinfo));
+                    $this->redis->expire($redis_key,$wechat_openid_cache->expire);//设置过期时间,不设置过去时间时，默认为永久保持
+                }
+            }
+        }
+        return $oauth_userinfo;
+    }
 
     //根据code获取小程序的用户身份信息
     public function getUserInfoByCode_mini_program($wechat = [],$code="")
