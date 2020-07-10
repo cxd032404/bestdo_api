@@ -1066,7 +1066,7 @@ class PageElementService extends BaseService
         $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
         $departmentId = $this->getFromParams($params,'department_id',"");
-        if($departmentId > 0)
+        if($departmentId>0)
         {
             $userInfo = $userService->getUserInfo($user_info['data']['user_id'],"user_id,company_id,department_id");
             $department = (new DepartmentService())->getDepartment($userInfo->department_id);
@@ -1080,7 +1080,7 @@ class PageElementService extends BaseService
                 $departmentId = $department[$name];
             }
         }
-        $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],$departmentId,"user_id",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3));
+        $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],$departmentId,"user_id",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 20));
         $stepsList = $stepsData['list'];
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);

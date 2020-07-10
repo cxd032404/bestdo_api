@@ -109,8 +109,70 @@ class StepsService extends BaseService
         return $steps->save();
     }
 
-    public function refreshStepsCache($company_id = 1,$hours = 1)
+    public function refreshStepsCache()
     {
+        $currentTime = time();
+        $startTime = date("Y-m-d H:00:00",$currentTime-3600);
+        $endTime = date("Y-m-d H:00:00",$currentTime);
+
+        $condition = "update_time >= '".$startTime."' and update_time <='".$endTime."'";
+        //echo $condition;
+        $column = "distinct(date) as date";
+        $dateList = (new \HJ\Steps())::find([
+            $condition,
+            "columns"=>$column
+        ])->toArray();
+        foreach($dateList as $key => $value)
+        {
+            echo $value['date']."\n";
+            $condition = "date = '".$value['date']."'";
+            $column = "count(1) as user_count,date,company_id,department_id_1,department_id_2,department_id_3,sum(step) as step";
+            $group = "date,company_id,department_id_1,department_id_2,department_id_3";
+            $data = (new \HJ\Steps())::find([
+                $condition,
+                "columns"=>$column,
+                "group"=>$group
+            ])->toArray();
+            foreach($data as $k => $v)
+            {
+                $condition = "company_id=".$v['company_id']." and date='".$value['date']."' and 
+                department_id_1 =".$v['department_id_1']." and department_id_2 =".$v['department_id_2']." and 
+                department_id_3 =".$v['department_id_3'];
+                $log = (new HJ\StepsData)::findFirst($condition);
+                if(isset($log->log_id))
+                {
+                    echo $log->step."-".$v['step']."\n";
+                    if($log->step==$v['step'])
+                    {
+                        //不更新
+                    }
+                    else
+                    {
+                        echo "toUpdate:";
+                        sleep(1);
+                        $log->step = $v['step'];
+                        $log->user_count = $v['user_count'];
+                        $log->update_time = date("Y-m-d H:i:s");
+                        $log->save();
+                    }
+                }
+                else
+                {
+                    $log = (new HJ\StepsData);
+                    foreach($v as $kk => $vv)
+                    {
+                        $log->$kk = $vv;
+                    }
+                    $log->create_time = $log->update_time = date("Y-m-d H:i:s");
+                    $log->save();
+                }
+            }
+
+        }
+
+
+        echo $startTime;
+        die();
         $startTime = date("Y-m-d H:00:00",time()-$hours*3600);
         $dateList = (new \HJ\Steps())::find(["update_time >= '".$startTime."'","columns"=>"date,company_id","group"=>"date,company_id"])->toArray();
         $departmentStructure = (new DepartmentService())->getDepartmentStructure($company_id);
