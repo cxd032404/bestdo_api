@@ -541,8 +541,10 @@ class PageElementService extends BaseService
         $club_list_permission = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
         $club_list = [];
         $club_ids = [];
+        $sum = 0;
         foreach ($club_list_permission as $key => $value) {
             $club_list[$key]['Usercount'] = (new ClubService())->getClubMemberCount($value->club_id);
+            $sum += $club_list[$key]['Usercount'];
             $club_list[$key]['club_id'] = $value->club_id;
             $club_list[$key]['club_name'] = $value->club_name;
             $club_ids [] = $value->club_id;
@@ -550,7 +552,8 @@ class PageElementService extends BaseService
         $club_list = array_values($club_list);
         $all = [
             'club_id'=>-1,
-            'club_name'=>'全部'
+            'club_name'=>'全部',
+            'Usercount'=>$sum
         ];
         array_push($club_list,$all);
         $data['detail']['club_list'] = $club_list;
@@ -1066,7 +1069,7 @@ class PageElementService extends BaseService
         $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
         $departmentId = $this->getFromParams($params,'department_id',"");
-        if($departmentId=="")
+        if($departmentId > 0)
         {
             $userInfo = $userService->getUserInfo($user_info['data']['user_id'],"user_id,company_id,department_id");
             $department = (new DepartmentService())->getDepartment($userInfo->department_id);
