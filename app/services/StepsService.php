@@ -328,12 +328,16 @@ class StepsService extends BaseService
                     //      "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
                 ];
             }
-            $steps = (new \HJ\Steps())::find($params)->toArray();
-            $this->redis->set($redis_key,json_encode($steps));
+            if($group == "user_id")
+            {
+                $steps = (new \HJ\Steps())::find($params)->toArray();
+            }
+            else {
+                $steps = (new \HJ\StepsData())::find($params)->toArray();
+            }            $this->redis->set($redis_key,json_encode($steps));
             $this->redis->expire($redis_key,$cache_settings->expire);
         }
-        $start = ($pageSize-1)*$page;
-        $end = ($start+$pageSize-1);
+
         $return = ["list"=>[],"mine"=>[]];
         foreach($steps as $key => $value)
         {
@@ -375,8 +379,8 @@ class StepsService extends BaseService
             }
 
         }
-
-
+        $start = ($page-1)*$pageSize;
+        $return['list'] = array_slice($return['list'],$start,$pageSize);
         return $return;
     }
     public function getUserStepsDataByDate($dateRange,$company_id,$user_id)

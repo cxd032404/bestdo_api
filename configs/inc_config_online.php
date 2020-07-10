@@ -155,7 +155,7 @@ $config = [
         'department_info'=>['name'=>'department_info_','expire'=>3600],//部门信息
         'department_parent'=>['name'=>'department_parent_','expire'=>3600],//父级子部门信息
         'department_user_count'=>['name'=>'department_user_count_','expire'=>3600],//部门（包含子部门）人数
-        'steps_data'=>['name'=>'steps_rank_','expire'=>3600],
+        'steps_data'=>['name'=>'steps_rank_','expire'=>600],
         'config'=>['name'=>'config_','expire'=>86400*7],
         'activity_member_count'=>['name'=>'activity_member_count_','expire'=>3600]
     ],

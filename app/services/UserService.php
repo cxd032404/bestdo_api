@@ -28,8 +28,8 @@ class UserService extends BaseService
         "companyuser_empty"=>"账户验证失败，当前账户尚未获得登录/注册权限！",
         "posts_empty"=>"列表内容查询不到，请选择正确的列表内容！",
         "company_id_empty"=>"企业编号无效",
-        "worker_id_empty"=>"工号无效",
-        "name_empty"=>"用户姓名无效",
+        "worker_id_empty"=>"请输入工号",
+        "name_empty"=>"请输入姓名",
         "company_user_existed"=>"此手机号码已绑定其他用户，请更换其他手机号码！",
 
 
