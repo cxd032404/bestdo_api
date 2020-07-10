@@ -19,6 +19,9 @@ class ActivityService extends BaseService
         "activity_update_fail"=>"活动更新失败",
         "activity_member_limit"=>"活动人数已满",
         "activity_club_limit"=>"申请加入",
+        "activity_apply_time"=>"报名开始时间不可大于报名结束时间",
+        "activity_start_time"=>"活动开始时间不可大于活动结束时间",
+        "activity_time"=>"报名结束时间不可大于活动开始时间",
     ];
     //生成每周的重复性活动数据
     public function generateNextActivityWeekly($activityParams)
@@ -86,11 +89,33 @@ class ActivityService extends BaseService
                 $nextList = $this->generateNextActivityWeekly($activityParams);
             }
         }
-        //活动时间校验
-
+        //参数校验
         if($activityParams['start_time']=="" || $activityParams['end_time']=="")
         {
             $return  = ['result'=>0,"msg"=>"活动时间有误，请重新输入",'code'=>400];
+        }
+        elseif($activityParams['apply_start_time']=="" || $activityParams['apply_end_time']=="")
+        {
+            $return  = ['result'=>0,"msg"=>"活动报名时间有误，请重新输入",'code'=>400];
+        }
+        //活动开始时间不得大于结束时间
+        elseif(strtotime($activityParams['start_time']) >= strtotime($activityParams['end_time']))
+        {
+            $return = ['result'=>0,"msg"=>$this->msgList['activity_start_time'],'code'=>400];
+        }
+        //活动报名时间不得早于当前时间
+        elseif(strtotime($activityParams['apply_start_time'])<$currentTime){
+            $return  = ['result'=>0,"msg"=>"活动报名时间不可早于当前时间，请重新输入",'code'=>400];
+        }
+        //报名结束时间不得大于活动开始时间
+        elseif(strtotime($activityParams['apply_end_time']) >= strtotime($activityParams['start_time']))
+        {
+            $return = ['result'=>0,"msg"=>$this->msgList['activity_time'],'code'=>400];
+        }
+        //报名开始不得早于结束
+        elseif(strtotime($activityParams['apply_start_time']) >= strtotime($activityParams['apply_end_time']))
+        {
+            $return = ['result'=>0,"msg"=>$this->msgList['activity_apply_time'],'code'=>400];
         }
         //活动名称长度校验
         elseif(strlen($activityParams['activity_name'])>=32)
@@ -188,10 +213,42 @@ class ActivityService extends BaseService
     public function updateActivity($activityId,$activityParams = [],$user_info)
     {
         $currentTime = time();
-        //活动时间校验
+        //参数校验
         if($activityParams['start_time']=="" || $activityParams['end_time']=="")
         {
             $return  = ['result'=>0,"msg"=>"活动时间有误，请重新输入",'code'=>400];
+        }
+        elseif($activityParams['apply_start_time']=="" || $activityParams['apply_end_time']=="")
+        {
+            $return  = ['result'=>0,"msg"=>"活动报名时间有误，请重新输入",'code'=>400];
+        }
+        //活动开始时间不得大于结束时间
+        elseif(strtotime($activityParams['start_time']) >= strtotime($activityParams['end_time']))
+        {
+            $return = ['result'=>0,"msg"=>$this->msgList['activity_start_time'],'code'=>400];
+        }
+        //活动报名时间不得早于当前时间
+        elseif(strtotime($activityParams['apply_start_time'])<$currentTime){
+            $return  = ['result'=>0,"msg"=>"活动报名时间不可早于当前时间，请重新输入",'code'=>400];
+        }
+        //报名结束时间不得大于活动开始时间
+        elseif(strtotime($activityParams['apply_end_time']) >= strtotime($activityParams['start_time']))
+        {
+            $return = ['result'=>0,"msg"=>$this->msgList['activity_time'],'code'=>400];
+        }
+        //报名开始不得早于结束
+        elseif(strtotime($activityParams['apply_start_time']) >= strtotime($activityParams['apply_end_time']))
+        {
+            $return = ['result'=>0,"msg"=>$this->msgList['activity_apply_time'],'code'=>400];
+        }
+        //活动名称长度校验
+        elseif(strlen($activityParams['activity_name'])>=32)
+        {
+            $return  = ['result'=>0,"msg"=>"活动名称超长，请重新输入",'code'=>400];
+        }//说明长度
+        elseif(strlen($activityParams['comment'])>=2000)
+        {
+            $return  = ['result'=>0,"msg"=>"活动说明超长，请重新输入",'code'=>400];
         }
         //报名时间校验
         elseif($activityParams['apply_start_time']=="" || $activityParams['apply_end_time']=="")
