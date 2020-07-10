@@ -89,8 +89,84 @@ class ClubService extends BaseService
       }
       //此处留有微信公众号信息推送
       return  $return;
-
   }
+    /*
+   * 加入俱乐部
+   */
+    public function inviteToClub($operate_user_id = 0,$user_id = 0,$club_id = 0,$comment = ""){
+        if(!$club_id)
+        {
+            $return = ['result'=> 0,'msg'=>'club_id未传'];
+            return $return;
+        }
+        //判断是否已是俱乐部成员
+        $member_ship = $this->checkUserIsClubMember($user_id,$club_id);
+        if($member_ship==1)
+        {
+            $return = ['result'=> 1,'msg'=>'由于已经是俱乐部成员了，邀请成功'];
+            return $return;
+        }
+        //判断操作人是否有俱乐部权限
+        $permission = $this->getUserClubPermission($operate_user_id,$club_id,0);
+        $permission = 0;
+        if($permission == 0)
+        {
+            $return = ['result'=> 0,'msg'=>'您没有操作该俱乐部的权限'];
+            return $return;
+        }
+
+
+
+        //判断是否提交过申请
+        $conditons = 'club_id = :club_id: and user_id = :user_id: and type = :type: and sub_type = :sub_type:';
+        $select_params = [
+            $conditons,
+            'bind'=>[
+                'club_id'=>$club_id,
+                'user_id'=>$user_id,
+                'type'=>1,
+                'sub_type'=>1,
+            ],
+            'columns'=>'log_id,result',
+            'order' => 'log_id desc',
+        ];
+        $club_member_log = (new \HJ\ClubMemberLog())->findfirst($select_params);
+        if(isset($club_member_log->log_id)&&$club_member_log->result == 0)
+        {
+            $return = ['result'=> 0,'data'=>$club_member_log,'msg'=>'已经提交过无须重复申请'];
+            return $return;
+        }
+        $current_time = time();
+        $type = 1;
+        $sub_type = 1;
+        $operate_user_id = $user_id;
+        $process_user_id = 0;
+        $create_time = date("Y-m-d H:i:s",$current_time);
+        $update_time = date("Y-m-d H:i:s",$current_time);
+        $process_time = date("Y-m-d H:i:s",$current_time);
+        $user_info = (new UserService())->getUserInfo($user_id,"user_id,company_id");
+        $insert = new \HJ\ClubMemberLog();
+        $insert->club_id = $club_id;
+        $insert->user_id = $user_id;
+        $insert->company_id = $user_info->company_id;
+        $insert->type = $type;
+        $insert->sub_type = $sub_type;
+        $insert->operate_user_id = $operate_user_id;
+        $insert->process_user_id = $process_user_id;
+        $insert->create_time = $create_time;
+        $insert->update_time = $update_time;
+        $insert->process_time = $process_time;
+        $insert_result = $insert->create();
+        if($insert_result)
+        {
+            $return = ['result'=> 1,'data'=>$insert,'msg'=>'申请成功'];
+        }else
+        {
+            $return = ['result'=> 0,'msg'=>'申请失败'];
+        }
+        //此处留有微信公众号信息推送
+        return  $return;
+    }
 
   /*
    * 撤销俱乐部申请
@@ -476,7 +552,6 @@ class ClubService extends BaseService
         {
             //获取用户信息
             $userInfo = (new UserService())->getUserInfo($user_id,"user_id,manager_id");
-
             //超级管理员
             if($userInfo->manager_id>0)
             {
