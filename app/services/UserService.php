@@ -9,7 +9,6 @@
 // | Author:   huzhichao@laoyuegou.com
 // | Created:  2017-xx-xx
 // +----------------------------------------------------------------------
-use Robots as robotModel;
 use Phalcon\Mvc\Model\Query;
 use Phalcon\Mvc\User\Component;
 use Elasticsearch\ClientBuilder;

@@ -57,8 +57,8 @@ class ClubController extends BaseController
             return $this->failure([],$return['msg'],$return['code']);
         }
         $operate_user_id = $return['data']['user_info']->user_id;
-        $user_id = $this->request->get('user_id')??13633;
-        $club_id = $this->request->get('club_id')??5;
+        $user_id = $this->request->get('user_id')??0;
+        $club_id = $this->request->get('club_id')??0;
         $comment = urldecode($this->request->get('comment'))??"";
         $return =  (new ClubService())->inviteToClub($operate_user_id,$user_id,$club_id,$comment);
         if($return['result'])
