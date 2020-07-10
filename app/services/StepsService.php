@@ -266,8 +266,13 @@ class StepsService extends BaseService
                     //      "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
                 ];
             }
-            $steps = (new \HJ\Steps())::find($params)->toArray();
-            $this->redis->set($redis_key,json_encode($steps));
+            if($group == "user_id")
+            {
+                $steps = (new \HJ\Steps())::find($params)->toArray();
+            }
+            else {
+                $steps = (new \HJ\StepsData())::find($params)->toArray();
+            }            $this->redis->set($redis_key,json_encode($steps));
             $this->redis->expire($redis_key,$cache_settings->expire);
         }
 
