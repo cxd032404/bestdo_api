@@ -1066,7 +1066,7 @@ class PageElementService extends BaseService
         $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
         $departmentId = $this->getFromParams($params,'department_id',"");
-        if($departmentId=="")
+        if($departmentId>0)
         {
             $userInfo = $userService->getUserInfo($user_info['data']['user_id'],"user_id,company_id,department_id");
             $department = (new DepartmentService())->getDepartment($userInfo->department_id);
