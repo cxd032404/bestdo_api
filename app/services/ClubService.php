@@ -132,14 +132,14 @@ class ClubService extends BaseService
             'order' => 'log_id desc',
         ];
         //查找当前有没有申请加入记录
-        $club_member_log = (new \HJ\ClubMemberLog())->findfirst($select_params);
-        if(isset($club_member_log->log_id)&&$club_member_log->result == 0)
+        $club_member_log = (new \HJ\ClubMemberLog())->find($select_params);
+        if(count($club_member_log))
         {
-            $log_id = $club_member_log->log_id;
+            $toFixLog = 1;
         }
         else
         {
-            $log_id = 0;
+            $toFixLog = 0;
         }
         $current_time = date("Y-m-d H:i:s",time());
         $type = 1;
@@ -185,6 +185,7 @@ class ClubService extends BaseService
         if($insertLog && $insertMember)
         {
             $transaction->commit();
+            $this->fixClubMemberEnterLog($user_id,$club_id,$operate_user_id);
             $return = ['result'=> 1,'data'=>$member,'msg'=>'申请成功'];
         }else
         {
@@ -1026,5 +1027,34 @@ class ClubService extends BaseService
         ];
         $count = (new \HJ\Activity())->findFirst($params);
         return $count->{0};
+    }
+
+    public function fixClubMemberEnterLog($user_id,$club_id,$process_user_id)
+    {
+        //判断是否提交过申请
+        $conditons = 'club_id = :club_id: and user_id = :user_id: and type = :type: and sub_type = :sub_type:';
+        $select_params = [
+            $conditons,
+            'bind'=>[
+                'club_id'=>$club_id,
+                'user_id'=>$user_id,
+                'type'=>1,
+                'sub_type'=>1,
+            ],
+            'columns'=>'*',
+            'order' => 'log_id desc',
+        ];
+        $club_member_log = (new \HJ\ClubMemberLog())->findfirst($select_params);
+        if(isset($club_member_log->log_id)&&$club_member_log->result == 0)
+        {
+            $club_member_log->result = 1;
+            $club_member_log->process_user_id = $process_user_id;
+            $club_member_log->detail = json_decode($club_member_log->detail,true);
+            $club_member_log->detail["operate_comment"] = "自动通过";
+            $club_member_log->detail = json_encode($club_member_log->detail);
+            $club_member_log->update_time = date("Y-m-d H:i:s");
+            $club_member_log->update();
+        }
+        return;
     }
 }
