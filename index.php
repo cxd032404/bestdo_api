@@ -14,7 +14,7 @@
 //    function(){
 //        if(error_get_last()){var_dump(error_get_last());
 //        }
-//
+
 //    });
 //define('APP_NAME', 'Phalcon');
 
@@ -34,7 +34,8 @@ define('ROOT_PATH', dirname(__FILE__));
 
 // 应用程序 ///////////////////////////////////////////////////////////
 try {
-	header('Content-Type: application/json; charset=utf-8');
+    header("Access-Control-Allow-Origin: *");
+    header('Content-Type: application/json; charset=utf-8');
 
 	error_reporting(0);
     require_once ROOT_PATH . "/vendor/autoload.php";
