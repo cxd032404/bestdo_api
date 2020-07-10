@@ -206,7 +206,7 @@ class StepsService extends BaseService
         $redis_key = $cache_settings->name.$key;
         $cache = $this->redis->get($redis_key);
         //默认不拿数据库
-        $from_db = 0;
+        $from_db = 1;
         if(!$cache)
         {
             //缓存获取失败
@@ -254,7 +254,7 @@ class StepsService extends BaseService
                     "columns"=>$group.",sum(step) as totalStep,sum(if(step>daily_step,1,0)) as achives,sum(daily_step) as total_daily_step",
                     "group"=>$group,
                     "order"=>"totalStep DESC",
-                    //        "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+                    "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
                 ];
             }
             else
@@ -263,7 +263,7 @@ class StepsService extends BaseService
                     $whereCondition,
                     "columns"=>"sum(step) as totalStep,sum(if(step>daily_step,1,0)) as achives",
                     "order"=>"totalStep",
-                    //      "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
+                    "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
                 ];
             }
             if($group == "user_id")
@@ -272,53 +272,46 @@ class StepsService extends BaseService
             }
             else {
                 $steps = (new \HJ\StepsData())::find($params)->toArray();
-            }            $this->redis->set($redis_key,json_encode($steps));
+            }
+            $this->redis->set($redis_key,json_encode($steps));
             $this->redis->expire($redis_key,$cache_settings->expire);
+        }else{
+            $whereCondition = "company_id = ".$company_id." ";
+            if($department_id > 0)
+            {
+                $department = (new DepartmentService())->getDepartment($department_id);
+                for($i = 1;$i<=$department['current_level'];$i++)
+                {
+                    $level_name = "department_id_".$i;
+                    $whereCondition.= " and ".$level_name." = ".$department[$level_name];
+                }
+            }
+            if(isset($dateRange['date']))
+            {
+                $whereCondition .= " and date = '".$dateRange['date']."'";
+            }
+            else
+            {
+                $whereCondition .= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
+            }
         }
 
         $return = ["list"=>[],"mine"=>[]];
-        foreach($steps as $key => $value)
-        {
-            if(($key+1) >=$start || ($key+1) <= $end)
-            {
-                $return["list"][] = $value;
-            }
-            elseif($key>$end)
-            {
-                break;
-            }
-        }
+        $return['list'] = $steps;
         $group = explode(",",$group??"");
         if(in_array("user_id",$group??[]))
         {
-            $found = 0;
-            foreach($steps as $key => $value)
-            {
-                if($value['user_id'] == "$user_id")
-                {
-                    $return["mine"] = $value;
-                    $return["mine"]["rank"] = $key+1;
-                    $found = 1;
-                    break;
-                }
-            }
-            if($found == 0)
-            {
-                $return["mine"] = [
-                    'user_id'=>$user_id,
-                    'totalStep'=>0,
-                    'achives'=>0,
-                    'total_daily_step'=>0,
-                    'distance'=>0,
-                    'kcal'=>0,
-                    'time'=>0,
-                    ];//{};
-                $return["mine"]["Rank"] = count($return["list"])+1;
-            }
-
+            $params = [
+                "user_id = '".$user_id."' and ".$whereCondition,
+                "columns"=>'sum(step) as totalStep,user_id',];
+            $Mydata = (new \HJ\Steps())::findFirst($params)->toArray();
+            $myStep = $Mydata['totalStep']??0;
+            $sql = 'select count(1) as c from (select sum(step) as totalStep ,user_id from user_steps where '.$whereCondition." group by user_id) as s where s.totalStep >=".$myStep;
+            $db_list = $this->hj_user->fetchOne($sql);
+            $myRank = $db_list['c']??0;
+            $return['mine'] = $Mydata;
+            $return['mine']['Rank'] = $myRank;
         }
-        $start = ($page-1)*$pageSize;
-        $return['list'] = array_slice($return['list'],$start,$pageSize);
         return $return;
     }
     public function getUserStepsDataByDate($dateRange,$company_id,$user_id)
