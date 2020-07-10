@@ -270,8 +270,7 @@ class StepsService extends BaseService
             $this->redis->set($redis_key,json_encode($steps));
             $this->redis->expire($redis_key,$cache_settings->expire);
         }
-        $start = ($pageSize-1)*$page;
-        $end = ($start+$pageSize-1);
+
         $return = ["list"=>[],"mine"=>[]];
         foreach($steps as $key => $value)
         {
@@ -313,8 +312,8 @@ class StepsService extends BaseService
             }
 
         }
-
-
+        $start = ($page-1)*$pageSize;
+        $return['list'] = array_slice($return['list'],$start,$pageSize);
         return $return;
     }
     public function getUserStepsDataByDate($dateRange,$company_id,$user_id)
