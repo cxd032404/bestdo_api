@@ -1,4 +1,9 @@
 <?php
+use Phalcon\Mvc\Model\Query;
+use Phalcon\Mvc\User\Component;
+use Phalcon\Mvc\Model\Transaction\Failed as TxFailed;
+use Phalcon\Mvc\Model\Transaction\Manager as TxManager;
+
 /*
  * 2020/6/10
  * author shishuozheng
@@ -89,8 +94,107 @@ class ClubService extends BaseService
       }
       //此处留有微信公众号信息推送
       return  $return;
-
   }
+    /*
+   * 加入俱乐部
+   */
+    public function inviteToClub($operate_user_id = 0,$user_id = 0,$club_id = 0,$comment = ""){
+        if(!$club_id)
+        {
+            $return = ['result'=> 0,'msg'=>'club_id未传'];
+            return $return;
+        }
+        //判断是否已是俱乐部成员
+        $member_ship = $this->checkUserIsClubMember($user_id,$club_id);
+        if($member_ship==1)
+        {
+            $return = ['result'=> 1,'msg'=>'由于已经是俱乐部成员了，邀请成功'];
+            return $return;
+        }
+        //判断操作人是否有俱乐部权限
+        $permission = $this->getUserClubPermission($operate_user_id,$club_id,0);
+        if($permission == 0)
+        {
+            $return = ['result'=> 0,'msg'=>'您没有操作该俱乐部的权限'];
+            return $return;
+        }
+        //判断是否提交过申请
+        $conditons = 'club_id = :club_id: and user_id = :user_id: and type = :type: and sub_type = :sub_type:';
+        $select_params = [
+            $conditons,
+            'bind'=>[
+                'club_id'=>$club_id,
+                'user_id'=>$user_id,
+                'type'=>1,
+                'sub_type'=>1,
+            ],
+            'columns'=>'log_id,result',
+            'order' => 'log_id desc',
+        ];
+        //查找当前有没有申请加入记录
+        $club_member_log = (new \HJ\ClubMemberLog())->find($select_params);
+        if(count($club_member_log))
+        {
+            $toFixLog = 1;
+        }
+        else
+        {
+            $toFixLog = 0;
+        }
+        $current_time = date("Y-m-d H:i:s",time());
+        $type = 1;
+        $sub_type = 0;
+        $user_info = (new UserService())->getUserInfo($user_id,"user_id,company_id");
+        $operate_user_info = (new UserService())->getUserInfo($operate_user_id,"user_id,true_name,company_id");
+
+        // Create a transaction manager
+        $manager = new TxManager();
+        //指定你需要的数据库
+        $manager->setDbService("hj_user");
+        // Request a transaction
+        $transaction = $manager->get();
+
+        $memberLog = new \HJ\ClubMemberLog();
+        $memberLog->club_id = $club_id;
+        $memberLog->user_id = $user_id;
+        $memberLog->company_id = $user_info->company_id;
+        $memberLog->type = $type;
+        $memberLog->sub_type = $sub_type;
+        $memberLog->operate_user_id = $operate_user_id;
+        $memberLog->process_user_id = $operate_user_id;
+        $memberLog->create_time = $current_time;
+        $memberLog->update_time = $current_time;
+        $memberLog->process_time = $current_time;
+        $memberLog->result = 1;
+        $detail = ["comment"=>"管理员".$operate_user_info->true_name."邀请加入","operate_comment"=>$comment==""?"":$comment];
+        $memberLog->detail = json_encode($detail);
+        $insertLog = $memberLog->create();
+
+        $member = new \HJ\ClubMember();
+        $member->club_id = $club_id;
+        $member->user_id = $user_id;
+        $member->company_id = $user_info->company_id;
+        $member->permission = 0;
+        $member->status = 1;
+        $member->create_time = $current_time;
+        $member->update_time = $current_time;
+        $member->process_time = $current_time;
+        $detail = ["comment"=>"管理员".$operate_user_info->true_name."邀请加入".($comment==""?"":",".$comment)];
+        $member->detail = json_encode($detail);
+        $insertMember = $member->create();
+        if($insertLog && $insertMember)
+        {
+            $transaction->commit();
+            $this->fixClubMemberEnterLog($user_id,$club_id,$operate_user_id);
+            $return = ['result'=> 1,'data'=>$member,'msg'=>'申请成功'];
+        }else
+        {
+            $transaction->rollback();
+            $return = ['result'=> 0,'msg'=>'申请失败'];
+        }
+        //此处留有微信公众号信息推送
+        return  $return;
+    }
 
   /*
    * 撤销俱乐部申请
@@ -476,7 +580,6 @@ class ClubService extends BaseService
         {
             //获取用户信息
             $userInfo = (new UserService())->getUserInfo($user_id,"user_id,manager_id");
-
             //超级管理员
             if($userInfo->manager_id>0)
             {
@@ -924,5 +1027,34 @@ class ClubService extends BaseService
         ];
         $count = (new \HJ\Activity())->findFirst($params);
         return $count->{0};
+    }
+
+    public function fixClubMemberEnterLog($user_id,$club_id,$process_user_id)
+    {
+        //判断是否提交过申请
+        $conditons = 'club_id = :club_id: and user_id = :user_id: and type = :type: and sub_type = :sub_type:';
+        $select_params = [
+            $conditons,
+            'bind'=>[
+                'club_id'=>$club_id,
+                'user_id'=>$user_id,
+                'type'=>1,
+                'sub_type'=>1,
+            ],
+            'columns'=>'*',
+            'order' => 'log_id desc',
+        ];
+        $club_member_log = (new \HJ\ClubMemberLog())->findfirst($select_params);
+        if(isset($club_member_log->log_id)&&$club_member_log->result == 0)
+        {
+            $club_member_log->result = 1;
+            $club_member_log->process_user_id = $process_user_id;
+            $club_member_log->detail = json_decode($club_member_log->detail,true);
+            $club_member_log->detail["operate_comment"] = "自动通过";
+            $club_member_log->detail = json_encode($club_member_log->detail);
+            $club_member_log->update_time = date("Y-m-d H:i:s");
+            $club_member_log->update();
+        }
+        return;
     }
 }
