@@ -328,15 +328,17 @@ class StepsService extends BaseService
                     "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
                 ];
             }
-            if($group == "user_id")
+            //if($group == "user_id")
             {
                 $steps = (new \HJ\Steps())::find($params)->toArray();
             }
+            /*
             else {
                 $steps = (new \HJ\StepsData())::find($params)->toArray();
             }
+            */
             $this->redis->set($redis_key,json_encode($steps));
-            $this->redis->expire($redis_key,$cache_settings->expire);
+            $this->redis->expire($redis_key,10/*$cache_settings->expire*/);
         }else{
             $whereCondition = "company_id = ".$company_id." ";
             if($department_id > 0)
@@ -357,7 +359,6 @@ class StepsService extends BaseService
                 $whereCondition .= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
             }
         }
-
         $return = ["list"=>[],"mine"=>[]];
         $return['list'] = $steps;
         $group = explode(",",$group??"");
@@ -366,12 +367,38 @@ class StepsService extends BaseService
             $params = [
                 "user_id = '".$user_id."' and ".$whereCondition,
                 "columns"=>'sum(step) as totalStep,user_id',];
-            $Mydata = (new \HJ\Steps())::findFirst($params)->toArray();
-            $myStep = $Mydata['totalStep']??0;
-            $sql = 'select count(1) as c from (select sum(step) as totalStep ,user_id from user_steps where '.$whereCondition." group by user_id) as s where s.totalStep >=".$myStep;
-            $db_list = $this->hj_user->fetchOne($sql);
-            $myRank = $db_list['c']??0;
-            $return['mine'] = $Mydata;
+            $cache_name =
+                "user_step_rank_".md5(json_encode($params));
+            $cache = $this->redis->get($cache_name);
+            if(!$cache)
+            {
+                $Mydata = (new \HJ\Steps())::findFirst($params);
+                //print_R($Mydata);
+                if(!isset($Mydata->totalStep))
+                {$myStep = 0;}
+                else
+                {
+
+                    $myStep = $Mydata->totalStep??0;
+                }
+                $sql = 'select count(1) as c from (select sum(step) as totalStep ,user_id from user_steps where '.$whereCondition." group by user_id) as s where s.totalStep >=".$myStep;
+                $this->logger->info($sql);
+                $db_list = $this->hj_user->fetchOne($sql);
+                //print_R($db_list);die();
+                $this->logger->info("my:".json_encode($db_list));
+                $myRank = $db_list['c']??0;
+                //echo $myRank;
+                //die("here");
+                $this->redis->set($cache_name,$myRank);
+                $this->redis->expire($cache_name,30/*$cache_settings->expire*/);
+            }
+            else
+            {
+                $myRank = $cache;
+            }
+            $return['mine'] = [];
+            $return['mine']['totalStep'] = $myStep;
+
             $return['mine']['Rank'] = $myRank;
         }
         return $return;
@@ -444,8 +471,8 @@ class StepsService extends BaseService
                 $lag = intval((strtotime($date)-strtotime($rangeStartDate))/( $value * 86400 ));
                 $return['data'][$key]['startDate'] = date("Y-m-d",strtotime($rangeStartDate) + $value * $lag * 86400);
                 $return['data'][$key]['endDate'] = min($rangeEndDate,date("Y-m-d",strtotime($rangeStartDate) + $value * ($lag+1) * 86400));
-                $return['data'][$key]['endDate'] = date("Y-m-d",strtotime($return[$key]['endDate'])-86400);
-                $return['data'][$key]['days'] = intval((strtotime($return[$key]['endDate'])-strtotime($return[$key]['startDate']))/86400)+1;
+                $return['data'][$key]['endDate'] = date("Y-m-d",strtotime($return['data'][$key]['endDate'])-86400);
+                $return['data'][$key]['days'] = intval((strtotime($return['data'][$key]['endDate'])-strtotime($return['data'][$key]['startDate']))/86400)+1;
             }
         }
         else
