@@ -464,63 +464,9 @@ class ActivityService extends BaseService
                 $activity_list[] = $created;
 */            }
         }
-        //已取消活动
-        $cancel_activity =[];
-        //已结束活动
-        $finish_activity= [];
-        //本月后六个月内的活动
-        $current_month = date('m',time());  //本月
-        $current_year = date('Y',time()); //本年
-        if($current_month+6>12)
-        { //超过本年
-            $year = $current_year+1; //年份加1
-            $month = $current_month-6;
-        }else
-        { //没超过本年
-            $year = $current_year;
-            $month = $current_month+6;
-        }
-        $activity_time = strtotime($year.'/'.$month.'/00');
-        //按活动开始时间排序处理
-        foreach($activity_list as $key=>$activity_info)
-        {
-            //去掉不在当月六个月内的活动
-            if(strtotime($activity_info->start_time) >= $activity_time)
-            {
-                unset($activity_list[$key]);
-                continue;
-            }
-            //挑出已取消的活动
-            if($activity_info->status == 0)
-            {
-                $cancel_activity[] = $activity_info;
-                unset($activity_list[$key]);
-                continue;
-            }
-            //已结束的活动
-            if(strtotime($activity_info->end_time)<time())
-            {
-                $activity_info->timeout = 1;//已过期标记
-                $activity_info->time_sort = strtotime($activity_info->start_time);//已过期标记
-                $finish_activity[] = $activity_info;
-                unset($activity_list[$key]);
-                continue;
-            }
-            $activity_info->timeout = 0;//未过期标记
-            $activity_list[$key]->time_sort = strtotime($activity_info->start_time);
-        }
-        //已过期活动排序
-        $finish_activity = json_decode(json_encode($finish_activity),true);
-        $activity_list = json_decode(json_encode($activity_list),true);
-        $cancel_activity = json_decode(json_encode($cancel_activity),true);
 
-        $last_names = array_column($finish_activity,'time_sort');
-        array_multisort($last_names,SORT_ASC,$finish_activity);
-        //未过期根据时间正序排序
-        $start_time_sort = array_column($activity_list,'time_sort');
-        array_multisort($start_time_sort,SORT_ASC,$activity_list);
-        //合并数组
-        $activity_list = array_merge($activity_list,$finish_activity,$cancel_activity);
+          $activity_list = $this->activitySort(json_decode(json_encode($activity_list),true));
+
         if($start>0)
         {
             $residuals = 1;
@@ -545,7 +491,46 @@ class ActivityService extends BaseService
         return $return;
 
     }
-
+        /*
+    * 按活动状态排序
+    *  1.活动报名未开始 0
+    * 2.活动报名进行中 1
+    * 3.活动报名已结束 2
+    * 4.活动进行中 3
+    * 5.活动已结束 4
+    * 6.活动已取消 5
+    */
+    public function activitySort($activity_list = []){
+        $current_time = time();
+        foreach ($activity_list as $key=>$value)
+        {
+            if($value['status'] == 0)
+            { //活动已取消
+                $activity_list[$key]['activity_status'] = 5;
+            }elseif(strtotime($value['apply_start_time'])>=$current_time) {
+                //报名未开始
+                $activity_list[$key]['activity_status'] = 0;
+            }elseif(strtotime($value['apply_start_time'])<$current_time && strtotime($value['apply_end_time'])>=$current_time){
+                //报名进行中
+                $activity_list[$key]['activity_status'] = 1;
+            }elseif(strtotime($value['apply_end_time'])<$current_time && strtotime($value['start_time'])>=$current_time){
+                //报名已结束
+                $activity_list[$key]['activity_status'] = 2;
+            }elseif(strtotime($value['start_time'])<$current_time && strtotime($value['end_time'])>=$current_time){
+                //活动进行中
+                $activity_list[$key]['activity_status'] = 3;
+            }elseif(strtotime($value['end_time'])<$current_time) {
+                //活动已结束
+                $activity_list[$key]['activity_status'] = 4;
+            }else{
+                //未知状态
+                $activity_list[$key]['activity_status'] = 6;
+            }
+        }
+        $activity_status = array_column($activity_list,'activity_status');
+        array_multisort($activity_status,SORT_ASC,$activity_list);
+        return $activity_list;
+    }
 
 
     //活动报名方法

@@ -681,7 +681,7 @@ class PageElementService extends BaseService
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],-1);
         }
         $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,
-            'activity_id,activity_name,start_time,apply_start_time,end_time,club_id,status',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
+            'activity_id,activity_name,start_time,apply_start_time,apply_end_time,end_time,club_id,status',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3));
         $managed_club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
         $managed_activity_list = $return['activity_list'];
         foreach ($managed_activity_list as $key=>$value)
@@ -1076,7 +1076,6 @@ class PageElementService extends BaseService
         $dateType = $this->getFromParams($params,'date_type',1);
         $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
         $departmentId = $this->getFromParams($params,'department_id',"");
-        /*
         if($departmentId>0)
         {
             $userInfo = $userService->getUserInfo($user_info['data']['user_id'],"user_id,company_id,department_id");
@@ -1091,7 +1090,6 @@ class PageElementService extends BaseService
                 $departmentId = $department[$name];
             }
         }
-        */
         $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],$departmentId,"user_id",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 20));
         $stepsList = $stepsData['list'];
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
