@@ -230,7 +230,6 @@ class WechatService extends BaseService
                 $access_token['expires_time'] = time()+intval($access_token['expires_in']);
                 $this->setRedis('access_token',$access_token);
             }
-            print_r($access_token);die();
         }
         return $access_token['access_token'];
     }
@@ -447,6 +446,43 @@ class WechatService extends BaseService
             return ["result"=>1,"msg"=>$errCode,"code"=>400];
         }
 
+    }
+
+
+    /*
+     * 微信公众号菜单
+     */
+    public function wechatMenue(){
+        die();
+        $access_token = $this->getAccessToken($this->key_config->aliyun->wechat->appid,$this->key_config->aliyun->wechat->appsecret);
+        $url = 'https://api.weixin.qq.com/cgi-bin/menu/create?access_token='.$access_token;
+        $menue = [
+            "button"=>[
+                 ["name"=>"首页","type"=>"view","url"=>"http://www.staffhome.cn"],
+                 ["name"=>"精品课程","type"=>"view","url"=>"http://www.staffhome.cn/classs"],
+                 ["name"=>"赛事活动",
+                     "sub_button"=>[
+                         ["name"=>"文体汇","type"=>"view","url"=>"http://www.staffhome.cn/culture"],
+                         ["name"=>"俱乐部","type"=>"view","url"=>"http://www.staffhome.cn/club"],
+                         ["name"=>"健步走","type"=>"view","url"=>"http://www.staffhome.cn/pace"],
+                     ],
+                 ],
+            ],
+
+        ];
+        $menue = json_encode($menue,JSON_UNESCAPED_UNICODE);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; MSIE 5.01; Windows NT 5.0)');
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_AUTOREFERER, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $menue);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $res = curl_exec($ch);
+        return $res;
     }
 
 }
