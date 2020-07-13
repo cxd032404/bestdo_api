@@ -108,4 +108,15 @@ class WechatController extends BaseController
             $this->failure([],$decrypt['msg'],$decrypt['code']);
         }
     }
+
+    /*
+     * 编辑公众号菜单
+     */
+    public function wechatMenueAction(){
+        (new WechatService())->wechatMenue();
+
+    }
+
+
+
 }
