@@ -1340,12 +1340,12 @@ class UserService extends BaseService
         $success = $fail = 0;
         for($i = 1;$i<=$count;$i++)
         {
-            $randName = date("YmdHis",$currentTime).sprintf("%05d",$i);
+            $randName = date("mdHi",$currentTime).sprintf("%05d",$i);
             $randMobile = "1".sprintf("%010d",rand(1,9999999999));
             $randDepartment = $departmentList[array_rand($departmentList)];
             $userInfo = [
             "company_id"=>$company_id,
-            "true_name"=>"姓名".$randName,
+            "true_name"=>$randName,
             "nick_name"=>"昵称".$randName,
             "department_id" => $departmentList[array_rand($departmentList)]['department_id'],
             "mobile" => $randMobile,
