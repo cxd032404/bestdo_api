@@ -541,8 +541,11 @@ class PageElementService extends BaseService
         $club_list_permission = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
         $club_list = [];
         $club_ids = [];
+        $sum = 0;
         foreach ($club_list_permission as $key => $value) {
-            $club_list[$key]['Usercount'] = (new ClubService())->getClubMemberCount($value->club_id);
+            $Usercount = (new ClubService())->getClubMemberCount($value->club_id);
+            $sum += $Usercount;
+            $club_list[$key]['Usercount'] = $Usercount;
             $club_list[$key]['club_id'] = $value->club_id;
             $club_list[$key]['club_name'] = $value->club_name;
             $club_ids [] = $value->club_id;
@@ -550,7 +553,8 @@ class PageElementService extends BaseService
         $club_list = array_values($club_list);
         $all = [
             'club_id'=>-1,
-            'club_name'=>'全部'
+            'club_name'=>'全部',
+            'Usercount'=>$sum
         ];
         array_push($club_list,$all);
         $data['detail']['club_list'] = $club_list;
@@ -579,7 +583,7 @@ class PageElementService extends BaseService
                 $member_log_list[$key]['club_id'] = $value->club_id;
                 $club_info = (new ClubService())->getClubInfo($value->club_id,'club_id,club_name');
                 $member_log_list[$key]['club_name'] = $club_info->club_name;
-                $member_log_list[$key]['create_time'] = date('Y/m/d H:i', strtotime($value->create_time));
+                $member_log_list[$key]['create_time'] = date('Y-m-d H:i', strtotime($value->create_time));
             }
         $data['detail']['member_log_list'] = $member_log_list;
         return $data;
@@ -628,7 +632,7 @@ class PageElementService extends BaseService
             $data['detail']['activity_info']->remain = $activity_info->member_limit - $user_count;
         }else
         {
-            $data['detail']['activity_info']->remain = '无限';
+            $data['detail']['activity_info']->remain = '不限';
         }
 
         $data['detail']['activity_info']->activity_name = mb_substr($activity_info->activity_name,0,20);
@@ -860,17 +864,23 @@ class PageElementService extends BaseService
                             continue;
                         }
                     }
-                    $clubInfo = $clubService->getClubInfo($activity_info->club_id, "club_id,club_name,icon,detail");
+                    if($activity_info->club_id == 0)
+                    {
+                        $clubInfo = [];
+                    }else
+                    {
+                        $clubInfo = $clubService->getClubInfo($activity_info->club_id, "club_id,club_name,icon,detail");
+                        $activity_list[$key]->club_name = $clubInfo->club_name;
+                    }
                     $activity_list[$key] = (object)array_merge((array)$activity_info, (array)$clubInfo);
                     $chinese_start_date = date('m月d日', strtotime($activity_info->start_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->start_time))];
                     $chinese_end_date = date('m月d日', strtotime($activity_info->end_time)) . " 周" . $this->weekarray[date('w', strtotime($activity_info->end_time))];
                     $activity_list[$key]->chinese_start_date = $chinese_start_date;
                     $activity_list[$key]->chinese_end_date = $chinese_end_date;
                     $activity_list[$key]->chinese_end_date = $chinese_end_date;
-                    $activity_list[$key]->format_apply_time = date('m/d H:i',strtotime($activity_info->apply_start_time)).'-'.date('m/d H:i',strtotime($activity_info->apply_end_time));
+                    $activity_list[$key]->format_apply_time = date('m-d H:i',strtotime($activity_info->apply_start_time)).'-'.date('m-d H:i',strtotime($activity_info->apply_end_time));
                     $activity_list[$key]->activity_name = mb_substr($activity_info->activity_name, 0, 12, 'utf-8');
                     $activity_list[$key]->comment = mb_substr($activity_info->comment, 0, 12, 'utf-8');
-                    $activity_list[$key]->club_name = $clubInfo->club_name;
                 } else {
                     unset($activity_list[$key]);
                 }
@@ -1350,7 +1360,8 @@ class PageElementService extends BaseService
         $params['list_id'] = $list_id;
         $params['page_size'] = $this->getFromParams($params,"pageSize",3);
         $data = $this->getElementPage_list($data,$params,$user_info,$company_id);
-        $available = $this->getElementPage_post($data,$params,$user_info,$company_id);
+       // $available = $this->getElementPage_post($data,$params,$user_info,$company_id);
+        $available = 1;
         $data['data']['available'] = $available['detail']['available']['result'];
         return $data;
     }

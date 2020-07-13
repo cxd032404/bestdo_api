@@ -455,6 +455,7 @@ class WechatService extends BaseService
     public function wechatMenue(){
         die();
         $access_token = $this->getAccessToken($this->key_config->aliyun->wechat->appid,$this->key_config->aliyun->wechat->appsecret);
+
         $url = 'https://api.weixin.qq.com/cgi-bin/menu/create?access_token='.$access_token;
         $menue = [
             "button"=>[
@@ -464,7 +465,7 @@ class WechatService extends BaseService
                      "sub_button"=>[
                          ["name"=>"文体汇","type"=>"view","url"=>"http://www.staffhome.cn/culture"],
                          ["name"=>"俱乐部","type"=>"view","url"=>"http://www.staffhome.cn/club"],
-                         ["name"=>"健步走","type"=>"view","url"=>"http://www.staffhome.cn/pace"],
+                         ["name"=>"健步走","type"=>"miniprogram","url"=>"http://mp.weixin.qq.com","appid"=>'wx52f654781e1775e7','pagepath'=>'pages/wtIndex/wtIndex'],
                      ],
                  ],
             ],
@@ -482,6 +483,7 @@ class WechatService extends BaseService
         curl_setopt($ch, CURLOPT_POSTFIELDS, $menue);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $res = curl_exec($ch);
+        print_r($res);die();
         return $res;
     }
 
