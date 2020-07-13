@@ -1087,8 +1087,12 @@ class PageElementService extends BaseService
         $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
         $companyInfo->detail = json_decode($companyInfo->detail,true);
         $stepsGoal = $companyInfo->detail['daily_step']??$stepsConfig->defaultDailyStep * $dateRange['days'];
+        $page = $this->getFromParams($params, 'page', 1);
+        $pageSize = $this->getFromParams($params, 'pageSize', 30);
+        $startRank = ($page-1)*$pageSize+1;
         foreach($stepsList as $key => $detail)
         {
+            $stepsList[$key]['Rank'] = $startRank++;
             $stepsList[$key]['distance'] = intval($detail['totalStep']*$stepsConfig->distancePerStep);
             $stepsList[$key]['kcal'] = intval($detail['totalStep']/$stepsConfig->stepsPerKcal);
             $stepsList[$key]['time'] = intval($detail['totalStep']/$stepsConfig->stepsPerMinute);

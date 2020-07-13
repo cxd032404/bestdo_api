@@ -373,33 +373,31 @@ class StepsService extends BaseService
             if(!$cache)
             {
                 $Mydata = (new \HJ\Steps())::findFirst($params);
-                //print_R($Mydata);
                 if(!isset($Mydata->totalStep))
                 {$myStep = 0;}
                 else
                 {
-
                     $myStep = $Mydata->totalStep??0;
                 }
                 $sql = 'select count(1) as c from (select sum(step) as totalStep ,user_id from user_steps where '.$whereCondition." group by user_id) as s where s.totalStep >=".$myStep;
                 $this->logger->info($sql);
                 $db_list = $this->hj_user->fetchOne($sql);
-                //print_R($db_list);die();
                 $this->logger->info("my:".json_encode($db_list));
                 $myRank = $db_list['c']??0;
-                //echo $myRank;
-                //die("here");
-                $this->redis->set($cache_name,$myRank);
+                $this->redis->set($cache_name,json_encode(['myRank'=>$myRank,'myStep'=>$myStep]));
                 $this->redis->expire($cache_name,30/*$cache_settings->expire*/);
+                $return['mine'] = [];
+                $return['mine']['totalStep'] = $myData['myStep']??0;
+                $return['mine']['Rank'] = $myData['myRank']??0;
             }
             else
             {
-                $myRank = $cache;
+                $myData = json_decode($cache,true);
+                $return['mine'] = [];
+                $return['mine']['totalStep'] = $myData['myStep']??0;
+                $return['mine']['Rank'] = $myData['myRank']??0;
             }
-            $return['mine'] = [];
-            $return['mine']['totalStep'] = $myStep;
 
-            $return['mine']['Rank'] = $myRank;
         }
         return $return;
     }
