@@ -387,8 +387,8 @@ class StepsService extends BaseService
                 $this->redis->set($cache_name,json_encode(['myRank'=>$myRank,'myStep'=>$myStep]));
                 $this->redis->expire($cache_name,30/*$cache_settings->expire*/);
                 $return['mine'] = [];
-                $return['mine']['totalStep'] = $myData['myStep']??0;
-                $return['mine']['Rank'] = $myData['myRank']??0;
+                $return['mine']['totalStep'] = $myStep??0;
+                $return['mine']['Rank'] = $myRank??0;
             }
             else
             {
