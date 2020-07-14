@@ -1367,4 +1367,14 @@ class PageElementService extends BaseService
         $data['data']['available'] = $available['detail']['available']['result'];
         return $data;
     }
+    /*
+     * 联系我们的公众号
+     */
+    public function getElementPage_ourContact($data,$params,$user_info,$company_id)
+    {
+        $wechat_acount = (new ConfigService())->getConfig("wechat_account");
+        $wechat_acount_name = $wechat_acount->content;
+        $data['detail']['wechat_acount_name'] = $wechat_acount_name;
+        return $data;
+    }
 }
