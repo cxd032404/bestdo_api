@@ -24,10 +24,10 @@ class wechatCallbackapiTest
 
     public function responseMsg()
     {
-		$postArr = $GLOBALS['HTTP_RAW_POST_DATA'];
+		$postArr = file_get_contents('php://input', 'r');
 		//获取到xml数据后，处理消息类型，并设置回复消息内容(回复就是直接打印xml数据)
 		//数据格式
-		$arr = simplexml_load_string($postArr);
+		$arr = $postObj = simplexml_load_string($postArr, 'SimpleXMLElement', LIBXML_NOCDATA);
 		if(strtolower($arr->MsgType)=="event")
 		{
 			$toUser = $arr->ToUserName;
@@ -35,7 +35,6 @@ class wechatCallbackapiTest
 			$msgType = 'text';
 			$createTime = time();
 			$content = "感谢关注'文体之窗'。我们将竭诚为您服务，为您的企业丰富线上生活，提供员工舞台，管理健康大数据。";
-
 			if(strtolower($arr->Event)=="subscribe")
 			{//订阅
 				$temp = "<xml><ToUserName><![CDATA[%s]]></ToUserName><FromUserName><![CDATA[%s]]></FromUserName><CreateTime>%s</CreateTime><MsgType><![CDATA[%s]]></MsgType><Content><![CDATA[%s]]></Content></xml>";
