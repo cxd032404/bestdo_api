@@ -415,7 +415,7 @@ class ActivityService extends BaseService
     /*
      * 获取用户管理的活动列表
      */
-    public function getUserActivityListWithPermission($user_id,$club_id,$columns,$start = 0,$page=1,$pageSize =4){
+    public function getUserActivityListWithPermission($user_id,$club_id,$columns,$start = 0,$page=1,$pageSize =4,$activity_status = -1){
         //查询用户是否有超级管理员权限
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
@@ -465,7 +465,7 @@ class ActivityService extends BaseService
 */            }
         }
 
-          $activity_list = $this->activitySort(json_decode(json_encode($activity_list),true));
+          $activity_list = $this->activitySort(json_decode(json_encode($activity_list),true),$activity_status);
 
         if($start>0)
         {
@@ -500,7 +500,7 @@ class ActivityService extends BaseService
     * 5.活动已结束 4
     * 6.活动已取消 5
     */
-    public function activitySort($activity_list = []){
+    public function activitySort($activity_list = [],$activity_status){
         $current_time = time();
         foreach ($activity_list as $key=>$value)
         {
@@ -525,6 +525,12 @@ class ActivityService extends BaseService
             }else{
                 //未知状态
                 $activity_list[$key]['activity_status'] = 6;
+            }
+            //所取不是全部状态
+            if($activity_status != -1)
+            {
+                if($activity_list[$key]['activity_status'] != $activity_status)
+                unset($activity_list[$key]);
             }
         }
         $activity_status = array_column($activity_list,'activity_status');
