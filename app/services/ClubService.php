@@ -232,8 +232,13 @@ class ClubService extends BaseService
     /*
      * 管理员操作用户申请
      */
-    public function applicationOperate($user_id,$operation,$log_ids = 0)
+    public function applicationOperate($user_id,$operation,$log_ids = [])
     {
+        if(count($log_ids) == 0)
+        {
+            $return = ['result'=> 0,'msg'=>'请选择要审核的申请记录'];
+            return $return;
+        }
         if($operation == 'pass')
         {
             $success = 0;

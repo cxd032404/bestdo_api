@@ -19,7 +19,7 @@ class ClubController extends BaseController
          }
          $user_id = $return['data']['user_info']->user_id;
          $operation = $this->request->get('operation')??'';
-         $log_id = $this->request->get('log_id')??0;
+         $log_id = $this->request->get('log_id')??[];
          $club_id = $this->request->get('club_id')??0;
          if($operation == 'join')
          {
