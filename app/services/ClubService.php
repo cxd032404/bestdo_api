@@ -427,6 +427,7 @@ class ClubService extends BaseService
             $current_time = time();
             $type = 0;
             $sub_type = ($operate_user_id==$user_id)?1:0;
+            $operate_user_info = (new UserService())->getUserInfo($operate_user_id,"user_id,true_name,company_id");
             $operate_user_id = $operate_user_id;
             $process_user_id = $operate_user_id ;
             $create_time = date("Y-m-d H:i:s",$current_time);
@@ -445,6 +446,10 @@ class ClubService extends BaseService
             $insert->create_time = $create_time;
             $insert->update_time = $update_time;
             $insert->process_time = $process_time;
+            $detail = [
+                "comment"=>($sub_type==1)?"主动离开":"被管理员".$operate_user_info->true_name."移出俱乐部",
+                "operate_comment"=>$reason];
+            $insert->detail = json_encode($detail);
             $insert_result = $insert->create();
             if($insert_result)
             {
@@ -457,10 +462,6 @@ class ClubService extends BaseService
             {
                 $return = ['result'=> 1,'msg'=>'退出失败'];
             }
-        }
-        else
-        {
-            $return = ['result'=> 1,'msg'=>'退出成功'];
         }
         return $return;
     }
