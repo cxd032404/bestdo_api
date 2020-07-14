@@ -867,6 +867,7 @@ class PageElementService extends BaseService
                             continue;
                         }
                     }
+                    //文体汇俱乐部id为0
                     if($activity_info->club_id == 0)
                     {
                         $clubInfo = [];
@@ -989,7 +990,7 @@ class PageElementService extends BaseService
             if(time()<$checkin_doing_time)
             { //活动开始前一小时的活动剔除
                 continue;
-            }elseif(time()>=strtotime($activity_info->end_time) && $value->status == 0)
+            }elseif(time()>=strtotime($activity_info->end_time) && $activity_info->status == 0)
             {//已结束的活动且未签到
                 $activity_status = 2;
                 $activity_status_name = '已过期';
@@ -997,11 +998,11 @@ class PageElementService extends BaseService
             }elseif($value->checkin_status == 1)
             {
                 $activity_status = 1; //已签到
-                $activity_status_name = '已签到';
+                $activity_status_name = '签到成功';
                 $activity_color = '#444054';
                 //已签到过获取签到时间
                 $detail = json_decode($value->detail);
-                $activity_checkin_time = date('Y-m-d H:i:s',$detail->checkin_time);
+                $activity_checkin_time = date('H:i',strtotime($detail->checkin_time??'00:00'));
             }elseif($value->checkin_status == 0)
             {
                 $activity_status = 0; //去签到
