@@ -389,10 +389,28 @@ class ClubService extends BaseService
     /*
    * 用户退出俱乐部
    */
-    public function leaveClub($user_id,$club_id){
-        //检测是否是某个俱乐部会员
-        $member_ship = $this->getUserClubMembership($user_id,$club_id,0);
-        if(isset($member_ship->member_id)&&$member_ship->status == 1)
+    public function leaveClub($operate_user_id = 0,$user_id = 0,$club_id = 0,$reason = "")
+    {
+        if(!$club_id)
+        {
+            $return = ['result'=> 0,'msg'=>'club_id未传'];
+            return $return;
+        }
+        //判断操作人是否有俱乐部权限
+        $permission = $this->getUserClubPermission($operate_user_id,$club_id,0);
+        if($permission == 0)
+        {
+            $return = ['result'=> 0,'msg'=>'您没有操作该俱乐部的权限'];
+            return $return;
+        }
+        //判断是否已是俱乐部成员
+        $member_ship = $this->checkUserIsClubMember($user_id,$club_id);
+        if($member_ship==0)
+        {
+            $return = ['result'=> 1,'msg'=>'退出成功'];
+            return $return;
+        }
+        else
         {
             $conditions = 'user_id ='.$user_id.' and club_id ='.$club_id.' and status = 1';
             $params = [
@@ -408,9 +426,9 @@ class ClubService extends BaseService
             }
             $current_time = time();
             $type = 0;
-            $sub_type = 1;
-            $operate_user_id = $user_id;
-            $process_user_id = $user_id ;
+            $sub_type = ($operate_user_id==$user_id)?1:0;
+            $operate_user_id = $operate_user_id;
+            $process_user_id = $operate_user_id ;
             $create_time = date("Y-m-d H:i:s",$current_time);
             $update_time = date("Y-m-d H:i:s",$current_time);
             $process_time = date("Y-m-d H:i:s",$current_time);
@@ -434,11 +452,13 @@ class ClubService extends BaseService
                 $this->getUserClubList($user_id,'member_id',1,0);
                 $this->getUserClubListWithPermission($user_id);
                 $return = ['result'=> 1,'msg'=>'退出成功'];
-            }else
+            }
+            else
             {
                 $return = ['result'=> 1,'msg'=>'退出失败'];
             }
-        }else
+        }
+        else
         {
             $return = ['result'=> 1,'msg'=>'退出成功'];
         }
