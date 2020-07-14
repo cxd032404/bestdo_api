@@ -39,7 +39,7 @@ class wechatCallbackapiTest
 			{//订阅
 				$temp = "<xml><ToUserName><![CDATA[%s]]></ToUserName><FromUserName><![CDATA[%s]]></FromUserName><CreateTime>%s</CreateTime><MsgType><![CDATA[%s]]></MsgType><Content><![CDATA[%s]]></Content></xml>";
 				$temp = sprintf($temp,$foUser,$toUser,$createTime,$msgType,$content);
-				return $temp;
+				echo $temp;
 			}
 		}
     }
