@@ -34,7 +34,7 @@ class wechatCallbackapiTest
 			$foUser = $arr->FromUserName;
 			$msgType = 'text';
 			$createTime = time();
-			$content = "感谢关注'文体之窗'。我们将竭诚为您服务，为您的企业丰富线上生活，提供员工舞台，管理健康大数据。";
+			$content = "感谢关注'文体之窗'。\n我们将竭诚为您服务，为您的企业丰富线上生活，提供员工舞台，管理健康大数据。";
 			if(strtolower($arr->Event)=="subscribe")
 			{//订阅
 				$temp = "<xml><ToUserName><![CDATA[%s]]></ToUserName><FromUserName><![CDATA[%s]]></FromUserName><CreateTime>%s</CreateTime><MsgType><![CDATA[%s]]></MsgType><Content><![CDATA[%s]]></Content></xml>";
