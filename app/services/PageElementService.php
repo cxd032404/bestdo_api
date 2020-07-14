@@ -990,7 +990,7 @@ class PageElementService extends BaseService
             if(time()<$checkin_doing_time)
             { //活动开始前一小时的活动剔除
                 continue;
-            }elseif(time()>=strtotime($activity_info->end_time) && $activity_info->status == 0)
+            }elseif(time()>=strtotime($activity_info->end_time) && $value->checkin_status == 0)
             {//已结束的活动且未签到
                 $activity_status = 2;
                 $activity_status_name = '已过期';
