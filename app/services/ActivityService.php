@@ -102,6 +102,9 @@ class ActivityService extends BaseService
         elseif(strtotime($activityParams['start_time']) >= strtotime($activityParams['end_time']))
         {
             $return = ['result'=>0,"msg"=>$this->msgList['activity_start_time'],'code'=>400];
+        }elseif((strtotime($activityParams['end_time'])-strtotime($activityParams['start_time']))<30*60)
+        {
+            $return  = ['result'=>0,"msg"=>"活动时间过短",'code'=>400];
         }
         //活动报名时间不得早于当前时间
         elseif(strtotime($activityParams['apply_start_time'])<$currentTime){
@@ -226,6 +229,9 @@ class ActivityService extends BaseService
         elseif(strtotime($activityParams['start_time']) >= strtotime($activityParams['end_time']))
         {
             $return = ['result'=>0,"msg"=>$this->msgList['activity_start_time'],'code'=>400];
+        }elseif((strtotime($activityParams['end_time'])-strtotime($activityParams['start_time']))<30*60)
+        {
+            $return  = ['result'=>0,"msg"=>"活动时间过短",'code'=>400];
         }
         //活动报名时间不得早于当前时间
         elseif(strtotime($activityParams['apply_start_time'])<$currentTime){
@@ -533,8 +539,9 @@ class ActivityService extends BaseService
                 unset($activity_list[$key]);
             }
         }
+        $create_time = array_column($activity_list,'create_time');
         $activity_status = array_column($activity_list,'activity_status');
-        array_multisort($activity_status,SORT_ASC,$activity_list);
+        array_multisort($activity_status,SORT_ASC,$create_time,SORT_DESC,$activity_list);
         return $activity_list;
     }
 

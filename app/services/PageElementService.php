@@ -681,7 +681,7 @@ class PageElementService extends BaseService
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],-1);
         }
         $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,
-            'activity_id,activity_name,start_time,apply_start_time,apply_end_time,end_time,club_id,status,detail',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3),$this->getFromParams($params,'activity_status',-1));
+            'activity_id,activity_name,start_time,apply_start_time,apply_end_time,end_time,club_id,status,detail,create_time',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3),$this->getFromParams($params,'activity_status',-1));
         $managed_club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
         $managed_activity_list = $return['activity_list'];
         foreach ($managed_activity_list as $key=>$value)
@@ -689,7 +689,15 @@ class PageElementService extends BaseService
             $detail = json_decode($value['detail']);
             $managed_activity_list[$key]['address'] = $detail->checkin?$detail->checkin->address:'';
             $managed_activity_list[$key]['applied'] = (new ActivityService())->getActivityMemberCount($value['activity_id']);
-            $managed_activity_list[$key]['chinese_start_time'] = date('m月d日 H:i',strtotime($value['start_time'])).'-'.date('H:i',strtotime($value['start_time']));
+            if(date('Y',strtotime($value['start_time'])) != date('Y',strtotime($value['end_time'])))
+            {
+                $managed_activity_list[$key]['chinese_start_time'] = date('Y年m月d日 H:i',strtotime($value['start_time'])).'-'.date('Y年m月d日 H:i',strtotime($value['end_time']));
+            }elseif(date('m-d',strtotime($value['start_time'])) != date('m-d',strtotime($value['end_time']))){
+                $managed_activity_list[$key]['chinese_start_time'] = date('m月d日 H:i',strtotime($value['start_time'])).'-'.date('m月d日 H:i',strtotime($value['end_time']));
+            }else
+            {
+                $managed_activity_list[$key]['chinese_start_time'] = date('m月d日 H:i',strtotime($value['start_time'])).'-'.date('H:i',strtotime($value['end_time']));
+            }
             if($value['club_id']>0)
             {
                 $club_info = (new ClubService())->getClubInfo($value['club_id'],'club_id,club_name,icon');
@@ -1048,7 +1056,7 @@ class PageElementService extends BaseService
         }
         $checkin_status = array_column($activity_list,'activity_status');
         $start_time = array_column($activity_list,'start_time');
-        array_multisort($checkin_status,SORT_ASC,$start_time,SORT_ASC,$activity_list);
+        array_multisort($checkin_status,SORT_ASC,$start_time,SORT_DESC,$activity_list);
 //        $page = $this->getFromParams($params,'page',1);
 //        $pageSize = $this->getFromParams($params,'pageSize',4);
 //        $offset = ($page-1)*$pageSize;
