@@ -104,7 +104,7 @@ class ActivityService extends BaseService
             $return = ['result'=>0,"msg"=>$this->msgList['activity_start_time'],'code'=>400];
         }elseif((strtotime($activityParams['end_time'])-strtotime($activityParams['start_time']))<30*60)
         {
-            $return  = ['result'=>0,"msg"=>"活动时间过短",'code'=>400];
+            $return  = ['result'=>0,"msg"=>"活动时长小于30分钟",'code'=>400];
         }
         //活动报名时间不得早于当前时间
         elseif(strtotime($activityParams['apply_start_time'])<$currentTime){
@@ -119,6 +119,9 @@ class ActivityService extends BaseService
         elseif(strtotime($activityParams['apply_start_time']) >= strtotime($activityParams['apply_end_time']))
         {
             $return = ['result'=>0,"msg"=>$this->msgList['activity_apply_time'],'code'=>400];
+        }elseif((strtotime($activityParams['apply_end_time'])-strtotime($activityParams['apply_start_time']))<30*60)
+        {
+            $return  = ['result'=>0,"msg"=>"报名时长小于30分钟",'code'=>400];
         }
         //活动名称长度校验
         elseif(strlen($activityParams['activity_name'])>=32)
@@ -246,6 +249,9 @@ class ActivityService extends BaseService
         elseif(strtotime($activityParams['apply_start_time']) >= strtotime($activityParams['apply_end_time']))
         {
             $return = ['result'=>0,"msg"=>$this->msgList['activity_apply_time'],'code'=>400];
+        }elseif((strtotime($activityParams['apply_end_time'])-strtotime($activityParams['apply_start_time']))<30*60)
+        {
+            $return  = ['result'=>0,"msg"=>"报名时长小于30分钟",'code'=>400];
         }
         //活动名称长度校验
         elseif(strlen($activityParams['activity_name'])>=32)
@@ -826,7 +832,7 @@ class ActivityService extends BaseService
                             {
                                 //添加签到时间和经纬度信息
                                 $insert_detail['position'] = $position;
-                                $insert_detail['checkin_time'] = time();
+                                $insert_detail['checkin_time'] = date('Y-m-d H:i:s',time());
                                 $data = ["checkin_status"=>1,"detail"=>json_encode($insert_detail)];
                                 $update = $this->updateActivityLog($activityLog->id,$data);
                                 if($update)
