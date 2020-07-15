@@ -1018,7 +1018,7 @@ class ActivityService extends BaseService
         $date_list = []; //日期下标数据
         $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_start_time"]);
         foreach ($activity_list as $key=>$activity_info) {
-            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,status,club_id,start_time,end_time,icon,comment");
+            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,status,club_id,start_time,end_time,apply_end_time,icon,comment");
             $activity_info = json_decode(json_encode($activity_info));
 
             if (isset($activity_info->activity_id) && ($activity_info->status == 1))
@@ -1040,6 +1040,7 @@ class ActivityService extends BaseService
                 $activity_data['time'] = date('h:i',strtotime($activity_info->start_time));
                 $activity_data['club_icon'] = '';
                 $activity_data['club_name'] = '';
+                $activity_data['apply_end_time'] = $activity_info->apply_end_time;
                 if($activity_info->club_id>0)
                 {
                     $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
@@ -1049,9 +1050,24 @@ class ActivityService extends BaseService
                 $date_list[$day] = $activity_data;
             }
         }
+       // print_r($date_list);die();
         //每月第一天的活动
         ksort($date_list);
-        $first_activity_info = current($date_list);
+        $count = 0;
+        foreach ($date_list as $key=>$value)
+        {
+          if($key>=$month && strtotime($value['apply_end_time'])>=time())
+          {
+              $count = $key;
+              break;
+          }
+        }
+        if($count != 0)
+        {
+            $first_activity_info = $date_list[$count];
+        }else {
+            $first_activity_info = current($date_list);
+        }
         return ['month_activities'=>$monthly_activities,'date_data'=>$date_list,'first_activity_info'=>$first_activity_info];
     }
     /*

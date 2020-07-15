@@ -587,7 +587,7 @@ class PageElementService extends BaseService
                 $member_log_list[$key]['club_name'] = $club_info->club_name;
                 $member_log_list[$key]['create_time'] = date('Y-m-d H:i', strtotime($value->create_time));
             }
-        $data['detail']['member_log_list'] = $member_log_list;
+        $data['detail']['member_log_list'] = array_values($member_log_list);
         return $data;
 
 
