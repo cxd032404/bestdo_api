@@ -289,15 +289,6 @@ class ActivityService extends BaseService
             }
             else
             {
-                //检查名称是否重复
-                $nameExists = $this->getActivityByName($activityParams['activity_name'],$activityParams['end_time'],$user_info->company_id);
-                //存在且不是自己
-                if(isset($nameExists->activity_id) && $nameExists->activity_id != $activityId)
-                {
-                    $return  = ['result'=>0,"msg"=>"活动名称已经存在了哦，请重新输入",'code'=>400];
-                }
-                else
-                {
                     $activityParams['weekly_rebuild'] = ($activityParams['weekly_rebuild']>=0 && $activityParams['weekly_rebuild']<=6)?$activityParams['weekly_rebuild']:-1;
                     //写入数据
                     $activity = (new Activity())::findFirst(['activity_id='.$activityId]);
@@ -332,7 +323,6 @@ class ActivityService extends BaseService
                         $activityInfo  = $this->getActivityInfo($activityId,'*',0);
                         $return  = ['result'=>1,"msg"=>$this->msgList["activity_update_success"],'data'=>$activityInfo,'code'=>200];
                     }
-                }
             }
         }
         return $return;
