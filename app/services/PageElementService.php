@@ -147,7 +147,8 @@ class PageElementService extends BaseService
     */
 
     public function getElementPage_companyInfo($data,$params,$user_info,$company_id){
-        $company_info = (new CompanyService())->getCompanyInfo($company_id)->toArray();
+        $company_info = (new CompanyService())->getCompanyInfo($company_id);
+        $company_info = json_decode(json_encode($company_info),true);
         if(isset($company_info['detail']))
         {
            $company_info['detail'] = json_decode($company_info['detail'],true);
@@ -868,9 +869,10 @@ class PageElementService extends BaseService
                     }
                 }
                 if (($activity_info->status == 1) && (strtotime($activity_info->apply_start_time) <= $currentTime) && (strtotime($activity_info->apply_end_time) >= $currentTime)) { //用户已报名的进行中的活动列表
-                    if ($already_applied) {
+                   // 去掉已参加的活动
+                    if (!$already_applied) {
                         $user_activity_log = (new ActivityService())->getActivityLogByUser($user_info['data']['user_id'], $activity_info->activity_id);
-                        if (!isset($user_activity_log->id)) {
+                        if (isset($user_activity_log->id)) {
                             unset($activity_list[$key]);
                             continue;
                         }

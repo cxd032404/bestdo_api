@@ -35,7 +35,7 @@ class CompanyService extends BaseService
         {
             $cache = $this->redis->get($cacheName);
             $cache = json_decode($cache);
-            if(isset($company->company_id))
+            if(isset($cache->company_id))
             {
                 $company = $cache;
             }
@@ -88,9 +88,9 @@ class CompanyService extends BaseService
                         unset($company['detail']['stepBanner'][$key]);
                     }
                 }
+                $sort = array_column($company['detail']['stepBanner'],"sort");
+                array_multisort($sort,SORT_ASC,$company['detail']['stepBanner']);
             }
-            $sort = array_column($company['detail']['stepBanner'],"sort");
-            array_multisort($sort,SORT_ASC,$company['detail']['stepBanner']);
             if(isset($company['detail']['clubBanner']))
             {
                 foreach ($company['detail']['clubBanner'] as $key => $value) {
@@ -109,11 +109,13 @@ class CompanyService extends BaseService
                         unset($company['detail']['clubBanner'][$key]);
                     }
                 }
+                $sort = array_column($company['detail']['clubBanner'],"sort");
+                array_multisort($sort,SORT_ASC,$company['detail']['clubBanner']);
             }
-            $sort = array_column($company['detail']['clubBanner'],"sort");
-            array_multisort($sort,SORT_ASC,$company['detail']['clubBanner']);
+
         }
         $company = json_decode(json_encode($company));
+        $company->detail = json_encode($company->detail);
         return $company;
     }
     //获取企业列表

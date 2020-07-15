@@ -238,7 +238,7 @@ class UserController extends BaseController
         $company_info  = $companyService->getCompanyInfo($company_id);
         if($company_info)
         {
-            $company_info = $company_info->toArray();
+            $company_info = json_decode(json_encode($company_info),true);
             if($privacy)
             {
                 $protocal = $companyService->getCompanyProtocal($company_id,"privacy");
