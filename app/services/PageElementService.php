@@ -415,6 +415,7 @@ class PageElementService extends BaseService
                $activity_list[$key]['activity_name'] = $activity_info->activity_name;
                $activity_list[$key]['club_id'] = $activity_info->club_id;
                $activity_list[$key]['icon'] = $club_info->icon;
+               $activity_list[$key]['create_time'] = $value['create_time']; //报名记录创建的时间最近的排最前
                $activity_list[$key]['start_time'] = date('Y-m-d H:i',strtotime($activity_info->start_time));
                $activity_list[$key]['end_time'] = date('Y-m-d H:i',strtotime($activity_info->end_time));
                $activity_list[$key]['apply_start_time'] = date('Y-m-d H:i',strtotime($activity_info->apply_start_time));
@@ -447,10 +448,10 @@ class PageElementService extends BaseService
                }
                $activity_list[$key]['status'] = $status;
            }
-           //对状态进行排序 已结束的排最后
-           $sort = array_column($activity_list,'status');
-           array_multisort($sort,SORT_ASC,$activity_list);
-
+           //对状态进行排序 已结束的排最后 最近报名的排前面
+           $create_time_sort = array_column($activity_list,'create_time');
+           $status_sort = array_column($activity_list,'status');
+           array_multisort($status_sort,SORT_ASC,$create_time_sort,SORT_DESC,$activity_list);
            $page = $this->getFromParams($params,'page',1);
            $pageSize = $this->getFromParams($params,'pageSize',4);
            $offset = ($page-1)*$pageSize;
