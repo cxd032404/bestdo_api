@@ -138,9 +138,11 @@ class UserService extends BaseService
             $available['result'] = 1;
             if(!empty($code))
             {
+                //通过code获取到微信的用户信息
                 $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
                 if(isset($WechatUserInfo['openid']))
                 {
+                    //检查手机号和微信Openid是否配对组合可用
                     $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile);
                     if($available['result']==0)
                     {
@@ -182,15 +184,42 @@ class UserService extends BaseService
                         }else{
                             if(!empty($miniProgramUserInfo))
                             {
-                                $this->wechat_code_logger->info("登录更新小程序信息");
-                                //完善用户小程序资料
-                                (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
+                                //如果尚未登录微信信息
+                                if($userinfo->wechatid=="")
+                                {
+                                    $this->wechat_code_logger->info("登录更新小程序信息");
+                                    //完善用户小程序资料
+                                    (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
+                                }
+                                else
+                                {
+                                    if($userinfo->test!=1)
+                                    {
+                                        $this->wechat_code_logger->info("登录更新小程序信息");
+                                        //完善用户小程序资料
+                                        (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
+                                    }
+                                }
+
                             }
                             if(!empty($code))
                             {
-                                $this->wechat_code_logger->info("登录更新微信信息");
-                                //完善用户微信资料
-                                (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
+                                //如果尚未登录微信信息
+                                if($userinfo->wechatid=="")
+                                {
+                                    $this->wechat_code_logger->info("登录更新微信信息");
+                                    //完善用户微信资料
+                                    (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
+                                }
+                                else
+                                {
+                                    if($userinfo->test!=1)
+                                    {
+                                        $this->wechat_code_logger->info("登录更新微信信息");
+                                        //完善用户微信资料
+                                        (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
+                                    }
+                                }
                             }
                             //生成token
                             $tokeninfo = $this->getToken($userinfo->user_id);
@@ -222,15 +251,42 @@ class UserService extends BaseService
                             }else{
                                 if(!empty($miniProgramUserInfo))
                                 {
-                                    $this->wechat_code_logger->info("入驻登录更新小程序信息");
-                                    //完善用户小程序资料
-                                    (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
+                                    //如果尚未登录微信信息
+                                    if($userinfo->wechatid=="")
+                                    {
+                                        $this->wechat_code_logger->info("入驻登录更新小程序信息");
+                                        //完善用户小程序资料
+                                        (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
+                                    }
+                                    else
+                                    {
+                                        if($userinfo->test!=1)
+                                        {
+                                            $this->wechat_code_logger->info("入驻登录更新小程序信息");
+                                            //完善用户小程序资料
+                                            (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
+                                        }
+                                    }
+
                                 }
                                 if(!empty($code))
                                 {
-                                    $this->wechat_code_logger->info("入驻登录更新微信信息");
-                                    //完善用户微信资料
-                                    (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
+                                    //如果尚未登录微信信息
+                                    if($userinfo->wechatid=="")
+                                    {
+                                        $this->wechat_code_logger->info("入驻登录更新微信信息");
+                                        //完善用户微信资料
+                                        (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
+                                    }
+                                    else
+                                    {
+                                        if($userinfo->test!=1)
+                                        {
+                                            $this->wechat_code_logger->info("入驻登录更新微信信息");
+                                            //完善用户微信资料
+                                            (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
+                                        }
+                                    }
                                 }
                                 //生成token
                                 $tokeninfo = $this->getToken($userinfo->user_id);
@@ -1235,11 +1291,23 @@ class UserService extends BaseService
             }
             else//不匹配，拒绝登录
             {
-                $return = ['result'=>0,"msg"=>$type."_used"];
+                //通过手机号获取用户
+                $currentMobileUser = $this->getUserInfoByMobile($mobile);
+                //如果是测试用户
+                if($currentMobileUser->test==1)
+                {
+                    //如果微信号不一致，但是手机对用用户是测试用户
+                    $return = ['result'=>1,"mobileUser"=>$currentMobileUser];
+                }
+                else
+                {
+                    $return = ['result'=>0,"msg"=>$type."_used"];
+                }
             }
         }
         else
         {
+            //通过手机号获取用户
             $currentMobileUser = $this->getUserInfoByMobile($mobile);
             {
                 //微信号为空
@@ -1249,7 +1317,17 @@ class UserService extends BaseService
                 }
                 else//不匹配，拒绝登录
                 {
-                    $return = ['result'=>0,"msg"=>$type."_mobile_used"];
+                    //如果是测试用户
+                    if($currentMobileUser->test==1)
+                    {
+                        //微信不对应用户，当前有用户
+                        $return = ['result'=>1,"mobileUser"=>$currentMobileUser];
+                    }
+                    else
+                    {
+                        $return = ['result'=>0,"msg"=>$type."_mobile_used"];
+
+                    }
                 }
             }
         }
