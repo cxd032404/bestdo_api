@@ -1379,7 +1379,7 @@ class PageElementService extends BaseService
         $data = $this->getElementPage_list($data,$params,$user_info,$company_id);
        // $available = $this->getElementPage_post($data,$params,$user_info,$company_id);
         $available = 1;
-        $data['data']['available'] = $available['detail']['available']['result'];
+        $data['data']['available'] = $available; //$available['detail']['available']['result'];
         return $data;
     }
     /*
