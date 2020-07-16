@@ -116,7 +116,7 @@ class UserService extends BaseService
         return $return;
     }
     //手机号验证码登录方法
-    public function mobileCodeLoginNew($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "")
+    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "")
     {
         $common = new Common();
         $oWechatService = (new WechatService());
