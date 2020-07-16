@@ -469,14 +469,14 @@ class StepsService extends BaseService
                 $lag = intval((strtotime($date)-strtotime($rangeStartDate))/( $value * 86400 ));
                 $return['data'][$key]['startDate'] = date("Y-m-d",strtotime($rangeStartDate) + $value * $lag * 86400);
                 $return['data'][$key]['endDate'] = min($rangeEndDate,date("Y-m-d",strtotime($rangeStartDate) + $value * ($lag+1) * 86400));
-                $return['data'][$key]['endDate'] = date("Y-m-d",strtotime($return['data'][$key]['endDate'])-86400);
+                $return['data'][$key]['endDate'] = min($date,date("Y-m-d",strtotime($return['data'][$key]['endDate'])-86400));
                 $return['data'][$key]['days'] = intval((strtotime($return['data'][$key]['endDate'])-strtotime($return['data'][$key]['startDate']))/86400)+1;
             }
         }
         else
         {
             $week = (new Common())->processDateRange("week",1);
-            $return = ["dateRange"=>[],'data'=>["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=>date("Y-m-t",strtotime($date))]]];
+            $return = ["dateRange"=>[],'data'=>["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=> min(date("Y-m-t",strtotime($date)),$date)]]];
         }
         foreach($return as $key => $value)
         {

@@ -1090,7 +1090,11 @@ class PageElementService extends BaseService
         $dateRangeType = $this->getFromParams($params,'date_range_type',"month");
         //日期端类型 1自然 2当前推
         $dateType = $this->getFromParams($params,'date_type',1);
-        $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
+        //$dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
+        $currentTime = time();
+        $currentDate = date("Y-m-d",$currentTime);
+        $dateRange = (new StepsService())->getStepsDateRange($user_info['data']['company_id'],$currentDate);
+        $dateRange = $dateRange['data'][$dateRangeType];
         $departmentId = $this->getFromParams($params,'department_id',"");
         if($departmentId>0)
         {
@@ -1251,8 +1255,6 @@ class PageElementService extends BaseService
         $dataArr = [];
         foreach($currentDateRange['data'] as $key => $dateRange)
         {
-            //print_R($dateRange);
-            //$dataArr[$key] = ['dateRange'=>$dateRange,'list'=>[]];
             $stepsData = (new StepsService())->getStepsDataByDate($user_info['data']['user_id'],$dateRange,$user_info['data']['company_id'],0,"department_id_1",$this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 100));
             $stepsList = $stepsData['list'];
             foreach($stepsList as $detail) {
