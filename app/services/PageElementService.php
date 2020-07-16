@@ -188,7 +188,7 @@ class PageElementService extends BaseService
         //获取列表信息
         $listInfo = $listService->getListInfo($list_id,"list_id,activity_id,detail");
         $listInfo->detail = json_decode($listInfo->detail,true);
-        $data['detail']['available'] = $listService->checkUserListPermission($user_info['data']['user_id'],$list_id);
+        $data['detail']['available'] = $listService->checkUserListPermission($user_info['data']['user_id'],$list_id)['result']??1;
         $afterActions = $listService->processAfterPostAction($listInfo->list_id,$user_info['data']['user_id']??0,$listInfo->detail);
         $data['detail']['after_action'] = $afterActions;
         return $data;
