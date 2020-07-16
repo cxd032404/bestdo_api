@@ -461,8 +461,9 @@ class StepsService extends BaseService
         {
             $rangeStartDate = $dateRange->start_date;
             $rangeEndDate = $dateRange->end_date;
-            $return = ["dateRange"=>["start_date"=>$dateRange->start_date,"end_date"=>$dateRange->end_date],"data"=>["day"=>["date"=>$date,"days"=>1],"week"=>[],"month"=>[]]];
-            $days = ["week"=>7,"month"=>30];
+            $week = (new Common())->processDateRange("week",1);
+            $return = ["dateRange"=>["start_date"=>$dateRange->start_date,"end_date"=>$dateRange->end_date],"data"=>["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>min($date,$week['endDate'])],"month"=>[]]];
+            $days = ["month"=>30];
             foreach($days as $key => $value)
             {
                 $d = $rangeStartDate;
@@ -478,12 +479,12 @@ class StepsService extends BaseService
             $week = (new Common())->processDateRange("week",1);
             $return = ["dateRange"=>[],'data'=>["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>$week['endDate']],"month"=>["startDate"=>date("Y-m-01",strtotime($date)),"endDate"=> min(date("Y-m-t",strtotime($date)),$date)]]];
         }
-        foreach($return as $key => $value)
+        foreach($return['data'] as $key => $value)
         {
             if(isset($value['startDate']))
             {
                 $days = intval((strtotime($value['endDate'])-strtotime($value['startDate']))/86400);
-                $return[$key]['days'] = $days+1;
+                $return['data'][$key]['days'] = $days+1;
             }
         }
         return $return;
