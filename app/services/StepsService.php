@@ -462,7 +462,7 @@ class StepsService extends BaseService
             $rangeStartDate = $dateRange->start_date;
             $rangeEndDate = $dateRange->end_date;
             $week = (new Common())->processDateRange("week",1);
-            $return = ["dateRange"=>["start_date"=>$dateRange->start_date,"end_date"=>$dateRange->end_date],"data"=>["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>$week['startDate'],"endDate"=>min($date,$week['endDate'])],"month"=>[]]];
+            $return = ["dateRange"=>["start_date"=>$dateRange->start_date,"end_date"=>$dateRange->end_date],"data"=>["day"=>["date"=>$date,"days"=>1],"week"=>["startDate"=>max($week['startDate'],$rangeStartDate),"endDate"=>min($date,$week['endDate'])],"month"=>[]]];
             $days = ["month"=>30];
             foreach($days as $key => $value)
             {
