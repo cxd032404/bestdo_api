@@ -28,30 +28,30 @@ $config = [
     ],
     'hj_config' => [ // 配置库
         'adapter'  => 'Mysql',
-        'host'     => 'rm-uf68e0u64uqojk4p1.mysql.rds.aliyuncs.com',
-        'username' => 'hj_cxd',
-        'password' => '&P5m!GWdZ6K@P2lN',
+        'host'     => 'rm-uf63p2xg445p1910t.mysql.rds.aliyuncs.com',
+        'username' => 'wtzc_mysql_root',
+        'password' => 'wtzc_mysql_root001',
         'dbname'   => 'hj_config'
     ],
     'hj_user' => [ // 配置库
         'adapter'  => 'Mysql',
-        'host'     => 'rm-uf68e0u64uqojk4p1.mysql.rds.aliyuncs.com',
-        'username' => 'hj_cxd',
-        'password' => '&P5m!GWdZ6K@P2lN',
+        'host'     => 'rm-uf63p2xg445p1910t.mysql.rds.aliyuncs.com',
+        'username' => 'wtzc_mysql_root',
+        'password' => 'wtzc_mysql_root001',
         'dbname'   => 'hj_user'
     ],
     'database' => [ // 测试库1
         'adapter'  => 'Mysql',
-        'host'     => 'rm-uf68e0u64uqojk4p1.mysql.rds.aliyuncs.com',
-        'username' => 'hj_cxd',
-        'password' => '&P5m!GWdZ6K@P2lN',
+        'host'     => 'rm-uf63p2xg445p1910t.mysql.rds.aliyuncs.com',
+        'username' => 'wtzc_mysql_root',
+        'password' => 'wtzc_mysql_root001',
         'dbname'   => 'swoole_test'
     ],
     'database_1' => [ // 测试库2
         'adapter'  => 'Mysql',
-        'host'     => 'rm-uf68e0u64uqojk4p1.mysql.rds.aliyuncs.com',
-        'username' => 'hj_cxd',
-        'password' => '&P5m!GWdZ6K@P2lN',
+        'host'     => 'rm-uf63p2xg445p1910t.mysql.rds.aliyuncs.com',
+        'username' => 'wtzc_mysql_root',
+        'password' => 'wtzc_mysql_root001',
         'dbname'   => 'swoole_test2'
     ],
     'redis' => [
