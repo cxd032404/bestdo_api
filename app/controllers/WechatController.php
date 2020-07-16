@@ -124,7 +124,7 @@ class WechatController extends BaseController
      */
     public function wechatAccountAction()
     {
-        $echoStr = $_GET["echostr"];
+        $echoStr = $_GET["echostr"]??'';
         //valid signature , option
         if($echoStr) {
             if ($this->checkSignature()) {
@@ -133,7 +133,8 @@ class WechatController extends BaseController
             }
         }else
         {
-            $this->responseMsg();
+                echo   $this->responseMsg();
+                exit;
         }
     }
     public function responseMsg()
@@ -141,7 +142,7 @@ class WechatController extends BaseController
         $postArr = file_get_contents('php://input', 'r');
         //获取到xml数据后，处理消息类型，并设置回复消息内容(回复就是直接打印xml数据)
         //数据格式
-        $arr = $postObj = simplexml_load_string($postArr, 'SimpleXMLElement', LIBXML_NOCDATA);
+        $arr =  simplexml_load_string($postArr, 'SimpleXMLElement', LIBXML_NOCDATA);
         if(strtolower($arr->MsgType)=="event")
         {
             $toUser = $arr->ToUserName;
@@ -153,7 +154,7 @@ class WechatController extends BaseController
             {//订阅
                 $temp = "<xml><ToUserName><![CDATA[%s]]></ToUserName><FromUserName><![CDATA[%s]]></FromUserName><CreateTime>%s</CreateTime><MsgType><![CDATA[%s]]></MsgType><Content><![CDATA[%s]]></Content></xml>";
                 $temp = sprintf($temp,$foUser,$toUser,$createTime,$msgType,$content);
-                echo $temp;
+                return $temp;
             }
         }
     }
