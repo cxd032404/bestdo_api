@@ -400,6 +400,7 @@ class PageElementService extends BaseService
      */
      public function getElementPage_attendActivityList($data,$params,$user_info,$company_id){
            $activity = (new ActivityService())->getActivityList($user_info['data']['user_id'])->toArray();
+           $activity_list = [];
            foreach ($activity as $key=>$value)
            {
                $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
