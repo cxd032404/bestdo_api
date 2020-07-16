@@ -149,6 +149,18 @@ class UserService extends BaseService
                         $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
                     }
                 }
+                else
+                {
+                    $mobileUser = $this->getUserInfoByMobile($mobile);
+                    if(!isset($mobileUser->user_id))
+                    {
+                        $available['mobileUser'] =  $mobileUser;
+                    }
+                    else
+                    {
+                        $available['mobileUser'] = [];
+                    }
+                }
             }
             elseif(!empty($miniProgramUserInfo))
             {
@@ -160,6 +172,18 @@ class UserService extends BaseService
                     if($available['result']==0)
                     {
                         $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                    }
+                }
+                else
+                {
+                    $mobileUser = $this->getUserInfoByMobile($mobile);
+                    if(!isset($mobileUser->user_id))
+                    {
+                        $available['mobileUser'] =  $mobileUser;
+                    }
+                    else
+                    {
+                        $available['mobileUser'] = [];
                     }
                 }
             }
