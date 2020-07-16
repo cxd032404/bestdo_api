@@ -135,6 +135,7 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['sendcode_error'];
         }
         else{
+            $available['result'] = 1;
             if(!empty($code))
             {
                 $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
