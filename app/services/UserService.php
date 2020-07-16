@@ -184,7 +184,7 @@ class UserService extends BaseService
                             if(!empty($miniProgramUserInfo))
                             {
                                 //如果尚未登录微信信息
-                                if($userinfo->wechatid=="")
+                                if($userinfo->mini_program_id=="")
                                 {
                                     $this->wechat_code_logger->info("登录更新小程序信息");
                                     //完善用户小程序资料
@@ -251,7 +251,7 @@ class UserService extends BaseService
                                 if(!empty($miniProgramUserInfo))
                                 {
                                     //如果尚未登录微信信息
-                                    if($userinfo->wechatid=="")
+                                    if($userinfo->mini_program_id=="")
                                     {
                                         $this->wechat_code_logger->info("入驻登录更新小程序信息");
                                         //完善用户小程序资料
@@ -1309,24 +1309,16 @@ class UserService extends BaseService
             //通过手机号获取用户
             $currentMobileUser = $this->getUserInfoByMobile($mobile);
             {
-                //微信号为空
-                if($currentMobileUser->wehchatid == "")
+                //手机号匹配不上用户
+                if(!isset($currentMobileUser->user_id))
                 {
-                    $return = ['result'=>1,"mobileUser"=>$currentMobileUser];
+                    //同时匹配不上，返回空用户
+                    $return = ['result'=>1,"mobileUser"=>[]];
                 }
-                else//不匹配，拒绝登录
+                else
                 {
-                    //如果是测试用户
-                    if($currentMobileUser->test==1)
-                    {
-                        //微信不对应用户，当前有用户
-                        $return = ['result'=>1,"mobileUser"=>$currentMobileUser];
-                    }
-                    else
-                    {
-                        $return = ['result'=>0,"msg"=>$type."_mobile_used"];
-
-                    }
+                    //返回当前手机用户
+                    $return = ['result'=>1,"mobileUser"=>$currentMobileUser];
                 }
             }
         }
