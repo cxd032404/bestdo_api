@@ -776,8 +776,8 @@ class PageElementService extends BaseService
         $data['detail']['activity_info']->weekly_rebuild = $detail->weekly_rebuild;
         $data['detail']['activity_info']->format_apply_start_time = date('m/d H:i',strtotime($activity_info->apply_start_time)).'-'.date('m/d H:i',strtotime($activity_info->apply_end_time));
         $data['detail']['activity_info']->format_start_time = date('Y/m/d H:i',strtotime($activity_info->start_time)).'-'.date('H:i',strtotime($activity_info->end_time));
-        $data['detail']['member_limit'] = [100,10,3];
-        $data['detail']['monthly_apply_limit'] = [1,2,3];
+        $data['detail']['member_limit'] = [100,10,3,'不限'];
+        $data['detail']['monthly_apply_limit'] = [1,2,3,'不限'];
         return $data;
     }
 
