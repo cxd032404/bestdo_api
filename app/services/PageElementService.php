@@ -1401,7 +1401,7 @@ class PageElementService extends BaseService
         $companyInfo->detail = json_decode($companyInfo->detail,true);
         $banner_type = $data['detail']['banner_type'];
         $banner_list = ($companyInfo->detail[$banner_type])??[];
-        $data['data']['detail'] = $banner_list;
+        $data['detail'] = $banner_list;
         return $data;
     }
 }
