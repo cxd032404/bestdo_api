@@ -191,6 +191,18 @@ class UserService extends BaseService
                     }
                 }
             }
+            else
+            {
+                $mobileUser = $this->getUserInfoByMobile($mobile);
+                if(isset($mobileUser->user_id))
+                {
+                    $available['mobileUser'] =  $mobileUser;
+                }
+                else
+                {
+                    $available['mobileUser'] = [];
+                }
+            }
             if($available['result']==0)
             {
                 return $return;
