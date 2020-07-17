@@ -306,7 +306,7 @@ class StepsService extends BaseService
             }
             else
             {
-                $whereCondition .= " and date > '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
+                $whereCondition .= " and date >= '".$dateRange['startDate']."' and date <= '".$dateRange['endDate']."'";
             }
 
             if(trim($group)!= "")

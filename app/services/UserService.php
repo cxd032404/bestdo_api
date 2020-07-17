@@ -121,7 +121,11 @@ class UserService extends BaseService
         $common = new Common();
         $oWechatService = (new WechatService());
         $login_code = $this->redis->get('login_'.$mobile);
-        if(in_array($mobile,(array)$this->config->testMoblie)){
+        //后台配置的测试号码
+        $test_phone_number =  (new ConfigService())->getConfig("phoneNumber")->content??'';
+        //配置文件中的测试号
+        $testMoblie = $this->config->testMoblie;
+        if(strstr($test_phone_number,$mobile) || in_array($mobile,(array)$testMoblie)){
             $login_code = json_encode(['code'=>123456]);
         }
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
