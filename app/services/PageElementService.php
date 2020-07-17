@@ -1392,4 +1392,16 @@ class PageElementService extends BaseService
         $data['detail']['wechat_acount_name'] = $wechat_acount_name;
         return $data;
     }
+    /*
+     * banner
+     */
+    public function getElementPage_banner($data,$params,$user_info,$company_id)
+    {
+        $companyInfo = (new CompanyService())->getCompanyInfo($user_info['data']['company_id'],"company_id,detail");
+        $companyInfo->detail = json_decode($companyInfo->detail,true);
+        $banner_type = $data['detail']['banner_type'];
+        $banner_list = ($companyInfo->detail[$banner_type])??[];
+        $data['data']['detail'] = $banner_list;
+        return $data;
+    }
 }
