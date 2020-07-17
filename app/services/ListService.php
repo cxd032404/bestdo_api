@@ -141,7 +141,7 @@ class ListService extends BaseService
                 }
                 else
                 {
-                    $postExists = (new PostsService())->getPostsList($list_id,[$user_id??0],"post_id","post_id DESC",0,1,1);
+                    $postExists = (new PostsService())->getPostsList($list_id,[$user_id??0],"post_id","post_id DESC",0,1,1,0);
                     //已经提交过
                     if(count($postExists['data'])>0)
                     {

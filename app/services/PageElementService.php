@@ -188,7 +188,7 @@ class PageElementService extends BaseService
         //获取列表信息
         $listInfo = $listService->getListInfo($list_id,"list_id,activity_id,detail");
         $listInfo->detail = json_decode($listInfo->detail,true);
-        $data['detail']['available'] = $listService->checkUserListPermission($user_info['data']['user_id'],$list_id);
+        $data['detail']['available'] = $listService->checkUserListPermission($user_info['data']['user_id'],$list_id)['result']??1;
         $afterActions = $listService->processAfterPostAction($listInfo->list_id,$user_info['data']['user_id']??0,$listInfo->detail);
         $data['detail']['after_action'] = $afterActions;
         return $data;
@@ -517,8 +517,8 @@ class PageElementService extends BaseService
         $userClubListWithPermission = json_decode(json_encode($userClubListWithPermission),true);
         $positionList = (new ActivityService())->getPositionListByCreater($user_info['data']['company_id'],$user_info['data']['user_id']);
         $data['detail']['user_club_list'] =array_values($userClubListWithPermission);
-        $data['detail']['member_limit'] = [100,10,3,'不限'];
-        $data['detail']['monthly_apply_limit'] = [1,2,3,'不限'];
+        $data['detail']['member_limit'] = ['100','10','3','不限'];
+        $data['detail']['monthly_apply_limit'] = ['1次','2次','3次','不限'];
         $data['detail']['recent_position_list'] = array_values($positionList);
 
         return $data;
@@ -776,8 +776,8 @@ class PageElementService extends BaseService
         $data['detail']['activity_info']->weekly_rebuild = $detail->weekly_rebuild;
         $data['detail']['activity_info']->format_apply_start_time = date('m/d H:i',strtotime($activity_info->apply_start_time)).'-'.date('m/d H:i',strtotime($activity_info->apply_end_time));
         $data['detail']['activity_info']->format_start_time = date('Y/m/d H:i',strtotime($activity_info->start_time)).'-'.date('H:i',strtotime($activity_info->end_time));
-        $data['detail']['member_limit'] = [100,10,3,'不限'];
-        $data['detail']['monthly_apply_limit'] = [1,2,3,'不限'];
+        $data['detail']['member_limit'] = ['100','10','3','不限'];
+        $data['detail']['monthly_apply_limit'] = ['1次','2次','3次','不限'];
         return $data;
     }
 
@@ -1379,7 +1379,7 @@ class PageElementService extends BaseService
         $data = $this->getElementPage_list($data,$params,$user_info,$company_id);
        // $available = $this->getElementPage_post($data,$params,$user_info,$company_id);
         $available = 1;
-        $data['data']['available'] = $available['detail']['available']['result'];
+        $data['data']['available'] = $available; //$available['detail']['available']['result'];
         return $data;
     }
     /*
