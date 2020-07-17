@@ -70,49 +70,34 @@ class CompanyService extends BaseService
         if(isset($company['detail']))
         {
             $company['detail'] = json_decode($company['detail'],true);
-            if(isset($company['detail']['stepBanner']))
+            $bannerTypeList = ["stepBanner","clubBanner","indexBanner","wtBanner"];
+            foreach($bannerTypeList as $banner_type)
             {
-                foreach ($company['detail']['stepBanner'] as $key => $value) {
-                    if (!is_array($value))
-                    {
-                        $source = \HJ\Source::findFirst(['source_id ='. $value])->toArray();
-                        if (isset($source['source_id'])) {
-                            $company['detail']['stepBanner'][$key] = $source;
-                        } else {
-                            $source = $value;
+                if(isset($company['detail'][$banner_type]))
+                {
+                    foreach ($company['detail'][$banner_type] as $key => $value) {
+                        if (!is_array($value))
+                        {
+                            $source = \HJ\Source::findFirst(['source_id ='. $value])->toArray();
+                            if (isset($source['source_id'])) {
+                                $company['detail'][$banner_type][$key] = $source;
+                            } else {
+                                $source = $value;
+                            }
+                        }
+                        $company['detail'][$banner_type][$key]['sort'] = $company['detail'][$banner_type][$key]['sort']??80;
+                        if (isset($source['start_time']) && (time() < strtotime($source['start_time']) || time() > strtotime($source['end_time']))) {
+                            unset($company['detail'][$banner_type][$key]);
                         }
                     }
-                    $company['detail']['stepBanner'][$key]['sort'] = $company['detail']['stepBanner'][$key]['sort']??80;
-
-                    if (isset($source['start_time']) && (time() < strtotime($source['start_time']) || time() > strtotime($source['end_time']))) {
-                        unset($company['detail']['stepBanner'][$key]);
-                    }
+                    $sort = array_column($company['detail'][$banner_type],"sort");
+                    array_multisort($sort,SORT_ASC,$company['detail'][$banner_type]);
                 }
-                $sort = array_column($company['detail']['stepBanner'],"sort");
-                array_multisort($sort,SORT_ASC,$company['detail']['stepBanner']);
-            }
-            if(isset($company['detail']['clubBanner']))
-            {
-                foreach ($company['detail']['clubBanner'] as $key => $value) {
-                    if (!is_array($value))
-                    {
-                        $source = \HJ\Source::findFirst(['source_id ='. $value])->toArray();
-                        if (isset($source['source_id'])) {
-                            $company['detail']['clubBanner'][$key] = $source;
-                        } else {
-                            $source = $value;
-                        }
-                    }
-                    $company['detail']['clubBanner'][$key]['sort'] = $company['detail']['clubBanner'][$key]['sort']??80;
-
-                    if (isset($source['start_time']) && (time() < strtotime($source['start_time']) || time() > strtotime($source['end_time']))) {
-                        unset($company['detail']['clubBanner'][$key]);
-                    }
+                else
+                {
+                    $company['detail'][$banner_type] = [];
                 }
-                $sort = array_column($company['detail']['clubBanner'],"sort");
-                array_multisort($sort,SORT_ASC,$company['detail']['clubBanner']);
             }
-
         }
         $company = json_decode(json_encode($company));
         $company->detail = json_encode($company->detail);
