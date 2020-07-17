@@ -156,7 +156,7 @@ class UserService extends BaseService
                 else
                 {
                     $mobileUser = $this->getUserInfoByMobile($mobile);
-                    if(!isset($mobileUser->user_id))
+                    if(isset($mobileUser->user_id))
                     {
                         $available['mobileUser'] =  $mobileUser;
                     }
@@ -181,7 +181,7 @@ class UserService extends BaseService
                 else
                 {
                     $mobileUser = $this->getUserInfoByMobile($mobile);
-                    if(!isset($mobileUser->user_id))
+                    if(isset($mobileUser->user_id))
                     {
                         $available['mobileUser'] =  $mobileUser;
                     }
@@ -195,8 +195,14 @@ class UserService extends BaseService
             {
                 return $return;
             }
-             //查询用户数据
+
+            //查询用户数据
             $userinfo = $available['mobileUser'];
+            //如果匹配上用户，就不需要入驻信息了
+            if($userinfo->user_id)
+            {
+                $companyuser_id = 0;
+            }
             if(isset($userinfo->user_id))
             {
                 if($companyuser_id==0)
