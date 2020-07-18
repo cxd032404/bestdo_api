@@ -40,7 +40,6 @@ class StepsService extends BaseService
                 }
                 else
                 {
-                    if($update == 1)
                     {
                         $updateLog = $this->updateUserSteps($stepsInfo->log_id,$step['step'],$department);
                         if($updateLog)
