@@ -342,22 +342,30 @@ class WechatMessageService extends BaseService
      */
 
     public function textMessage($message){
-        return 'success';
-        $UserMessage = $message->Content;
+        $UserMessage = json_decode(json_encode($message->Content),true)[0];
         //根据用户发送信息回复消息
-        $condition = "message LIKE :UserMessage:";
-        $params = [
-             $condition,
-            'bind'=>['UserMessage'=>'%'.$UserMessage.'%']
-        ];
-        print_r($params);die();
-        $Message_info = (new \HJ\WechatMessage())->findFirst($condition);
-        print_r($Message_info);die();
+        $Message_info = (new \HJ\WechatMessage())->find()->toArray();
+        $content = '听不懂你说啥';
+        foreach ($Message_info as $key=>$apply_message)
+        {
+            if(strstr($apply_message['message'],$UserMessage))
+            {
+              $content = $apply_message['replay_message'];
+            }
+        }
         $toUser= $message->ToUserName??'';
         $fromUser = $message->FromUserName??'';
         $msgType = 'text';
         $createTime = time();
-
+         $temp = "<xml>
+  <ToUserName><![CDATA[%s]]></ToUserName>
+  <FromUserName><![CDATA[%s]]></FromUserName>
+  <CreateTime>%s</CreateTime>
+  <MsgType><![CDATA[%s]]></MsgType>
+  <Content><![CDATA[%s]]></Content>
+</xml>";
+        $temp = sprintf($temp,$fromUser,$toUser,$createTime,$msgType,$content);
+        return $temp;
     }
 
     /*
