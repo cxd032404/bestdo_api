@@ -302,5 +302,71 @@ class WechatMessageService extends BaseService
         return $accessTokenInfo['access_token'];
     }
 
+    /*
+     * 微信公众号消息回复
+     */
+    public function answer($message = []){
+         $event_function_name = strtolower($message->MsgType).'Message';
+         return $this->$event_function_name($message);
+    }
+    /*
+     * 公众号事件回复
+     */
+
+    public function eventMessage($message){
+        if(strtolower($message->Event)=='subscribe')
+        {
+            return $this->subscribeMessage($message);
+        }else
+        {
+            return 'success';
+        }
+    }
+    /*
+     * 关注事件回复
+     */
+    public function subscribeMessage($message)
+    {
+        $toUser= $message->ToUserName??'';
+        $fromUser = $message->FromUserName??'';
+        $msgType = 'text';
+        $createTime = time();
+        $content = "感谢关注\"文体之窗\"。\n我们将竭诚为您服务，为您的企业丰富线上生活，提供员工舞台，管理健康大数据。";
+            $temp = "<xml><ToUserName><![CDATA[%s]]></ToUserName><FromUserName><![CDATA[%s]]></FromUserName><CreateTime>%s</CreateTime><MsgType><![CDATA[%s]]></MsgType><Content><![CDATA[%s]]></Content></xml>";
+            $temp = sprintf($temp,$fromUser,$toUser,$createTime,$msgType,$content);
+            return $temp;
+    }
+
+    /*
+     * 回复文本消息
+     */
+
+    public function textMessage($message){
+        return 'success';
+        $UserMessage = $message->Content;
+        //根据用户发送信息回复消息
+        $condition = "message LIKE :UserMessage:";
+        $params = [
+             $condition,
+            'bind'=>['UserMessage'=>'%'.$UserMessage.'%']
+        ];
+        print_r($params);die();
+        $Message_info = (new \HJ\WechatMessage())->findFirst($condition);
+        print_r($Message_info);die();
+        $toUser= $message->ToUserName??'';
+        $fromUser = $message->FromUserName??'';
+        $msgType = 'text';
+        $createTime = time();
+
+    }
+
+    /*
+     * 图片消息
+     */
+    public function imageMessage(){
+        return 'success';
+
+}
+
 
 }
