@@ -404,7 +404,7 @@ class PageElementService extends BaseService
            foreach ($activity as $key=>$value)
            {
                $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
-               if(!isset($activity_info->status) || $activity_info->status == 0 )
+               if(!isset($activity_info->status) || $activity_info->status == 0 || $activity_info->club_id>0)
                {
                    continue;
                }
