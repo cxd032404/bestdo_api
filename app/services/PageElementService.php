@@ -1408,4 +1408,15 @@ class PageElementService extends BaseService
         $data['detail'] = $banner_list;
         return $data;
     }
+    /*
+     * 默认欢迎用户
+     */
+    public function getElementPage_welcomUser($data,$params,$user_info,$company_id)
+    {
+        $userImg = (new ConfigService())->getConfig("default_user_img");
+        $userImg->content = json_decode($userImg->content,true);
+        $userImg = $userImg->content['0']['img_url']??"";
+        $data['detail'] = ['user_img'=>$userImg,'true_name'=>"欢迎您",'nick_name'=>"欢迎您"];
+        return $data;
+    }
 }
