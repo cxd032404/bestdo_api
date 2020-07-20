@@ -1155,7 +1155,7 @@ class PageElementService extends BaseService
         $dateRangeType = $this->getFromParams($params,'date_range_type',"day");
         //日期端类型 1自然 2当前推
         $dateType = $this->getFromParams($params,'date_type',1);
-        $dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
+        //$dateRange = (new Common())->processDateRange($dateRangeType,$dateType);
         $userId = $this->getFromParams($params,'user_id',0);
         $userInfo = $userService->getUserInfo($userId,"user_id,company_id,department_id");
         if(isset($userInfo->user_id) && $userInfo->company_id == $user_info['data']['company_id'])
@@ -1169,6 +1169,10 @@ class PageElementService extends BaseService
             $userId = $user_info['data']['user_id'];
             $userInfo = $userService->getUserInfo($userId,"user_id,company_id,department_id");
         }
+        $currentTime = time();
+        $currentDate = date("Y-m-d",$currentTime);
+        $currentDateRange = (new StepsService())->getStepsDateRange($user_info['data']['company_id'],$currentDate);
+        $dateRange = $currentDateRange['data'][$dateRangeType];
         $stepsData = (new StepsService())->getUserStepsDataByDate($dateRange,$user_info['data']['company_id'],$userInfo->user_id);
         $t  = [];
         for($date = (!isset($dateRange['date'])?$dateRange['endDate']:$dateRange['date']);$date>=(!isset($dateRange['date'])?$dateRange['startDate']:$dateRange['date']);$date = date("Y-m-d",strtotime($date)-86400))
