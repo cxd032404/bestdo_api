@@ -342,6 +342,7 @@ class WechatMessageService extends BaseService
      */
 
     public function textMessageReplay($message){
+        return 'success';
         $UserMessage = json_decode(json_encode($message->Content),true)[0];
         //根据用户发送信息回复消息
         $Message_info = (new \HJ\WechatMessage())->find()->toArray();

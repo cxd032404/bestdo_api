@@ -252,6 +252,14 @@ class PageElementService extends BaseService
                 $connectedListInfo  =  $listService->getListInfo($listInfo->detail['connect'],"list_id,list_name");
                 $postsInfo->connect_list_name = (($listInfo->detail['connect_name']??"")=="")?$connectedListInfo['list_name']:$listInfo->detail['connect_name'];
             }
+            //查询用户是否已经点赞
+            $postskudos_info = (new PostsService())->checkKudos($user_info['data']['user_id']??0,"",$post_id);
+            if($postskudos_info)
+            {
+                $postsInfo->is_kudos = 1;
+            }else{
+                $postsInfo->is_kudos = 0;
+            }
             $postsInfo->list_name = $listInfo->list_name;
             $data['detail'] = json_decode(json_encode($postsInfo));
         }
@@ -570,17 +578,13 @@ class PageElementService extends BaseService
             $club_member_logs = (new ClubService())->getClubMemberLogInfo($club_id, 'log_id,club_id,create_time,user_id,result', $this->getFromParams($params, 'start', 0), $this->getFromParams($params, 'page', 1), $this->getFromParams($params, 'pageSize', 3), $this->getFromParams($params, 'result', 0));
             foreach ($club_member_logs as $key => $value) {
                 $user_info = (new UserService())->getUserInfo($value->user_id ?? 0, 'user_id,nick_name,true_name,user_img');
-                if(!$user_info)
-                {
-                    continue;
-                }
 
                 $user_count = (new ClubService())->getClubMemberCount($value->club_id);
-                $member_log_list[$key]['user_id'] = $user_info->user_id;
+                $member_log_list[$key]['user_id'] = $user_info->user_id??0;
                 $member_log_list[$key]['user_count'] = $user_count;
-                $member_log_list[$key]['nick_name'] = $user_info->nick_name;
-                $member_log_list[$key]['true_name'] = $user_info->true_name;
-                $member_log_list[$key]['user_img'] = $user_info->user_img;
+                $member_log_list[$key]['nick_name'] = $user_info->nick_name??'';
+                $member_log_list[$key]['true_name'] = $user_info->true_name??'';
+                $member_log_list[$key]['user_img'] = $user_info->user_img??'';
                 $member_log_list[$key]['log_id'] = $value->log_id;
                 $member_log_list[$key]['result'] = $value->result;
                 $member_log_list[$key]['club_id'] = $value->club_id;
@@ -590,8 +594,6 @@ class PageElementService extends BaseService
             }
         $data['detail']['member_log_list'] = array_values($member_log_list);
         return $data;
-
-
 
     }
 
