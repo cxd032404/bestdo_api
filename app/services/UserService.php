@@ -1031,6 +1031,14 @@ class UserService extends BaseService
             }
         }
         $userInfo = json_decode(json_encode($userInfo));
+        //有user_img自段且为null
+        if(isset($userInfo->user_img)&&$userInfo->user_img==='')
+        {
+            $userImg = (new ConfigService())->getConfig("default_user_img");
+            $userImg->content = json_decode($userImg->content,true);
+            $userImg = $userImg->content['0']['img_url']??"";
+            $userInfo->user_img = $userImg;
+        }
         return $userInfo;
     }
     public function getUserInfoByMobile($mobile = "")

@@ -306,17 +306,17 @@ class WechatMessageService extends BaseService
      * 微信公众号消息回复
      */
     public function answer($message = []){
-         $event_function_name = strtolower($message->MsgType).'Message';
+         $event_function_name =strtolower($message->MsgType).'MessageReplay';
          return $this->$event_function_name($message);
     }
     /*
      * 公众号事件回复
      */
 
-    public function eventMessage($message){
+    public function eventMessageReplay($message){
         if(strtolower($message->Event)=='subscribe')
         {
-            return $this->subscribeMessage($message);
+            return $this->subscribeMessageReplay($message);
         }else
         {
             return 'success';
@@ -325,7 +325,7 @@ class WechatMessageService extends BaseService
     /*
      * 关注事件回复
      */
-    public function subscribeMessage($message)
+    public function subscribeMessageReplay($message)
     {
         $toUser= $message->ToUserName??'';
         $fromUser = $message->FromUserName??'';
@@ -341,7 +341,7 @@ class WechatMessageService extends BaseService
      * 回复文本消息
      */
 
-    public function textMessage($message){
+    public function textMessageReplay($message){
         $UserMessage = json_decode(json_encode($message->Content),true)[0];
         //根据用户发送信息回复消息
         $Message_info = (new \HJ\WechatMessage())->find()->toArray();
@@ -357,13 +357,7 @@ class WechatMessageService extends BaseService
         $fromUser = $message->FromUserName??'';
         $msgType = 'text';
         $createTime = time();
-         $temp = "<xml>
-  <ToUserName><![CDATA[%s]]></ToUserName>
-  <FromUserName><![CDATA[%s]]></FromUserName>
-  <CreateTime>%s</CreateTime>
-  <MsgType><![CDATA[%s]]></MsgType>
-  <Content><![CDATA[%s]]></Content>
-</xml>";
+         $temp = "<xml><ToUserName><![CDATA[%s]]></ToUserName><FromUserName><![CDATA[%s]]></FromUserName><CreateTime>%s</CreateTime><MsgType><![CDATA[%s]]></MsgType><Content><![CDATA[%s]]></Content></xml>";
         $temp = sprintf($temp,$fromUser,$toUser,$createTime,$msgType,$content);
         return $temp;
     }
@@ -371,7 +365,7 @@ class WechatMessageService extends BaseService
     /*
      * 图片消息
      */
-    public function imageMessage(){
+    public function imageMessageReplay(){
         return 'success';
 
 }
