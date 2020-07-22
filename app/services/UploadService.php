@@ -155,7 +155,7 @@ class UploadService extends BaseService
                 $ext = $t[count($t)-1];
                 if(in_array($ext,$type_info['list']))
                 {
-                    $fileArr = ['path'=>$path,'name'=>$name,'type'=>$type,'suffix'=>($type=="video")?"?x-oss-process=video/snapshot,t_1000,f_jpg,w_540,m_fast":""];
+                    $fileArr = ['path'=>$path,'name'=>$name,'type'=>$type,'suffix'=>($type=="video")?"?x-oss-process=video/snapshot,t_500,f_jpg,w_540,m_fast":""];
                     $return[] = $fileArr;
                 }
             }
