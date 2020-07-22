@@ -456,7 +456,7 @@ class UserController extends BaseController
         }
         /*验证token结束*/
         $user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
-        $userInfo  = (new UserService())->getUserInfo($user_id,'user_id,user_img,nick_name,true_name,mobile ');
+        $userInfo  = (new UserService())->getUserInfo($user_id,'user_id,user_img,nick_name,true_name,mobile');
         if(!$userInfo->user_id)
         {
             return $this->failure([],'请求失败',400);
