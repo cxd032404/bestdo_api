@@ -52,24 +52,32 @@ class DepartmentService extends BaseService
     public function getDepartment($department_id)
     {
         $departmentInfo = $this->getDepartmentInfo($department_id);
-        if($departmentInfo->parent_id==0)
+        if(isset($departmentInfo->department_id))
         {
-            //第一级
-            $return = ['department_id_1'=>$department_id,"department_id_2"=>0,"department_id_3"=>0,"current_level"=>1];
-        }
-        else
-        {
-            $parentDepartmentInfo = $this->getDepartmentInfo($departmentInfo->parent_id);
-            if($parentDepartmentInfo->parent_id==0)
+            if($departmentInfo->parent_id==0)
             {
-                //第二级
-                $return = ["department_id_1"=>$departmentInfo->parent_id,'department_id_2'=>$department_id,"department_id_3"=>0,"current_level"=>2];
+                //第一级
+                $return = ['department_id_1'=>$department_id,"department_id_2"=>0,"department_id_3"=>0,"current_level"=>1];
             }
             else
             {
-                //第三级
-                $return = ["department_id_1"=>$parentDepartmentInfo->parent_id,'department_id_2'=>$departmentInfo->parent_id,"department_id_3"=>$department_id,"current_level"=>3];
+                $parentDepartmentInfo = $this->getDepartmentInfo($departmentInfo->parent_id);
+                if($parentDepartmentInfo->parent_id==0)
+                {
+                    //第二级
+                    $return = ["department_id_1"=>$departmentInfo->parent_id,'department_id_2'=>$department_id,"department_id_3"=>0,"current_level"=>2];
+                }
+                else
+                {
+                    //第三级
+                    $return = ["department_id_1"=>$parentDepartmentInfo->parent_id,'department_id_2'=>$departmentInfo->parent_id,"department_id_3"=>$department_id,"current_level"=>3];
+                }
             }
+        }
+        else
+        {
+            //第一级
+            $return = ['department_id_1'=>0,"department_id_2"=>0,"department_id_3"=>0,"current_level"=>1];
         }
         return $return;
     }
