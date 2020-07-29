@@ -36,7 +36,7 @@ class ActivityService extends BaseService
             $nextParam = [];
             $nextParam['start_time'] = date("Y-m-d H:i:s",strtotime($activityParams['start_time'])+$i*7*86400);
             $nextParam['end_time'] = date("Y-m-d H:i:s",strtotime($activityParams['end_time'])+$i*7*86400);
-            $nextParam['appay_start_time'] = date("Y-m-d H:i:s",strtotime($activityParams['apply_start_time'])+$i*7*86400);
+            $nextParam['apply_start_time'] = date("Y-m-d H:i:s",strtotime($activityParams['apply_start_time'])+$i*7*86400);
             $nextParam['apply_end_time'] = date("Y-m-d H:i:s",strtotime($activityParams['apply_end_time'])+$i*7*86400);
             $i++;
             $return[] = $nextParam;
@@ -155,6 +155,7 @@ class ActivityService extends BaseService
             }
             else
             {
+
                 /*
                 //检查名称是否重复
                 $nameExists = $this->getActivityByName($activityParams['activity_name'],$activityParams['end_time'],$user_info->company_id);
@@ -204,6 +205,10 @@ class ActivityService extends BaseService
                         {
                             foreach($nextList as $key => $value)
                             {
+                                if($key == 0)
+                                {
+                                    continue;
+                                }
                                 $copyActivity = array_merge($activityParams,$value);
                                 $copyActivity['connect_activity_id'] = $copied['activity_id']??$activity->activity_id;
                                 $copied = $this->createActivity($copyActivity,$user_info);
