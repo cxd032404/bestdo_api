@@ -205,13 +205,12 @@ class ActivityService extends BaseService
                         {
                             foreach($nextList as $key => $value)
                             {
-                                if($key == 0)
+                                if($key!=0)
                                 {
-                                    continue;
+                                    $copyActivity = array_merge($activityParams,$value);
+                                    $copyActivity['connect_activity_id'] = $copied['activity_id']??$activity->activity_id;
+                                    $copied = $this->createActivity($copyActivity,$user_info);
                                 }
-                                $copyActivity = array_merge($activityParams,$value);
-                                $copyActivity['connect_activity_id'] = $copied['activity_id']??$activity->activity_id;
-                                $copied = $this->createActivity($copyActivity,$user_info);
                             }
                         }
                         $return  = ['result'=>1,"msg"=>"活动创建成功！",'activity_id'=>$activity->activity_id,'data'=>$this->getActivityInfo($activity->activity_id,"*",0),'code'=>200];
