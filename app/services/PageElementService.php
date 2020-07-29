@@ -283,7 +283,7 @@ class PageElementService extends BaseService
         {
             $list_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
- //       $groups = ['user_id'];
+  //      $groups = ['user_id'];
         //查询列表内容
 //        $posts = \HJ\Posts::find([
 //            "list_id='".$list_id."' and visible=1",
@@ -291,15 +291,16 @@ class PageElementService extends BaseService
 //            "group"=>$groups
 //        ])->toArray();
 //        print_r($posts);die();
-
+        $page = $this->getFromParams($params,'page',1);
+        $pageSize = $this->getFromParams($params,'pageSize',150);
         //新表查询
         $posts = \HJ\ActivityListRank::find([
           'list_id ='.$list_id,
-            'columns'=>'log_id,user_id,post_count',
-            'order'=>'post_count desc'
+            'columns'=>'log_id,user_id,kudos_count+plus as count',
+            'order'=>'count desc',
+             "limit" => ["offset" => ($page - 1) * $pageSize, "number" => $pageSize]
             ]
         )->toArray();
-
         foreach($posts as $p_key=>$p_val){
             $userinfo = (new UserService())->getUserInfo($p_val['user_id'],"user_id,nick_name,true_name,user_img,company_id");
             $posts[$p_key]['nick_name'] = (isset($userinfo->user_id))?$userinfo->nick_name:"";
