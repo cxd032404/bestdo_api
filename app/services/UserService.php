@@ -115,6 +115,76 @@ class UserService extends BaseService
         }
         return $return;
     }
+    //根据手机号码，微信code，小程序登录信息获取潜在的登录用户
+    public function getUserToLogin($mobile = "",$code = "",$miniProgramUserInfo = "")
+    {
+        $oWechatService = new WechatService();
+        $available['result'] = 1;
+        if(!empty($code))
+        {
+            //通过code获取到微信的用户信息
+            $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
+            if(isset($WechatUserInfo['openid']))
+            {
+                //检查手机号和微信Openid是否配对组合可用
+                $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile);
+                if($available['result']==0)
+                {
+                    $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                }
+            }
+            else
+            {
+                $mobileUser = $this->getUserInfoByMobile($mobile);
+                if(isset($mobileUser->user_id))
+                {
+                    $available['mobileUser'] =  $mobileUser;
+                }
+                else
+                {
+                    $available['mobileUser'] = [];
+                }
+            }
+        }
+        elseif(!empty($miniProgramUserInfo))
+        {
+            $code = json_decode($miniProgramUserInfo,true)['code'];
+            $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+            if(isset($miniProgramUserInfo['openid']))
+            {
+                $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
+                if($available['result']==0)
+                {
+                    $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                }
+            }
+            else
+            {
+                $mobileUser = $this->getUserInfoByMobile($mobile);
+                if(isset($mobileUser->user_id))
+                {
+                    $available['mobileUser'] =  $mobileUser;
+                }
+                else
+                {
+                    $available['mobileUser'] = [];
+                }
+            }
+        }
+        else
+        {
+            $mobileUser = $this->getUserInfoByMobile($mobile);
+            if(isset($mobileUser->user_id))
+            {
+                $available['mobileUser'] =  $mobileUser;
+            }
+            else
+            {
+                $available['mobileUser'] = [];
+            }
+        }
+        return $available;
+    }
     //手机号验证码登录方法
     public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "")
     {
@@ -139,70 +209,7 @@ class UserService extends BaseService
             $return['msg']  = $this->msgList['sendcode_error'];
         }
         else{
-            $available['result'] = 1;
-            if(!empty($code))
-            {
-                //通过code获取到微信的用户信息
-                $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
-                if(isset($WechatUserInfo['openid']))
-                {
-                    //检查手机号和微信Openid是否配对组合可用
-                    $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile);
-                    if($available['result']==0)
-                    {
-                        $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
-                    }
-                }
-                else
-                {
-                    $mobileUser = $this->getUserInfoByMobile($mobile);
-                    if(isset($mobileUser->user_id))
-                    {
-                        $available['mobileUser'] =  $mobileUser;
-                    }
-                    else
-                    {
-                        $available['mobileUser'] = [];
-                    }
-                }
-            }
-            elseif(!empty($miniProgramUserInfo))
-            {
-                $code = json_decode($miniProgramUserInfo,true)['code'];
-                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
-                if(isset($miniProgramUserInfo['openid']))
-                {
-                    $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
-                    if($available['result']==0)
-                    {
-                        $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
-                    }
-                }
-                else
-                {
-                    $mobileUser = $this->getUserInfoByMobile($mobile);
-                    if(isset($mobileUser->user_id))
-                    {
-                        $available['mobileUser'] =  $mobileUser;
-                    }
-                    else
-                    {
-                        $available['mobileUser'] = [];
-                    }
-                }
-            }
-            else
-            {
-                $mobileUser = $this->getUserInfoByMobile($mobile);
-                if(isset($mobileUser->user_id))
-                {
-                    $available['mobileUser'] =  $mobileUser;
-                }
-                else
-                {
-                    $available['mobileUser'] = [];
-                }
-            }
+            $available = $this->getUserToLogin($mobile,$code,$miniProgramUserInfo);
             if($available['result']==0)
             {
                 return $return;
