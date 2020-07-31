@@ -179,4 +179,19 @@ class WechatController extends BaseController
         }
     }
 
+    /*
+     * 检测小程序文字内容
+     */
+    public function wechatMsgCheckAction(){
+        $checkContent =  $_GET["checkMsg"]??'';
+        $return = (new WechatService())->wechatMsgCheck($checkContent);
+        if($return['result'])
+        {
+            return $this->success();
+        }else
+        {
+            $this->success($return['msg']);
+        }
+    }
+
 }

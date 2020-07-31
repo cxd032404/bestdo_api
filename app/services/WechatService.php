@@ -216,9 +216,9 @@ class WechatService extends BaseService
     }
 
     //获取全局access_token
-    public function getAccessToken($appid="",$appsecret="")
+    public function getAccessToken($appid="",$appsecret="",$redisKey = 'access_token')
     {
-        $access_token_redis = $this->getRedis("access_token");
+        $access_token_redis = $this->getRedis($redisKey);
         if( $access_token_redis && $access_token_redis["expires_time"] && $access_token_redis["expires_time"]>time() ){
             $access_token = $access_token_redis;
         }
@@ -228,7 +228,7 @@ class WechatService extends BaseService
             if(!array_key_exists('errcode', $access_token)){
                 //用户token存入redis缓存中
                 $access_token['expires_time'] = time()+intval($access_token['expires_in']);
-                $this->setRedis('access_token',$access_token);
+                $this->setRedis($redisKey,$access_token);
             }
         }
         return $access_token['access_token'];
@@ -485,6 +485,27 @@ class WechatService extends BaseService
         $res = curl_exec($ch);
         print_r($res);die();
         return $res;
+    }
+    /*
+    * 检测小程序文字内容
+    */
+    public function wechatMsgCheck($checkContent){
+        $appid = $this->key_config->wechat_mini_program->appid;
+        $appsecret = $this->key_config->wechat_mini_program->appsecret;
+        $redisKey = 'miniprogram';
+        $accessToken = $this->getAccessToken($appid,$appsecret,$redisKey);
+        $url = 'https://api.weixin.qq.com/wxa/msg_sec_check?access_token='. $accessToken;
+        $data = json_encode(array('content'=>$checkContent),JSON_UNESCAPED_UNICODE);
+        $wechatReturn =(new WebCurl())->curl_post($url,$data);
+        if($wechatReturn['errcode'] != 0)
+        {
+            return ['result'=>false,'msg'=>'您提交的内容含有敏感词汇'];
+        }
+        else
+        {
+            return ['result'=>true];
+        }
+
     }
 
 }

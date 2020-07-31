@@ -119,6 +119,25 @@ class WebCurl extends Component {
 		# 返回状态码
 		return $return;
 	}
+    /*
+* post请求
+*/
+    public function curl_post($url,$data){
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_HEADER, FALSE);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_URL,$url); // url
+        curl_setopt($ch, CURLOPT_POST, TRUE);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data); // json数据
+        $res = curl_exec($ch); // 返回值
+        curl_close($ch);
+        $result = json_decode($res,true);
+        return $result;
+
+    }
 
 	/**
 	 * 获取 HTTP Status Code
