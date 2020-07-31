@@ -33,11 +33,19 @@ class ListController extends BaseController
         $manager_id = $tokenInfo['data']['user_info']->manager_id ?? 0;
         $detail = $this->request->getPost('detail') ?? [];
         $detail['comment'] = $this->request->getPost("comment") ?? "";
+
+        //检测上传的内容是否包含敏感词
+        $check_result  = (new WechatService())->wechatMsgCheck($detail['comment']);
+        if(!$check_result['result'])
+        {
+            return $this->failure([], $check_result['msg']);
+        }
+
         $detail['title'] = $this->request->getPost("title") ?? "";
         if ($post_id > 0) {
-            $post = (new PostsService())->updatePosts(intval($this->request->getPost('post_id')), $user_id, $manager_id, $detail, $visible);
+            $post = (new PostsService())->updatePosts($post_id, $user_id, $manager_id, $detail, $visible);
         } else {
-            $post = (new PostsService())->addPosts(intval($this->request->getPost('list_id')), $user_id, $detail, $visible);
+            $post = (new PostsService())->addPosts($list_id, $user_id, $detail, $visible);
         }
         if ($post['result']) {
             return $this->success($post['data'],$post['data']['msg']);
