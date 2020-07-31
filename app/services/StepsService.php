@@ -467,9 +467,8 @@ class StepsService extends BaseService
             {
                 $d = $rangeStartDate;
                 $lag = intval((strtotime($date)-strtotime($rangeStartDate))/( $value * 86400 ));
-                $return['data'][$key]['startDate'] = date("Y-m-d",strtotime($rangeStartDate) + $value * $lag * 86400);
+                $return['data'][$key]['startDate'] = max(date("Y-m-01"),$rangeStartDate);
                 $return['data'][$key]['endDate'] = min($rangeEndDate,date("Y-m-d",strtotime($rangeStartDate) + $value * ($lag+1) * 86400));
-                $return['data'][$key]['endDate'] = min($date,date("Y-m-d",strtotime($return['data'][$key]['endDate'])-86400));
                 $return['data'][$key]['days'] = intval((strtotime($return['data'][$key]['endDate'])-strtotime($return['data'][$key]['startDate']))/86400)+1;
             }
         }
