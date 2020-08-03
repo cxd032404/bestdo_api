@@ -1051,25 +1051,25 @@ class ActivityService extends BaseService
                     $activity_data['club_icon'] = $club_info->icon;
                     $activity_data['club_name'] = $club_info->club_name;
                 }
-                $date_list[$day] = $activity_data;
+                $date_list[$day][] = $activity_data;
             }
         }
        // print_r($date_list);die();
-        //每月第一天的活动
+        /*每月初始展示的活动*/
         ksort($date_list);
-        $count = 0;
-        foreach ($date_list as $key=>$value)
+        foreach ($date_list as $key=>$day_activity_list)
         {
-          if($key>=$month && strtotime($value['apply_end_time'])>=time())
-          {
-              $count = $key;
-              break;
-          }
+            if($key>=$month) {
+                foreach ($day_activity_list as $activity_info) {
+                    //取出第一个报名未结束的活动
+                    if (strtotime($activity_info['apply_end_time']) > time()) {
+                        $first_activity_info = $activity_info;
+                    }
+                }
+            }
         }
-        if($count != 0)
+        if(!isset($first_activity_info))
         {
-            $first_activity_info = $date_list[$count];
-        }else {
             $first_activity_info = current($date_list);
         }
         return ['month_activities'=>$monthly_activities,'date_data'=>$date_list,'first_activity_info'=>$first_activity_info];

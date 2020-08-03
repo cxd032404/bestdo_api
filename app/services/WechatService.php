@@ -490,6 +490,14 @@ class WechatService extends BaseService
     * 检测小程序文字内容
     */
     public function wechatMsgCheck($checkContent){
+        //md5缓存结果
+        $comment_redis_key = md5($checkContent);
+        $check_result = $this->redis->get($comment_redis_key);
+
+        if($check_result)
+        {
+            return json_decode($check_result,true);
+        }
         $appid = $this->key_config->wechat_mini_program->appid;
         $appsecret = $this->key_config->wechat_mini_program->appsecret;
         $redisKey = 'miniprogram';
@@ -499,13 +507,16 @@ class WechatService extends BaseService
         $wechatReturn =(new WebCurl())->curl_post($url,$data);
         if($wechatReturn['errcode'] != 0)
         {
-            return ['result'=>false,'msg'=>'您提交的内容含有敏感词汇'];
+            $return = ['result'=>false,'msg'=>'您提交的内容含有敏感词汇'];
         }
         else
         {
-            return ['result'=>true];
+            $return = ['result'=>true];
         }
-
+        //结果缓存20分钟
+        $this->redis->set($comment_redis_key,json_encode($return));
+        $this->redis->expire($comment_redis_key,1200);
+        return $return;
     }
 
 }
