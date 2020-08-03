@@ -491,7 +491,8 @@ class WechatService extends BaseService
     */
     public function wechatMsgCheck($checkContent){
         //md5缓存结果
-        $comment_redis_key = md5($checkContent);
+        $cache_settings = $this->config->cache_settings->wechat_comment_check;
+        $comment_redis_key = $cache_settings->name.md5($checkContent);
         $check_result = $this->redis->get($comment_redis_key);
 
         if($check_result)
@@ -515,7 +516,7 @@ class WechatService extends BaseService
         }
         //结果缓存20分钟
         $this->redis->set($comment_redis_key,json_encode($return));
-        $this->redis->expire($comment_redis_key,1200);
+        $this->redis->expire($cache_settings->expire,1200);
         return $return;
     }
 
