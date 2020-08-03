@@ -1015,7 +1015,7 @@ class ActivityService extends BaseService
     /*
      * 获取某公司活动列表
      */
-    public function getMonthlyActivityList($company_id,$month){
+    public function getMonthlyActivityList($company_id,$month,$number = 1){
         $year = date('Y',time());
         $date =$year.'-'.$month;
         $monthly_activities = [];
@@ -1064,6 +1064,18 @@ class ActivityService extends BaseService
                     //取出第一个报名未结束的活动
                     if (strtotime($activity_info['apply_end_time']) > time()) {
                         $first_activity_info = $activity_info;
+                        break;
+                    }
+                }
+            }
+        }
+        if($number == 1) {
+            foreach ($date_list as $key => $day_activity_list) {
+                foreach ($day_activity_list as $activity_info) {
+                    //取出第一个没结束的活动
+                    if (strtotime($activity_info['apply_end_time']) > time()) {
+                        $date_list[$key] = $activity_info;
+                        break;
                     }
                 }
             }
