@@ -15,7 +15,7 @@ use Phalcon\DI\FactoryDefault\CLI as CliDI,
     Phalcon\CLI\Console as ConsoleApp,
 	Phalcon\Config as PhConfig;
 
-error_reporting(E_ALL);
+error_reporting(9);
 date_default_timezone_set('Asia/Shanghai');
 
 define('VERSION', '1.0.0');
@@ -30,6 +30,13 @@ $data = require_once (ROOT_PATH . '/configs/inc_config.php');
 require_once ROOT_PATH . "/vendor/autoload.php";
 $config = new PhConfig($data);
 $di -> set('config', $config);
+
+//加载key配置文件////////////////////////////////////////////////////////////////////////////////////////////////////////
+$key_data = require_once (ROOT_PATH . '/configs/inc_key_config.php');
+$key_config = new PhConfig($key_data);
+$di -> set('key_config', $key_config);
+
+
 
 //注册类自动加载器////////////////////////////////////////////////////////////////////////////////////////////////////////
 $loader = new \Phalcon\Loader();
