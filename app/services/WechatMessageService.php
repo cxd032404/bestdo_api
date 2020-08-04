@@ -30,11 +30,13 @@ class WechatMessageService extends BaseService
     public function  sendMessage($info,$type)
     {
         $userListSend = $this->generateUserListSend($info,$type);
+
         if(!$userListSend['result'])
         {
             return $userListSend;
         }
         $contentSend = $this->generateContentSend($info,$type);
+
         if(!$contentSend['result'])
         {
             return $contentSend;
@@ -92,8 +94,8 @@ class WechatMessageService extends BaseService
         }
         foreach ($user_list as $key =>$value) {
             $user_list_info[$key]['user_id'] = $value;
-            $user_info = (new UserService())->getUserInfo($value, 'user_id,openid');
-            $user_list_info[$key]['openid'] = isset($user_info->openid)?$user_info->openid:'';
+            $user_info = (new UserService())->getUserInfo($value, 'user_id,wechatid');
+            $user_list_info[$key]['openid'] = isset($user_info->wechatid)?$user_info->wechatid:'';
         }
         return ['result'=>1,'msg'=>'','user_list_info'=>$user_list_info];
 
@@ -109,6 +111,7 @@ class WechatMessageService extends BaseService
         }
         $user_id = $info['user_id'];
         $user_info = (new UserService())->getUserInfo($user_id,'true_name,nick_name');
+
         if(!$user_info->true_name)
         {
             $user_name = $user_info->nick_name;
@@ -156,12 +159,13 @@ class WechatMessageService extends BaseService
                              $templete_id = $this->sendDataTemplete['application_note'] ;break;
             //告知用户审核通过结果
             case 'applicationPass':
-                            $first = '您的俱乐部加入申请已有结果';
-                            $second = $club_name;
-                            $third =  '审核通过';
-                            $four  =  date('Y-m-d h:i',time());
-                            $five = '快去参加活动吧';
-                            $templete_id = $this->sendDataTemplete['apply_result'];break;
+                            $url = 'http://www.staffhome.cn/club';//俱乐部申请通过跳转链接
+                            $first = '恭喜您！您提交的会员申请已通过审核！';
+                            $keyword1 = $club_name;
+                            $keyword2  =  date('Y年m月d日 h:i',time());
+                            $keyword3 = $user_name;
+                            $remark = '点击查看详情';
+                            $templete_id = $this->config->wechat_template['application_pass'];break;
             //告知用户审核失败
             case 'applicationReject':
                             $first = '您的俱乐部加入申请已有结果';
@@ -196,13 +200,15 @@ class WechatMessageService extends BaseService
 
             default:return ['result'=>0,'msg'=>'未知类型'];
         }
+
         $content = [
             'first'=>$first,
-            'second'=>$second,
-            'third'=>$third,
-            'four'=>$four,
-            'five'=>$five,
-            'templete_id'=>$templete_id
+            'keyword1'=>$keyword1,
+            'keyword2'=>$keyword2,
+            'keyword3'=>$keyword3,
+            'remark'=>$remark,
+            'templete_id'=>$templete_id,
+            'url' => $url
         ];
         return ['result'=>1,'msg'=>'','content'=>$content];
     }
@@ -217,60 +223,60 @@ class WechatMessageService extends BaseService
             $WechatMessage['touser'] = $value['openid'];
             $WechatMessage['template_id'] = $contentSend['templete_id'];
             $WechatMessage['appid'] = $this->key_config->wechat->appid;
+            $WechatMessage['url'] = $contentSend['url'];
             $WechatMessage['data'] = [
-                'data'=>[
                     "first"=>[
                         'value'=>$contentSend['first'],
-                        'color'=>'#173177'
                     ],
-                    "second"=>[
-                        'value'=>$contentSend['second'],
-                        'color'=>'#173177'
+                    "keyword1"=>[
+                        'value'=>$contentSend['keyword1'],
                     ],
-                    "third"=>[
-                        'value'=>$contentSend['third'],
-                        'color'=>'#173177'
+                    "keyword2"=>[
+                        'value'=>$contentSend['keyword2'],
                     ],
-                    "four"=>[
-                        'value'=>$contentSend['four'],
-                        'color'=>'#173177'
+                    "keyword3"=>[
+                        'value'=>$contentSend['keyword3'],
                     ],
-                    "five"=>[
-                        'value'=>$contentSend['five'],
-                        'color'=>'#173177'
+                    "remark"=>[
+                        'value'=>$contentSend['remark'],
                     ]
-                ]
             ];
             $res = $this->redis->rpush($redisKey,json_encode($WechatMessage));
-            if(!$res)
+            if($res)
             {
-                $error_data[] = $WechatMessage;
-                $this->logger->info('微信模板消息:'.json_encode($WechatMessage));
+                return ['result'=>1,'msg'=>'发送成功'];
             }
-        }
-        if(!isset($error_data))
-        {
-            return ['result'=>1,'msg'=>'发送成功'];
-        }else
-        {
-            return ['result'=>0,'msg'=>'发送失败','error_data'=>$error_data];
+            return ['result'=>0,'msg'=>'发送失败','error_data'=>$WechatMessage];
         }
 
+
     }
+
 
 
     /*
      * 推送微信公众号信息
      */
-    public function sendWechatMessage($content)
+    public function sendWechatMessage()
     {
-        $accessToken = (new WechatService())->getAccessToken($this->key_config->aliyun->wechat->appid,$this->key_config->aliyun->wechat->appsecret);
-        $sendUrl = "http://api.weixin.qq.com/cgi-bin/message/template/send?access_token=$accessToken";
-        $res = $this->curl->post_request($sendUrl,$content);
-        if($res['errcode']==0)
-            return true;
-        return false;
-
+        $redisKey = $this->config->redisQueue->wechatMessageQueue;
+        for($i = 0 ;$i<50;$i++)
+        {
+            $message = $this->redis->lpop($redisKey);
+            if($message)
+            {
+                //有数据发送
+                $accessToken = (new WechatService())->getAccessToken($this->key_config->aliyun->wechat->appid,$this->key_config->aliyun->wechat->appsecret);
+                $sendUrl = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=$accessToken";
+                $res = $this->curl->curl_post($sendUrl,$message);
+                if($res['errcode']!=0)
+                {
+                    //未发送成功的记录日志
+                    $this->wechatMessage_logger->info($message.json_encode($res));
+                }
+                $this->wechatMessage_logger->info("发送成功");
+            }
+        }
     }
 
 

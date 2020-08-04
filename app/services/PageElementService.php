@@ -1247,7 +1247,7 @@ class PageElementService extends BaseService
         {
             $month = '0'.$month;
         }
-        $activity_list = (new ActivityService())->getMonthlyActivityList($company_id,$month,$this->getFromParams($params,'number','1'));
+        $activity_list = (new ActivityService())->getMonthlyActivityList($company_id,$month,$this->getFromParams($params,'type','h5'));
         $data['detail']['user_monthly_activities'] = $activity_list;
         return $data;
     }

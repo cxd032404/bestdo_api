@@ -1015,7 +1015,7 @@ class ActivityService extends BaseService
     /*
      * 获取某公司活动列表
      */
-    public function getMonthlyActivityList($company_id,$month,$number = 1){
+    public function getMonthlyActivityList($company_id,$month,$type = 'h5'){
         $year = date('Y',time());
         $date =$year.'-'.$month;
         $monthly_activities = [];
@@ -1056,34 +1056,60 @@ class ActivityService extends BaseService
         }
        // print_r($date_list);die();
         /*每月初始展示的活动*/
+        $current = time();
+        $today = date('d',$current);
         ksort($date_list);
         foreach ($date_list as $key=>$day_activity_list)
         {
-            if($key>=$month) {
+            $flag = 0;
+            //今天往后的数据
+            if($key>=$today) {
                 foreach ($day_activity_list as $activity_info) {
                     //取出第一个报名未结束的活动
                     if (strtotime($activity_info['apply_end_time']) > time()) {
                         $first_activity_info = $activity_info;
+                        $flag = 1;
                         break;
                     }
                 }
             }
+            //获取到数据不再循环
+            if($flag == 1)
+            {
+                break;
+            }
         }
-        if($number == 1) {
+        //h5页面只取每天第一个报名未结束的活动
+        if($type == 'h5') {
             foreach ($date_list as $key => $day_activity_list) {
+                $flag = 0;
                 foreach ($day_activity_list as $activity_info) {
                     //取出第一个没结束的活动
                     if (strtotime($activity_info['apply_end_time']) > time()) {
                         $date_list[$key] = $activity_info;
+                        $flag = 1;
                         break;
                     }
                 }
+                //没有报名没结束的活动获取第一条
+                if($flag == 0)
+                {
+                    $date_list[$key] = $day_activity_list[0];
+                }
+            }
+            if(!isset($first_activity_info))
+            {
+                $first_activity_info = current($date_list);
             }
         }
+
         if(!isset($first_activity_info))
         {
             $first_activity_info = current($date_list);
         }
+
+
+
         return ['month_activities'=>$monthly_activities,'date_data'=>$date_list,'first_activity_info'=>$first_activity_info];
     }
     /*
