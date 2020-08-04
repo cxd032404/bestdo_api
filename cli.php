@@ -40,28 +40,7 @@ $di -> set('key_config', $key_config);
 $loader = new \Phalcon\Loader();
 $loader->registerDirs($data['autoload']);
 $loader->register();
-/*
-//数据库服务///////////////////////////////////////////////////////////////////////////////////////////////
-$di->set('db', function () use ( $config ) {
-    return new Phalcon\Db\Adapter\Pdo\Mysql([
-        'host'     => $config->database->host,
-        'username' => $config->database->username,
-        'password' => $config->database->password,
-        'charset'  => 'UTF8',
-        'dbname'   => $config->database->dbname
-    ]);
-});
 
-$di->set('hj_user', function () use ( $config ) {
-    return new Phalcon\Db\Adapter\Pdo\Mysql([
-        'host'     => $config->hj_user->host,
-        'username' => $config->hj_user->username,
-        'password' => $config->hj_user->password,
-        'charset'  => 'UTF8',
-        'dbname'   => $config->hj_user->dbname
-    ]);
-});
-*/
 //缓存服务///////////////////////////////////////////////////////////////////////////////////////////////
 initRedis($di,$di['config']);
 //数据库服务///////////////////////////////////////////////////////////////////////////////////////////////
