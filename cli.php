@@ -36,8 +36,6 @@ $key_data = require_once (ROOT_PATH . '/configs/inc_key_config.php');
 $key_config = new PhConfig($key_data);
 $di -> set('key_config', $key_config);
 
-
-
 //注册类自动加载器////////////////////////////////////////////////////////////////////////////////////////////////////////
 $loader = new \Phalcon\Loader();
 $loader->registerDirs($data['autoload']);
@@ -64,13 +62,15 @@ $di->set('hj_user', function () use ( $config ) {
     ]);
 });
 */
-
-initRedis($di,$config);
-initDatabase($di,$config);
-initRequestLogger($di,$config);
+//缓存服务///////////////////////////////////////////////////////////////////////////////////////////////
+initRedis($di,$di['config']);
+//数据库服务///////////////////////////////////////////////////////////////////////////////////////////////
+initDatabase($di,$di['config']);
+//日志服务///////////////////////////////////////////////////////////////////////////////////////////////
+initLogger($di,$di['config']);
 
 // 公共的函数库 Common 服务///////////////////////////////////////////////////////////////////////////////////////////////
-$di->set('util', function () use ( $config ) {
+$di->set('util', function ()  {
     return new Utilitys();
 });
 
@@ -82,6 +82,7 @@ $di->set('redis', function () use ( $config ) {
 */
 
 //日志服务///////////////////////////////////////////////////////////////////////////////////////////////
+/*
 $di -> set('logger', function($filename='') use ($config) {
 	$format   = $config->get('logger')->format;
     $filename = trim($config->get('logger')->filename, '\\/');
@@ -91,6 +92,7 @@ $di -> set('logger', function($filename='') use ($config) {
 	$logger -> setFormatter($formatter);
 	return $logger;
 });
+*/
 
 //创建console应用////////////////////////////////////////////////////////////////////////////////////////////////////////
 $console = new ConsoleApp();
@@ -144,7 +146,7 @@ function initRedis( $di,$config )
     }
     return $di;
 }
-function initRequestLogger( $di,$config )
+function initLogger( $di,$config )
 {
     foreach($config as $k => $c) {
         if($c['adapter'] == 'logger') {
