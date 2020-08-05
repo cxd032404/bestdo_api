@@ -29,6 +29,7 @@ class WechatMessageService extends BaseService
    */
     public function  sendMessage($info,$type)
     {
+
         $userListSend = $this->generateUserListSend($info,$type);
 
         if(!$userListSend['result'])
@@ -148,13 +149,12 @@ class WechatMessageService extends BaseService
         }
 
         $content = '';
-
         switch ($type){
             //提醒去审核
             case 'clubJoin': $first = '有新的成员申请加入俱乐部';
                              $second = $club_name;
                              $third = $user_name;
-                             $four = date('Y-m-d h:i',time());
+                             $four = date('Y-m-d H:i',time());
                              $five = '请前往审批';
                              $templete_id = $this->sendDataTemplete['application_note'] ;break;
             //告知用户审核通过结果
@@ -162,7 +162,7 @@ class WechatMessageService extends BaseService
                             $url = 'http://www.staffhome.cn/club';//俱乐部申请通过跳转链接
                             $first = '恭喜您！您提交的会员申请已通过审核！';
                             $keyword1 = $club_name;
-                            $keyword2  =  date('Y年m月d日 h:i',time());
+                            $keyword2  =  date('Y年m月d日 H:i',time());
                             $keyword3 = $user_name;
                             $remark = '点击查看详情';
                             $templete_id = $this->config->wechat_template['application_pass'];break;
@@ -171,7 +171,7 @@ class WechatMessageService extends BaseService
                             $first = '您的俱乐部加入申请已有结果';
                             $second = $club_name;
                             $third =  '申请被拒绝';
-                            $four  =  date('Y-m-d h:i',time());
+                            $four  =  date('Y-m-d H:i',time());
                             $five = '看看其他俱乐部';
                             $templete_id = $this->sendDataTemplete['apply_result'];break;
             //通知管理员成员离开
@@ -179,7 +179,7 @@ class WechatMessageService extends BaseService
                             $first = '有成员离开俱乐部';
                             $second = $club_name;
                             $third = $user_name;
-                            $four = date('Y-m-d h:i',time());
+                            $four = date('Y-m-d H:i',time());
                             $five = '请知晓';
                             $templete_id = $this->sendDataTemplete['application_note'];break;
 
@@ -187,7 +187,7 @@ class WechatMessageService extends BaseService
                             $first = '有成员参加活动';
                             $second = $activity_name;
                             $third = $address;
-                            $four = date('Y-m-d h:i',time());
+                            $four = date('Y-m-d H:i',time());
                             $five = '活动愉快';break;
             //活动签到提醒
             case 'toCheckin':
@@ -260,7 +260,7 @@ class WechatMessageService extends BaseService
     public function sendWechatMessage()
     {
         $redisKey = $this->config->redisQueue->wechatMessageQueue;
-        for($i = 0 ;$i<50;$i++)
+        for($i = 0 ;$i<10;$i++)
         {
             $message = $this->redis->lpop($redisKey);
             if($message)
@@ -272,9 +272,9 @@ class WechatMessageService extends BaseService
                 if($res['errcode']!=0)
                 {
                     //未发送成功的记录日志
-                    $this->wechatMessage_logger->info($message.json_encode($res));
+                    $this->wechatMessageError_logger->info($message.json_encode($res));
                 }
-                $this->wechatMessage_logger->info("发送成功");
+                $this->wechatMessageSuccess_logger->info("发送成功");
             }
         }
     }

@@ -1,5 +1,8 @@
 <?php
 use Predis\Client;
+use Phalcon\Logger\Formatter\Line as PhFormatterLine;
+use Phalcon\Logger\Adapter\File as PhFileLogger;
+
 /*
 |--------------------------------------------------------------------------
 | Task
@@ -47,7 +50,8 @@ initRedis($di,$di['config']);
 initDatabase($di,$di['config']);
 //日志服务///////////////////////////////////////////////////////////////////////////////////////////////
 initLogger($di,$di['config']);
-
+//curl
+initWebCurl($di,$di['config']);
 // 公共的函数库 Common 服务///////////////////////////////////////////////////////////////////////////////////////////////
 $di->set('util', function ()  {
     return new Utilitys();
@@ -164,5 +168,18 @@ function initDatabase( $di,$config )
         }
     }
     return $di;
+}
+ function initWebCurl( $di,$config )
+{
+//    $this->di['curl'] = function() use ( $di ) {
+//        return new WebCurl();
+//    };
+    $di->set('curl',  function() use ( $di )
+    {
+        return new WebCurl();
+    });
+
+
+
 }
 
