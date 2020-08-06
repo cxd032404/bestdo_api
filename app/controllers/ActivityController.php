@@ -41,13 +41,13 @@ class ActivityController extends BaseController
             return $this->failure([],$return['msg'],$return['code']);
         }
         $userInfo = $return['data']['user_info'];
-	    //接收参数并格式化
+	   //接收参数并格式化
 		$data = $this->request->get();
         $activityData['activity_name'] = isset($data['activity_name'])?substr(trim($data['activity_name'],'#'),0,32):"";
         $activityData['comment'] = isset($data['comment'])?trim($data['comment'],'#'):"";
         $activityData['start_time'] = isset($data['start_time'])?trim($data['start_time'],'#'):"";
         $activityData['end_time'] = isset($data['end_time'])?trim($data['end_time'],'#'):"";
-        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):date('Y-m-d H:i',time()+30); //俱乐部小程序没有报名开始时间 默认给个现在+30秒
+        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):date('Y-m-d H:i',time()+30*60); //俱乐部小程序没有报名开始时间 默认给个现在+30秒
         $activityData['apply_end_time'] = isset($data['apply_end_time'])?trim($data['apply_end_time'],'#'):"";
         $activityData['club_member_only'] = intval($data['club_member_only']??1);
         $activityData['member_limit'] = intval($data['member_limit']??100);
@@ -56,6 +56,7 @@ class ActivityController extends BaseController
         $activityData['weekly_rebuild'] = $data['weekly_rebuild']??[];
         $activityData['connect_activity_id'] = intval($data['connect_activity_id']??0);
         $activityData['checkin'] = json_decode($data['checkin']??"",true);
+        $activityData['header_image'] = $data['header_image']??'';
         //ALTER TABLE `config_activity` ADD `connect_activity_id` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '关联的活动id' AFTER `activity_id`, ADD INDEX (`connect_activity_id`);
         //创建活动
         $create = (new ActivityService())->createActivity($activityData, $userInfo);
@@ -98,7 +99,7 @@ class ActivityController extends BaseController
         $activityData['comment'] = isset($data['comment'])?trim($data['comment'],'#'):"";
         $activityData['start_time'] = isset($data['start_time'])?trim($data['start_time'],'#'):"";
         $activityData['end_time'] = isset($data['end_time'])?trim($data['end_time'],'#'):"";
-        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):"";
+        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):date('Y-m-d H:i',time()+30*60); //俱乐部小程序没有报名开始时间 默认给个现在+30秒
         $activityData['apply_end_time'] = isset($data['apply_end_time'])?trim($data['apply_end_time'],'#'):"";
         $activityData['club_member_only'] = intval($data['club_member_only']??1);
         $activityData['member_limit'] = intval($data['member_limit']??100);
@@ -107,7 +108,7 @@ class ActivityController extends BaseController
         $activityData['weekly_rebuild'] = intval($data['weekly_rebuild']??-1);
         $activityData['connect_activity_id'] = intval($data['connect_activity_id']??0);
         $activityData['checkin'] = json_decode($data['checkin']??"",true);
-
+        $activityData['header_image'] = $data['header_image']??'';
         //更新活动
         $update = (new ActivityService())->updateActivity($activityId,$activityData, $userInfo);
         if($update['result'])

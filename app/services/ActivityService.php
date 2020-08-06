@@ -166,11 +166,7 @@ class ActivityService extends BaseService
             {
 
                     /*写入数据*/
-                   //文件上传
-                echo 3333;die();
-                   $oUpload = new UploadService();
-                   $upload = $oUpload->getUploadedFile([],[],0,0,['pic'=>1]);//['pic'=>1];
-
+             
 
                     $activity = new Activity();
                     $activity->activity_name = $activityParams['activity_name'];
@@ -190,7 +186,7 @@ class ActivityService extends BaseService
                     $activity->activity_sign = "";
                     $activity->connect_activity_id = $activityParams['connect_activity_id'];
                     $activity->status = 1;
-                    $header_image = $upload['upload_pic.1']??"";
+                    $header_image = $activityParams['header_image'];
                     $activity->detail = json_encode(
                         [
                             "checkin"=>$activityParams['checkin']??[],
@@ -302,9 +298,7 @@ class ActivityService extends BaseService
             else
             {
                      //文件上传
-                    $oUpload = new UploadService();
-                    $upload = $oUpload->getUploadedFile([],[],0,0,['pic'=>1]);//['pic'=>1];
-
+            
 
                     $activityParams['weekly_rebuild'] = ($activityParams['weekly_rebuild']>=0 && $activityParams['weekly_rebuild']<=6)?$activityParams['weekly_rebuild']:-1;
                     //写入数据
@@ -323,19 +317,18 @@ class ActivityService extends BaseService
                     $activity->member_limit = $activityParams['member_limit'];
                     $activity->icon = "";
                     $activity->status = 1;
-                    $header_image = json_encode($activity->detail,true)['header_img']??'';
-                    if(count($upload) != 0)
-                    {
-                       $header_image = $upload['upload_pic.1'];
-                    }
-                    $activity->detail = json_encode(
-                        [
-                            "checkin"=>$activityParams['checkin']??[],
-                            "monthly_apply_limit"=>$activityParams['monthly_apply_limit'],
-                            "weekly_rebuild"=>$activityParams['weekly_rebuild']??-1,
-                            "header_image"=>$header_image
-                        ]
-                    );
+                    $header_image = $activityParams['header_image'];
+                    $activity->detail = json_decode($activity->detail,true);
+                                      
+                                        $activity->detail["checkin"]=$activityParams['checkin']??[];
+                                        $activity->detail["monthly_apply_limit"]=$activityParams['monthly_apply_limit'];
+                                        $activity->detail["weekly_rebuild"]=$activityParams['weekly_rebuild']??-1;
+                                        $activity->detail['header_image']=$header_image==""?$activity->detail['header_image']:$header_image;
+                    
+                    $activity->detail = json_encode($activity->detail);
+
+                    //$this->logger->info($activity->detail);
+                    
                     $update = $activity->save();
                     if ($update === false)
                     {
@@ -462,7 +455,7 @@ class ActivityService extends BaseService
         $created_activity_list = $this->getActivityListByCreater($user_info->company_id,$user_info->user_id,$columns,$club_id,0);
         foreach($created_activity_list as $key => $created)
         {
-            if(!$created || $created->club_id == 0)
+            if(!$created || $created->system == 1)
             {
                 //unset($created_activity_list[$key]);
                 //continue;
@@ -1041,7 +1034,8 @@ class ActivityService extends BaseService
         $date_list = []; //日期下标数据
         $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_start_time"]);
         foreach ($activity_list as $key=>$activity_info) {
-            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,system,status,club_id,start_time,end_time,apply_end_time,icon,comment,detail",0);
+            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,system,status,club_id,start_time,end_time,apply_end_time,icon,comment,detail");
+         
             $activity_info = json_decode(json_encode($activity_info));
 
             if (isset($activity_info->activity_id) && ($activity_info->status == 1) && $activity_info->system == 0)
@@ -1058,7 +1052,7 @@ class ActivityService extends BaseService
                 $day = date('d',strtotime($activity_info->start_time));
                 $activity_data['activity_id'] = $activity_info->activity_id;
                 $activity_data['date'] = $day;
-                $monthly_activities[] = $activity_data;
+                $monthly_activities[$day] = $activity_data;
                 $activity_data = [];
                 $activity_data['activity_id'] = $activity_info->activity_id;
                 $activity_data['comment'] = mb_substr($activity_info->comment,0,15);
@@ -1092,6 +1086,7 @@ class ActivityService extends BaseService
                 }
                 $date_list[$day][] = $activity_data;
             }
+        
         }
        // print_r($date_list);die();
         /*每月初始展示的活动*/
@@ -1118,7 +1113,7 @@ class ActivityService extends BaseService
                 break;
             }
         }
-        //h5页面只取每天第一个报名未结束的活动
+        //h5页面只取每天第一个报名未结束的活动 ,俱乐部小程序需要每天的所有活动
         if($type == 'h5') {
             foreach ($date_list as $key => $day_activity_list) {
                 $flag = 0;
@@ -1146,8 +1141,7 @@ class ActivityService extends BaseService
         {
             $first_activity_info = current($date_list);
         }
-
-        return ['month_activities'=>$monthly_activities,'date_data'=>$date_list,'first_activity_info'=>$first_activity_info];
+        return ['month_activities'=>array_values($monthly_activities),'date_data'=>$date_list,'first_activity_info'=>$first_activity_info];
     }
     /*
      * 获取活动已签到人数

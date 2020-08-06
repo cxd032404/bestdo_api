@@ -639,6 +639,31 @@ class PageElementService extends BaseService
         $activity_info->format_apply_end_time = date('Y/m/d',strtotime($activity_info->apply_end_time));
         $activity_info->format_start_time = date('Y/m/d',strtotime($activity_info->start_time));
         $activity_info->format_end_time = date('Y/m/d',strtotime($activity_info->end_time));
+        //活动头图
+        $header_image = $detail->header_image??'';
+        $activity_info->header_image = $header_image;
+        //如果头图不存在 取默认图片
+
+
+        if(!$header_image)
+        {
+            $company_info = (new  CompanyService())->getCompanyInfo($company_id,'company_id,company_name,detail');
+            $detail = json_decode($company_info->detail,true);
+                    $bannerList = [];
+                    //需默认Banner
+                    if(isset($detail['clubBanner']))
+                    {
+                        $bannerList = $detail['clubBanner'];
+                    }
+                    $default_header_image = $bannerList[0]['img_url'];
+        }else
+        {
+            $default_header_image = '';
+        }
+        $activity_info->defalut_header_image = $default_header_image;
+
+
+
         //$data['detail']['address'] = isset($detail['checkin']['address'])?$detail['checkin']['address']:'';
         $user_count = (new ActivityService())->getActivityMemberCount($activity_id);
         $data['detail']['userCount'] = $user_count;
@@ -652,24 +677,28 @@ class PageElementService extends BaseService
 
         $data['detail']['activity_info']->activity_name = mb_substr($activity_info->activity_name,0,20);
         $data['detail']['aplied'] = isset($res->id)?1:0;
+        //活动关联的俱乐部信息
         $club_info = (new ClubService())->getClubInfo($activity_info->club_id,"club_id,icon,detail");
         if($club_info)
         {
             $data['detail']['icon'] = $club_info->icon;
+        
         }else
         {
             $data['detail']['icon'] = '';
         }
-        $detail = json_decode($club_info->detail);
         $data['detail']['club_info'] = $club_info;
+        $detail = json_decode($club_info->detail??'');
         unset($data['detail']['club_info']->detail);
         //需默认banner
-        if(isset($detail->banner))
+    
+        if($detail && isset($detail->banner))
         {
-            $data['detail']['club_info']->banner= $detail->banner;
+            //存在且有banner
+            $data['detail']['club_info']['banner']= $detail->banner;
         }else
         {
-            $data['detail']['club_info']->banner = [];
+            $data['detail']['club_info']['banner'] = [];
         }
         $member_list = (new ActivityService())->getActivityMemberList($activity_id);
         $activity_member_list = [];
@@ -696,14 +725,14 @@ class PageElementService extends BaseService
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],-1);
         }
         $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,
-            'activity_id,activity_name,start_time,apply_start_time,apply_end_time,end_time,club_id,status,detail,create_time',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',3),$this->getFromParams($params,'activity_status',-1));
+            'activity_id,activity_name,start_time,apply_start_time,apply_end_time,end_time,club_id,status,detail,create_time,system',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',5),$this->getFromParams($params,'activity_status',-1));
         $managed_club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
         $managed_activity_list = $return['activity_list'];
         foreach ($managed_activity_list as $key=>$value)
         {
             $detail = json_decode($value['detail']);
-            $managed_activity_list[$key]['address'] = $detail->checkin?$detail->checkin->address:'';
-            $managed_activity_list[$key]['applied'] = (new ActivityService())->getActivityMemberCount($value['activity_id']);
+            $managed_activity_list[$key]['address'] = $detail->checkin->address??'';
+            $managed_activity_list[$key]['applied'] = (new ActivityService())->getActivityMemberCount($value['activity_id']);//参加人数
             if(date('Y',strtotime($value['start_time'])) != date('Y',strtotime($value['end_time'])))
             {
                 $managed_activity_list[$key]['chinese_start_time'] = date('Y年m月d日 H:i',strtotime($value['start_time'])).'-'.date('Y年m月d日 H:i',strtotime($value['end_time']));
@@ -1434,18 +1463,26 @@ class PageElementService extends BaseService
     /*
      * 获取公司下所有的活动
      */
-    public function getElementPage_CompanyActivityList($data,$params,$user_info,$company_id)
+    public function getElementPage_allActivities($data,$params,$user_info,$company_id)
     {
-         $activityList = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,activity_name,start_time',$club_id = -1);
-         foreach ($activityList as $key =>$activity_info)
-         {
-             if($activity_info->system != 0)
-             {
-               unset($activityList[$key]);
-             }
-         }
-         $activityList = array_values($activityList);
-         print_r($activityList);die();
-         return $data['detail'] = 1;die();
+        $activityList = (new ActivityService())->getActivityListByCompany(1,'activity_id,status,activity_name,start_time,system,detail',$club_id = -1);
+        foreach ($activityList as $key =>$activity_info)
+        {
+            //去除文体汇的活动和无效的活动
+            if($activity_info->system == 1 || $activity_info->status = 0 )
+            {
+              unset($activityList[$key]);
+              continue;
+            }
+            $detail =json_encode($activity_info->detail,true);
+            $lat = $detail['checkin']['lat']??'';
+            $lng = $detail['checkin']['lng']??'';
+            $activityList[$key]->lat = $lat;
+            $activityList[$key]->lng = $lng;
+            unset($activityList[$key]->detail);
+        }
+       
+        $data['detail']['all_activities'] =  array_values($activityList);
+         return $data;
     }
 }
