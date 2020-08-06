@@ -9,7 +9,6 @@
 // | Author:   huzhichao@laoyuegou.com
 // | Created:  2017-xx-xx
 // +----------------------------------------------------------------------
-use Robots as robotModel;
 use Phalcon\Mvc\Model\Query;
 use Phalcon\Mvc\User\Component;
 
@@ -353,8 +352,9 @@ class WechatService extends BaseService
 
     //根据code获取用户微信信息
     /*更新用户微信信息*/
-    public function getUserInfoByCode_Wechat($wechat=[],$code="")
+    public function getUserInfoByCode_Wechat($wechat=[],$code="",$app_id)
     {
+        $wechat = $wechat->$app_id;
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
         //第二步：获取网页授权access_token和openid
@@ -364,7 +364,7 @@ class WechatService extends BaseService
         {
             $openid = $oauth2['openid'];
             $wechat_openid_cache = $this->config->cache_settings->wechat_openid;
-            $redis_key = $wechat_openid_cache->name.$openid;
+            $redis_key = $wechat_openid_cache->name."_".$app_id."_".$openid;
             $cache = $this->redis->get($redis_key);
             if($cache!= "")
             {
@@ -386,10 +386,11 @@ class WechatService extends BaseService
     }
 
     //根据code获取小程序的用户身份信息
-    public function getUserInfoByCode_mini_program($wechat = [],$code="")
+    public function getUserInfoByCode_mini_program($wechat = [],$code="",$app_id)
     {
+        $wechat = $wechat->$app_id;
         $wechat_cache = $this->config->cache_settings->mini_program_code;
-        $redis_key = $wechat_cache->name.$code;
+        $redis_key = $wechat_cache->name."_".$app_id."_".$code;
         $cache = $this->redis->get($redis_key);
         if($cache!= "")
         {
@@ -430,9 +431,10 @@ class WechatService extends BaseService
      *
      * @return int 成功0，失败返回对应的错误码
      */
-    public function decryptData( $encryptedData, $iv, $wechat, $code )
+    public function decryptData( $encryptedData, $iv, $wechat, $code,$app_id)
     {
-        $sessionKey = $this->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        $wechat = $this->key_config->tencent->$app_id;
+        $sessionKey = $this->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
         $decryptClass = new WXBizDataCrypt($wechat['appid'],$sessionKey['session_key']??"");
         $errCode = $decryptClass->decryptData($encryptedData, $iv, $data );
         $log = ['encryptedData'=>$encryptedData,'iv'=>$iv,'code'=>$code,'sessionKey'=>$sessionKey,'errorCode'=>$errCode,'data'=>$data];

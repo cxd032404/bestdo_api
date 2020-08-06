@@ -20,9 +20,9 @@ class WechatController extends BaseController
         if(!preg_match('/http:\/\/[\w.]+[\w\/]*[\w.]*\??[\w=&\+\%]*/is',$url)){
             return $this->failure([],'请传输正确的url地址！',400);
         }
-        $appid = $this->key_config->wechat->appid??"";
+        $app_id = $this->key_config->wechat->appid??"";
         $appsecret = $this->key_config->wechat->appsecret??"";
-        $return  = (new WechatService)->getSignPackage($appid,$appsecret,$url);
+        $return  = (new WechatService)->getSignPackage($app_id,$appsecret,$url);
         return $this->success($return);
     }
 
@@ -44,8 +44,9 @@ class WechatController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        $app_id = $this->request->getHeader("app_id")??101;
         //通过code获取sessionKey,openid,Unionid
-        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
         if($wechatUserInfo['openid'])
         {
             $return  = (new UserService)->miniProgramLogin($wechatUserInfo['unionid']??"",$wechatUserInfo['openid']??"");
@@ -74,8 +75,9 @@ class WechatController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        $app_id = $this->request->getHeader("app_id")??101;
         //通过code获取sessionKey,openid,Unionid
-        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
         if($wechatUserInfo['openid'])
         {
             return $this->success($wechatUserInfo);
@@ -99,8 +101,9 @@ class WechatController extends BaseController
         $code = trim($data['code']??"");
         $iv = trim($data['iv']??"");
         $data = trim($data['encryptedData']??"");
+        $app_id = $this->request->getHeader("app_id")??101;
         //解码
-        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$code);
+        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$code,$app_id);
         if($decrypt['result'])
         {
             $this->success($decrypt['data']??[],"",$decrypt['code']);

@@ -58,8 +58,9 @@ class UserController extends BaseController
 		$companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
 		$code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
+        $app_id = $this->request->getHeader("app_id")??101;
         //调用手机号验证码登录方法
-		$return  = (new UserService)->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo);
+		$return  = (new UserService)->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo,$app_id);
 		//返回值判断
 		if($return['result']!=1){
 			return $this->failure([],$return['msg'],$return['code']);

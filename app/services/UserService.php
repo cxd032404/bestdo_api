@@ -116,7 +116,7 @@ class UserService extends BaseService
         return $return;
     }
     //手机号验证码登录方法
-    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "")
+    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "",$app_id = 101)
     {
         $common = new Common();
         $oWechatService = (new WechatService());
@@ -143,11 +143,11 @@ class UserService extends BaseService
             if(!empty($code))
             {
                 //通过code获取到微信的用户信息
-                $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
+                $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->tencent,$code,$app_id);
                 if(isset($WechatUserInfo['openid']))
                 {
                     //检查手机号和微信Openid是否配对组合可用
-                    $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile);
+                    $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile,$app_id);
                     if($available['result']==0)
                     {
                         $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
@@ -155,7 +155,7 @@ class UserService extends BaseService
                 }
                 else
                 {
-                    $mobileUser = $this->getUserInfoByMobile($mobile);
+                    $mobileUser = $this->getUserInfoByMobile($mobile,$app_id);
                     if(isset($mobileUser->user_id))
                     {
                         $available['mobileUser'] =  $mobileUser;
@@ -169,7 +169,7 @@ class UserService extends BaseService
             elseif(!empty($miniProgramUserInfo))
             {
                 $code = json_decode($miniProgramUserInfo,true)['code'];
-                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
                 if(isset($miniProgramUserInfo['openid']))
                 {
                     $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
@@ -180,7 +180,7 @@ class UserService extends BaseService
                 }
                 else
                 {
-                    $mobileUser = $this->getUserInfoByMobile($mobile);
+                    $mobileUser = $this->getUserInfoByMobile($mobile,$app_id);
                     if(isset($mobileUser->user_id))
                     {
                         $available['mobileUser'] =  $mobileUser;
