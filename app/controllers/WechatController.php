@@ -103,7 +103,7 @@ class WechatController extends BaseController
         $data = trim($data['encryptedData']??"");
         $app_id = $this->request->getHeader("app_id")??101;
         //解码
-        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$code,$app_id);
+        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->tencent,$code,$app_id);
         if($decrypt['result'])
         {
             $this->success($decrypt['data']??[],"",$decrypt['code']);

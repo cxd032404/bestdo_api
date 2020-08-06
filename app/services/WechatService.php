@@ -74,10 +74,10 @@ class WechatService extends BaseService
     }
     /*更新用户微信信息*/
     /*更新用户微信信息*/
-    public function updateUserWithMiniProgram($user_id=0,$miniProgramUserInfo="")
+    public function updateUserWithMiniProgram($user_id=0,$miniProgramUserInfo="",$app_id = 101)
     {
         $miniProgramUserInfo = json_decode($miniProgramUserInfo,true);
-        $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'],$this->key_config->wechat_mini_program, $miniProgramUserInfo['code'] );
+        $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'],$this->key_config->tencent, $miniProgramUserInfo['code'],$app_id );
 
         $miniProgramUserInfo = json_decode($miniProgramUserInfo['data'],true);
         if(isset($miniProgramUserInfo['openId']))
@@ -491,7 +491,7 @@ class WechatService extends BaseService
     /*
     * 检测小程序文字内容
     */
-    public function wechatMsgCheck($checkContent){
+    public function wechatMsgCheck($checkContent,$app_id=201){
         //md5缓存结果
         $cache_settings = $this->config->cache_settings->wechat_comment_check;
         $comment_redis_key = $cache_settings->name.md5($checkContent);
@@ -501,8 +501,8 @@ class WechatService extends BaseService
         {
             return json_decode($check_result,true);
         }
-        $appid = $this->key_config->wechat_mini_program->appid;
-        $appsecret = $this->key_config->wechat_mini_program->appsecret;
+        $appid = $this->key_config->tencent->$app_id->appid;
+        $appsecret = $this->key_config->tencent->$app_id->appsecret;
         $redisKey = 'miniprogram';
         $accessToken = $this->getAccessToken($appid,$appsecret,$redisKey);
         $url = 'https://api.weixin.qq.com/wxa/msg_sec_check?access_token='. $accessToken;
