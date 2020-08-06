@@ -88,6 +88,29 @@ class WechatController extends BaseController
         }
     }
     /*
+     * 微信code登录
+     * 参数
+     * code
+     * （必填）：微信授权code
+     * */
+    public function wechatCodeLoginAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        //echo "code:".$code;
+        //调用手机号验证码登录方法
+        $openId = (new WechatService)->getOpenIdByCode($this->key_config->wechat,$code);
+        //调用手机号验证码登录方法
+        //$openId = 'oPCk01aWREJXeJK0IjOjDQfUWsmA';
+        $return  = (new UserService)->wechatLogin($openId);
+        //返回值判断
+        if($return['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        return $this->success($return['data']);
+    }
+    /*
      * 小程序数据解码
      * 参数
      * session_key
@@ -187,7 +210,8 @@ class WechatController extends BaseController
      */
     public function wechatMsgCheckAction(){
         $checkContent =  $_GET["checkMsg"]??'';
-        $return = (new WechatService())->wechatMsgCheck($checkContent);
+        $app_id = $this->request->getHeader("app_id")??101;
+        $return = (new WechatService())->wechatMsgCheck($checkContent,$app_id);
         if($return['result'])
         {
             return $this->success();
