@@ -87,11 +87,15 @@ class LoginService extends BaseService
         "miniprogram_mobile_used"=>"您所使用手机号码已经绑定了其他的小程序账号",
     ];
 
-    public function mobileCodeLogin()
+    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "",$app_id = 101)
     {
         //基础校验
         //手机号码/验证码为空校验
-
+        $checkMobile = $this->checkMobileCode($mobile,$logincode);
+        if($checkMobile['result']==false)
+        {
+            return $checkMobile;
+        }
         //验证码码有效性校验
 
         //获取可能可用的手机号码对应用户用以登录
@@ -116,4 +120,29 @@ class LoginService extends BaseService
                     //company_name = ""
                         //拒绝登录
     }
+    //校验手机号码和验证码
+     public function checkMobileCode($mobile,$logincode)
+     {
+         $login_code = $this->redis->get('login_'.$mobile);
+         //后台配置的测试号码
+         $test_phone_number =  (new ConfigService())->getConfig("phoneNumber")->content??'';
+         //配置文件中的测试号
+         $testMoblie = $this->config->testMoblie;
+         if(strstr($test_phone_number,$mobile) || in_array($mobile,(array)$testMoblie)){
+             $login_code = json_encode(['code'=>123456]);
+         }
+         $return = ['result'=> true,'data'=>[],'msg'=>"",'code'=>200];
+         if( empty($mobile) || !(new Common())->check_mobile($mobile) )
+         {
+             $return['result'] = false;
+             //手机号码无效
+             $return['msg']  = $this->msgList['mobile_empty'];
+         }
+         elseif(empty($logincode) || ($logincode != json_decode($login_code)->code))
+         {
+             $return['result'] = false;
+             //验证码为空或者错误
+             $return['msg']  = $this->msgList['sendcode_error'];
+         }
+     }
 }
