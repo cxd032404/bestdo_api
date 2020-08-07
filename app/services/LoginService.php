@@ -20,11 +20,7 @@ class LoginService extends BaseService
 
     private $kudosTypeList = ['kudo'=>"点赞",'vote'=>"投票"];
     private $msgList = [
-        "congratulation"=>"恭喜您，",
         "mobile_empty"=>"手机号无效，请填写正确的手机号码！",
-        "password_empty"=>"密码无效，请填写正确的密码！",
-        "sendcode_empty"=>"验证码无效，请填写验证码！",
-        "activity_empty"=>"活动无效，请选择正确的活动！",
         "companyuser_empty"=>"账户验证失败，当前账户尚未获得登录/注册权限！",
         "posts_empty"=>"列表内容查询不到，请选择正确的列表内容！",
         "company_id_empty"=>"企业编号无效",
@@ -91,14 +87,27 @@ class LoginService extends BaseService
     {
         //基础校验
         //手机号码/验证码为空校验
+        //验证码码有效性校验
         $checkMobile = $this->checkMobileCode($mobile,$logincode);
         if($checkMobile['result']==false)
         {
             return $checkMobile;
         }
-        //验证码码有效性校验
-
         //获取可能可用的手机号码对应用户用以登录
+        $userToLogin = $this->getUserToLogin($mobile,$code,$miniProgramUserInfo,$app_id);
+        if($userToLogin['result']==true)
+        {
+            //用作登录的用户数据
+            $userinfo = $userToLogin['mobileUser'];
+            //用户找到，不需要对应的名单ID了
+            $companyuser_id = 0;
+        }
+        else
+        {
+            return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+        }
+
+
 
         //找到用户
             //登录流程
@@ -144,5 +153,75 @@ class LoginService extends BaseService
              //验证码为空或者错误
              $return['msg']  = $this->msgList['sendcode_error'];
          }
+     }
+    //获取可能可用的手机号码对应用户用以登录
+    public function getUserToLogin($mobile,$code,$miniProgramUserInfo,$app_id)
+     {
+         $oWechatService = new WechatService();
+         $available = ['result'=>true,"mobileUser" => []];
+         if(!empty($code))
+         {
+             //通过code获取到微信的用户信息
+             $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->tencent,$code,$app_id);
+             if(isset($WechatUserInfo['openid']))
+             {
+                 //检查手机号和微信Openid是否配对组合可用
+                 $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile,$app_id);
+                 if($available['result']==0)
+                 {
+                     $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                 }
+             }
+             else
+             {
+                 $mobileUser = $this->getUserInfoByMobile($mobile,$app_id);
+                 if(isset($mobileUser->user_id))
+                 {
+                     $available['mobileUser'] =  $mobileUser;
+                 }
+                 else
+                 {
+                     $available['mobileUser'] = [];
+                 }
+             }
+         }
+         elseif(!empty($miniProgramUserInfo))
+         {
+             $code = json_decode($miniProgramUserInfo,true)['code'];
+             $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
+             if(isset($miniProgramUserInfo['openid']))
+             {
+                 $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
+                 if($available['result']==0)
+                 {
+                     $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                 }
+             }
+             else
+             {
+                 $mobileUser = $this->getUserInfoByMobile($mobile,$app_id);
+                 if(isset($mobileUser->user_id))
+                 {
+                     $available['mobileUser'] =  $mobileUser;
+                 }
+                 else
+                 {
+                     $available['mobileUser'] = [];
+                 }
+             }
+         }
+         else
+         {
+             $mobileUser = $this->getUserInfoByMobile($mobile);
+             if(isset($mobileUser->user_id))
+             {
+                 $available['mobileUser'] =  $mobileUser;
+             }
+             else
+             {
+                 $available['mobileUser'] = [];
+             }
+         }
+         return $available;
      }
 }
