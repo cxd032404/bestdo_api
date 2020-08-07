@@ -98,22 +98,55 @@ class LoginService extends BaseService
         if($userToLogin['result']==true)
         {
             //用作登录的用户数据
-            $userinfo = $userToLogin['mobileUser'];
-            //用户找到，不需要对应的名单ID了
-            $companyuser_id = 0;
+            $userInfo = $userToLogin['mobileUser'];
+
         }
         else
         {
             return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
         }
-
-
-
-        //找到用户
+        if(isset($userInfo->user_id))
+        {
+            //用户找到，不需要对应的名单ID了
+            $companyuser_id = 0;
             //登录流程
+            $login = $this->loginByUser($userInfo);
+            //修改验证码记录状态
+            $sendcode = (new UserService())->setMobileCode($mobile,$logincode);
+            return $login;
+        }
+        else//没找到用户
+        {
+            if($companyuser_id == 0)
+            {
+
+            }
+            else
+            {
+                //查询企业导入名单
+                $companyuserInfo = \HJ\CompanyUserList::findFirst([
+                    "id=:companyuser_id:",
+                    'bind'=>[
+                        'companyuser_id'=>$companyuser_id,
+                    ],
+                    'order'=>'id desc'
+                ]);
+                //如果没查到
+                if(!isset($companyuserInfo->id))
+                {
+                    //返回失败
+                    return ['rusult'=>"false","msg"=>$this->msgList["companyuser_empty"],"code"=>400];
+                }
+                else
+                {
+
+                }
+            }
+        }
 
 
-        //没找到用户
+
+
             //company_user>0
                 //登录流程
 
@@ -223,5 +256,62 @@ class LoginService extends BaseService
              }
          }
          return $available;
+     }
+     //登录
+     public function loginByUser($userInfo)
+     {
+         //用户存在只修改验证码状态及生产token
+         if($userInfo->is_del==1){
+             $return['msg']  = $this->msgList['mobile_prohibit'];
+         }else{
+                 if(!empty($miniProgramUserInfo))
+                 {
+                     //如果尚未登录微信信息
+                     if($userInfo->mini_program_id=="")
+                     {
+                         $this->wechat_code_logger->info("登录更新小程序信息");
+                         //完善用户小程序资料
+                         (new WechatService)->updateUserWithMiniProgram($userInfo->user_id,$miniProgramUserInfo);
+                     }
+                     else
+                     {
+                         if($userInfo->test!=1)
+                         {
+                             $this->wechat_code_logger->info("登录更新小程序信息");
+                             //完善用户小程序资料
+                             (new WechatService)->updateUserWithMiniProgram($userInfo->user_id,$miniProgramUserInfo);
+                         }
+                     }
+
+                 }
+                 if(!empty($code))
+                 {
+                     //如果尚未登录微信信息
+                     if($userInfo->wechatid=="")
+                     {
+                         $this->wechat_code_logger->info("登录更新微信信息");
+                         //完善用户微信资料
+                         (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userInfo->user_id,$code);
+                     }
+                     else
+                     {
+                         if($userInfo->test!=1)
+                         {
+                             $this->wechat_code_logger->info("登录更新微信信息");
+                             //完善用户微信资料
+                             (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userInfo->user_id,$code);
+                         }
+                     }
+                 }
+                 //生成token
+                 $tokeninfo = $this->getToken($userInfo->user_id);
+                 $currentTime = time();
+                 //修改用户登录时间
+                 $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
+                     'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
+                     'last_login_source'=>"Mobile"],$userInfo->user_id);
+                 $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
+         }
+         return $return;
      }
 }

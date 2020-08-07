@@ -273,7 +273,6 @@ class UserService extends BaseService
                             $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
                                 'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
                                 'last_login_source'=>"Mobile"],$userinfo->user_id);
-                            $this->redis->expire('login_'.$mobile,0);
                             $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                         }
                     }
@@ -344,7 +343,6 @@ class UserService extends BaseService
                     //生成token
                     $tokeninfo = $this->getToken($user->user_id);
                     $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token'] ]];
-                    $this->redis->expire('login_'.$mobile,0);
                     $transaction->commit($return);
                 } catch (TxFailed $e) {
                     // 捕获失败回滚的错误
@@ -652,12 +650,6 @@ class UserService extends BaseService
         return $return;
     }
 
-
-
-
-
-    
-
     //修改验证码状态
     public function setMobileCode($mobile,$code){
         //修改验证码记录状态
@@ -670,6 +662,7 @@ class UserService extends BaseService
                 return false;
             }
         }
+        $this->redis->expire('login_'.$mobile,0);
         return true;
     }
 
