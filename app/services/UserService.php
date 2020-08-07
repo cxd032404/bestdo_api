@@ -217,8 +217,7 @@ class UserService extends BaseService
             }
             if(isset($userinfo->user_id))
             {
-                if($companyuser_id==0)
-                {
+
                     //用户存在只修改验证码状态及生产token
                     if($userinfo->is_del==1){
                         $return['msg']  = $this->msgList['mobile_prohibit'];
@@ -278,79 +277,8 @@ class UserService extends BaseService
                             $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                         }
                     }
-                }
-                else
-                {
-                    //查找企业名单
-                    $companyUserInfo = \HJ\CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$companyuser_id]]);
-                    //如果已经绑定且和当前用户一致
-                    if(isset($companyUserInfo->user_id) && $companyUserInfo->user_id == $userinfo->user_id)
-                    {
-                        //用户存在只修改验证码状态及生产token
-                        if($userinfo->is_del==1){
-                            $return['msg']  = $this->msgList['mobile_prohibit'];
-                        }else{
-                            //修改验证码记录状态
-                            $sendcode = $this->setMobileCode($mobile,$logincode);
-                            if(!$sendcode){
-                                $return['msg']  = $this->msgList['code_status_error'];
-                            }else{
-                                if(!empty($miniProgramUserInfo))
-                                {
-                                    //如果尚未登录微信信息
-                                    if($userinfo->mini_program_id=="")
-                                    {
-                                        $this->wechat_code_logger->info("入驻登录更新小程序信息");
-                                        //完善用户小程序资料
-                                        (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
-                                    }
-                                    else
-                                    {
-                                        if($userinfo->test!=1)
-                                        {
-                                            $this->wechat_code_logger->info("入驻登录更新小程序信息");
-                                            //完善用户小程序资料
-                                            (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
-                                        }
-                                    }
 
-                                }
-                                if(!empty($code))
-                                {
-                                    //如果尚未登录微信信息
-                                    if($userinfo->wechatid=="")
-                                    {
-                                        $this->wechat_code_logger->info("入驻登录更新微信信息");
-                                        //完善用户微信资料
-                                        (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
-                                    }
-                                    else
-                                    {
-                                        if($userinfo->test!=1)
-                                        {
-                                            $this->wechat_code_logger->info("入驻登录更新微信信息");
-                                            //完善用户微信资料
-                                            (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
-                                        }
-                                    }
-                                }
-                                //生成token
-                                $tokeninfo = $this->getToken($userinfo->user_id);
-                                $currentTime = time();
-                                //修改用户登录时间
-                                $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
-                                    'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
-                                    'last_login_source'=>"Mobile"],$userinfo->user_id);
-                                $this->redis->expire('login_'.$mobile,0);
-                                $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
-                            }
-                        }
-                    }
-                    else
-                    {
-                        $return['msg']  = $this->msgList['company_user_existed'];
-                    }
-                }
+
             }else{//用户不存在 需创建用户+修改验证码状态+修改企业名单状态+生成token
                 try {
                     //启用事务
