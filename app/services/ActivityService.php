@@ -68,7 +68,7 @@ class ActivityService extends BaseService
         $activityParams['apply_start_time'] = $applyStartDate." 00:00:00";
         $activityParams['apply_end_time'] = $applyEndDate." 23:59:59";
         return $activityParams;
-
+     
     }
 
     public function createActivity($activityParams = [],$user_info)
@@ -326,8 +326,6 @@ class ActivityService extends BaseService
                                         $activity->detail['header_image']=$header_image==""?$activity->detail['header_image']:$header_image;
                     
                     $activity->detail = json_encode($activity->detail);
-
-                    //$this->logger->info($activity->detail);
                     
                     $update = $activity->save();
                     if ($update === false)
