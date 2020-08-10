@@ -19,7 +19,37 @@ use Phalcon\Mvc\Controller;
 
 class UserController extends BaseController
 {
-	
+    /*
+     * 登录
+     * 参数
+     * mobile（必填）：账号
+     * logincode（必填）：验证码
+     * companyuser_id （必填）企业导入名单id
+     * company_id （选填）企业id
+     * company_name （选填）企业名称
+     * app_id （必填）app_id
+     * */
+    public function loginAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
+        $logincode = isset($data['logincode'])?preg_replace('# #','',$data['logincode']):"";
+        $companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
+        $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
+        $app_id = $data["app_id")??101;
+        $company_id = intval($data['company_id'])??0);
+        $company_name = isset($data['company_name'])?substr(preg_replace('# #','',$data['company_name']),0,11):"";
+        //调用手机号验证码登录方法
+        $return  = (new LoginService())->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo,$company_id,$company_name,$app_id);
+        //返回值判断
+        if($return['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        return $this->success($return['data']);
+    }
+
 	/*
      * 手机号密码登录
      * 参数
