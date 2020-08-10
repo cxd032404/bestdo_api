@@ -31,6 +31,7 @@ class UserController extends BaseController
      * */
     public function loginAction()
     {
+        echo "666";
         //接收参数并格式化
         $data = $this->request->get();
         $mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
@@ -38,10 +39,13 @@ class UserController extends BaseController
         $companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
-        $app_id = $data["app_id"]??101;
+        $app_id = $this->request->getHeader("app_id")??101;
         $company_id = intval($data['company_id']??0);
         $company_name = isset($data['company_name'])?substr(preg_replace('# #','',$data['company_name']),0,11):"";
         //调用手机号验证码登录方法
+        echo "EHre";
+        echo $mobile."-".$logincode."-".$app_id;
+        die();
         $return  = (new LoginService())->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo,$company_id,$company_name,$app_id);
         //返回值判断
         if($return['result']!=1){
