@@ -40,7 +40,7 @@ class UserController extends BaseController
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
         $app_id = $this->request->getHeader("app_id")>0?$this->request->getHeader("app_id"):101;
         $company_id = intval($data['company_id']??0);
-        $company_name = isset($data['company_name'])?substr(preg_replace('# #','',$data['company_name']),0,11):"";
+        $company_name = isset($data['company_name'])?substr(preg_replace('# #','',$data['company_name']),0,32):"";
         //调用手机号验证码登录方法
         $return  = (new LoginService())->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo,$company_id,$company_name,$app_id);
         print_R($return);

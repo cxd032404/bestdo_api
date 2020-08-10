@@ -99,7 +99,6 @@ class LoginService extends BaseService
         {
             //用作登录的用户数据
             $userInfo = $userToLogin['mobileUser'];
-
         }
         else
         {
@@ -127,10 +126,10 @@ class LoginService extends BaseService
                         $createCompany = (new CompanyService())->createCompany(["company_name"=>$company_name,"member_limit"=>10,'parent_id'=>0,'dilplay'=>1]);
                         if($createCompany['result']==true)
                         {
-                            $createUser = (new UserService())->createUser(["username"=>$mobile,
+                            $createUser = (new UserService())->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
                                 "company_id"=>$createCompany['companyInfo']->company_id,
                                 'mobile'=>$mobile,'department_id'=>0,
-                                'department_id_1'=>0,'department_id_2'=>0,'department_id_3'=>0,'last_login_source'=>"Mobile"]);
+                                'department_id_1'=>0,'department_id_2'=>0,'department_id_3'=>0,'last_login_source'=>"Mobile",'is_del'=>0]);
                             if($createUser['result']==true)
                             {
                                 //登录流程
@@ -146,6 +145,23 @@ class LoginService extends BaseService
                         {
                             return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
                         }
+                    }
+                    else
+                    {
+                        return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                    }
+                }
+                else
+                {
+                    $createUser = (new UserService())->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
+                        "company_id"=>$company_id,
+                        'mobile'=>$mobile,'department_id'=>0,
+                        'department_id_1'=>0,'department_id_2'=>0,'department_id_3'=>0,'last_login_source'=>"Mobile",'is_del'=>0]);
+                    if($createUser['result']==true)
+                    {
+                        //登录流程
+                        $login = $this->loginByUser($createUser['userInfo']);
+                        return $login;
                     }
                     else
                     {
@@ -224,6 +240,7 @@ class LoginService extends BaseService
     public function getUserToLogin($mobile,$code,$miniProgramUserInfo,$app_id)
      {
          $oWechatService = new WechatService();
+         $oUserService = new UserService();
          $available = ['result'=>true,"mobileUser" => []];
          if(!empty($code))
          {
@@ -240,7 +257,7 @@ class LoginService extends BaseService
              }
              else
              {
-                 $mobileUser = $this->getUserInfoByMobile($mobile,$app_id);
+                 $mobileUser = $oUserService->getUserInfoByMobile($mobile,$app_id);
                  if(isset($mobileUser->user_id))
                  {
                      $available['mobileUser'] =  $mobileUser;
@@ -265,7 +282,7 @@ class LoginService extends BaseService
              }
              else
              {
-                 $mobileUser = $this->getUserInfoByMobile($mobile,$app_id);
+                 $mobileUser = $oUserService->getUserInfoByMobile($mobile,$app_id);
                  if(isset($mobileUser->user_id))
                  {
                      $available['mobileUser'] =  $mobileUser;
@@ -278,7 +295,7 @@ class LoginService extends BaseService
          }
          else
          {
-             $mobileUser = $this->getUserInfoByMobile($mobile);
+             $mobileUser = $oUserService->getUserInfoByMobile($mobile);
              if(isset($mobileUser->user_id))
              {
                  $available['mobileUser'] =  $mobileUser;
@@ -293,6 +310,8 @@ class LoginService extends BaseService
      //登录
      public function loginByUser($userInfo)
      {
+         $oUserService = (new UserService());
+         $oWechatService = (new WechatService());
          //用户存在只修改验证码状态及生产token
          if($userInfo->is_del==1){
              $return['msg']  = $this->msgList['mobile_prohibit'];
@@ -302,15 +321,13 @@ class LoginService extends BaseService
                      //如果尚未登录微信信息
                      if($userInfo->mini_program_id=="")
                      {
-                         $this->wechat_code_logger->info("登录更新小程序信息");
                          //完善用户小程序资料
-                         (new WechatService)->updateUserWithMiniProgram($userInfo->user_id,$miniProgramUserInfo);
+                         $oWechatService->updateUserWithMiniProgram($userInfo->user_id,$miniProgramUserInfo);
                      }
                      else
                      {
                          if($userInfo->test!=1)
                          {
-                             $this->wechat_code_logger->info("登录更新小程序信息");
                              //完善用户小程序资料
                              (new WechatService)->updateUserWithMiniProgram($userInfo->user_id,$miniProgramUserInfo);
                          }
@@ -322,25 +339,23 @@ class LoginService extends BaseService
                      //如果尚未登录微信信息
                      if($userInfo->wechatid=="")
                      {
-                         $this->wechat_code_logger->info("登录更新微信信息");
                          //完善用户微信资料
-                         (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userInfo->user_id,$code);
+                         $oWechatService->updateUserWithWechat($this->key_config->wechat,$userInfo->user_id,$code);
                      }
                      else
                      {
                          if($userInfo->test!=1)
                          {
-                             $this->wechat_code_logger->info("登录更新微信信息");
                              //完善用户微信资料
-                             (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userInfo->user_id,$code);
+                             $oWechatService->updateUserWithWechat($this->key_config->wechat,$userInfo->user_id,$code);
                          }
                      }
                  }
                  //生成token
-                 $tokeninfo = $this->getToken($userInfo->user_id);
+                 $tokeninfo = $oUserService->getToken($userInfo->user_id);
                  $currentTime = time();
                  //修改用户登录时间
-                 $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
+                 $oUserService->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
                      'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
                      'last_login_source'=>"Mobile"],$userInfo->user_id);
                  $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
