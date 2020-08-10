@@ -20,7 +20,7 @@ use Phalcon\Mvc\Controller;
 class UserController extends BaseController
 {
     /*
-     * 登录
+     * 手机号验证码登录
      * 参数
      * mobile（必填）：账号
      * logincode（必填）：验证码
@@ -38,8 +38,8 @@ class UserController extends BaseController
         $companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
-        $app_id = $data["app_id")??101;
-        $company_id = intval($data['company_id'])??0);
+        $app_id = $data["app_id"]??101;
+        $company_id = intval($data['company_id']??0);
         $company_name = isset($data['company_name'])?substr(preg_replace('# #','',$data['company_name']),0,11):"";
         //调用手机号验证码登录方法
         $return  = (new LoginService())->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo,$company_id,$company_name,$app_id);
