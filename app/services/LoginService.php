@@ -83,7 +83,7 @@ class LoginService extends BaseService
         "miniprogram_mobile_used"=>"您所使用手机号码已经绑定了其他的小程序账号",
     ];
 
-    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "",$app_id = 101)
+    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "",$company_id = 0,$company_name = "",$app_id = 101)
     {
         //基础校验
         //手机号码/验证码为空校验
@@ -119,7 +119,39 @@ class LoginService extends BaseService
         {
             if($companyuser_id == 0)
             {
-
+                if($company_id == 0)
+                {
+                    if($company_name != "")
+                    {
+                        //创建企业
+                        $createCompany = (new CompanyService())->createCompany(["company_name"=>$company_name,"member_limit"=>10,'parent_id'=>0,'dilplay'=>1]);
+                        if($createCompany['result']==true)
+                        {
+                            $createUser = (new UserService())->createUser(["username"=>$mobile,
+                                "company_id"=>$createCompany['companyInfo']->company_id,
+                                'mobile'=>$mobile,'department_id'=>0,
+                                'department_id_1'=>0,'department_id_2'=>0,'department_id_3'=>0,'last_login_source'=>"Mobile"]);
+                            if($createUser['result']==true)
+                            {
+                                //登录流程
+                                $login = $this->loginByUser($createUser['userInfo']);
+                                return $login;
+                            }
+                            else
+                            {
+                                return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                            }
+                        }
+                        else
+                        {
+                            return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                        }
+                    }
+                    else
+                    {
+                        return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                    }
+                }
             }
             else
             {
@@ -139,28 +171,28 @@ class LoginService extends BaseService
                 }
                 else
                 {
-
+                    //获取对应的部门信息
+                    $department = (new DepartmentService())->getDepartment($companyuserInfo->department_id);
+                    //创建用户
+                    $createUser = (new UserService())->createUser(["username"=>$mobile,
+                        "company_id"=>$companyuserInfo->company_id,
+                        'mobile'=>$mobile,'department_id'=>department_id,
+                        'department_id_1'=>$department['department_id_1'],'department_id_2'=>$department['department_id_2'],'department_id_3'=>$department['department_id_3'],
+                        'worker_id'=>$companyuserInfo->worker_id,"true_name"=>$companyuserInfo->name,"nick_name"=>$companyuserInfo->name,
+                        'last_login_source'=>"Mobile"]);
+                    if($createUser['result']==true)
+                    {
+                        //登录流程
+                        $login = $this->loginByUser($createUser['userInfo']);
+                        return $login;
+                    }
+                    else
+                    {
+                        return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                    }
                 }
             }
         }
-
-
-
-
-            //company_user>0
-                //登录流程
-
-
-            //compnay_user=0
-                //company_id > 0
-                    //登录
-                //company_id = 0
-                    //company_name ！=""
-                        //创建企业
-                        //登录流程
-                        //更新用户到企业
-                    //company_name = ""
-                        //拒绝登录
     }
     //校验手机号码和验证码
      public function checkMobileCode($mobile,$logincode)

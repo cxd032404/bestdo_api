@@ -125,4 +125,24 @@ class CompanyService extends BaseService
         ];
         return (new Protocal())->findFirst($params);
     }
+    //创建企业
+    public function createCompany($companyInfo = [])
+    {
+        $company = new \HJ\Company();
+        foreach($companyInfo as $key => $value)
+        {
+            $company->$key = $value;
+        }
+        $company->create_time = $company->update_time = date("Y-m-d H:i:s");
+        if ($company->create() === true) {
+            return ['result'=>true,"companyInfo"=>$company];
+        }
+        else
+        {
+            return ['result'=>false];
+        }
+        //ALTER TABLE `config_company` ADD `member_limit` INT(10) UNSIGNED NOT NULL DEFAULT '100' COMMENT '用户数量限制' AFTER `company_name`;
+        //ALTER TABLE `config_company` CHANGE `icon` `icon` VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '图标', CHANGE `detail` `detail` VARCHAR(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '备注';
+
+    }
 }

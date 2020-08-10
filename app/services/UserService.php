@@ -1300,4 +1300,22 @@ class UserService extends BaseService
         }
         return $return;
     }
+    //创建用户
+    public function createUser($userInfo = [])
+    {
+        $user = new \HJ\UserInfo();
+        foreach($userInfo as $key => $value)
+        {
+            $user->$key = $value;
+        }
+        $user->create_time = $user->update_time = date("Y-m-d H:i:s");
+        if ($user->create() === true) {
+            return ['result'=>true,"userInfo"=>$user];
+        }
+        else
+        {
+            return ['result'=>false];
+        }
+
+    }
 }
