@@ -218,6 +218,7 @@ class LoginService extends BaseService
              //验证码为空或者错误
              $return['msg']  = $this->msgList['sendcode_error'];
          }
+         return $return;
      }
     //获取可能可用的手机号码对应用户用以登录
     public function getUserToLogin($mobile,$code,$miniProgramUserInfo,$app_id)
