@@ -126,7 +126,7 @@ class LoginService extends BaseService
                     if($company_name != "")
                     {
                         //创建企业
-                        $createCompany = $oCompanyService->createCompany(["company_name"=>$company_name,"member_limit"=>10,'parent_id'=>0,'dilplay'=>1]);
+                        $createCompany = $oCompanyService->createCompany(["company_name"=>$company_name,"member_limit"=>10,'parent_id'=>0,'display'=>1]);
                         if($createCompany['result']==true)
                         {
                             $createUser = $oUserService->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
