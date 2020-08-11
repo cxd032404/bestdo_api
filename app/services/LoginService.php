@@ -85,6 +85,8 @@ class LoginService extends BaseService
 
     public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "",$company_id = 0,$company_name = "",$app_id = 101)
     {
+        $oCompanyService = new CompanyService();
+        $oUserService = new UserService();
         //基础校验
         //手机号码/验证码为空校验
         //验证码码有效性校验
@@ -111,7 +113,7 @@ class LoginService extends BaseService
             //登录流程
             $login = $this->loginByUser($userInfo);
             //修改验证码记录状态
-            $sendcode = (new UserService())->setMobileCode($mobile,$logincode);
+            $sendcode = $oUserService->setMobileCode($mobile,$logincode);
             return $login;
         }
         else//没找到用户
@@ -123,10 +125,10 @@ class LoginService extends BaseService
                     if($company_name != "")
                     {
                         //创建企业
-                        $createCompany = (new CompanyService())->createCompany(["company_name"=>$company_name,"member_limit"=>10,'parent_id'=>0,'dilplay'=>1]);
+                        $createCompany = $oCompanyService->createCompany(["company_name"=>$company_name,"member_limit"=>10,'parent_id'=>0,'dilplay'=>1]);
                         if($createCompany['result']==true)
                         {
-                            $createUser = (new UserService())->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
+                            $createUser = $oUserService->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
                                 "company_id"=>$createCompany['companyInfo']->company_id,
                                 'mobile'=>$mobile,'department_id'=>0,
                                 'department_id_1'=>0,'department_id_2'=>0,'department_id_3'=>0,'last_login_source'=>"Mobile",'is_del'=>0]);
@@ -134,7 +136,7 @@ class LoginService extends BaseService
                             {
                                 //登录流程
                                 $login = $this->loginByUser($createUser['userInfo']);
-                                (new CompanyService())->updateCompanyInfo($createCompany['companyInfo']->company_id,['create_user_id'=>$createUser['userInfo']->user_id]);
+                                $oCompanyService->updateCompanyInfo($createCompany['companyInfo']->company_id,['create_user_id'=>$createUser['userInfo']->user_id]);
                                 return $login;
                             }
                             else
@@ -154,7 +156,7 @@ class LoginService extends BaseService
                 }
                 else
                 {
-                    $createUser = (new UserService())->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
+                    $createUser = $oUserService->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
                         "company_id"=>$company_id,
                         'mobile'=>$mobile,'department_id'=>0,
                         'department_id_1'=>0,'department_id_2'=>0,'department_id_3'=>0,'last_login_source'=>"Mobile",'is_del'=>0]);
@@ -191,7 +193,7 @@ class LoginService extends BaseService
                     //获取对应的部门信息
                     $department = (new DepartmentService())->getDepartment($companyuserInfo->department_id);
                     //创建用户
-                    $createUser = (new UserService())->createUser(["username"=>$mobile,
+                    $createUser = $oUserService->createUser(["username"=>$mobile,
                         "company_id"=>$companyuserInfo->company_id,
                         'mobile'=>$mobile,'department_id'=>department_id,
                         'department_id_1'=>$department['department_id_1'],'department_id_2'=>$department['department_id_2'],'department_id_3'=>$department['department_id_3'],
