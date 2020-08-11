@@ -261,7 +261,7 @@ class LoginService extends BaseService
              }
              else
              {
-                 $mobileUser = $oUserService->getUserInfoByMobile($mobile,$app_id);
+                 $mobileUser = $oUserService->getUserInfoByMobile($mobile);
                  if(isset($mobileUser->user_id))
                  {
                      $available['mobileUser'] =  $mobileUser;
@@ -278,7 +278,7 @@ class LoginService extends BaseService
              $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
              if(isset($miniProgramUserInfo['openid']))
              {
-                 $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
+                 $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,$app_id);
                  if($available['result']==0)
                  {
                      $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
@@ -286,7 +286,7 @@ class LoginService extends BaseService
              }
              else
              {
-                 $mobileUser = $oUserService->getUserInfoByMobile($mobile,$app_id);
+                 $mobileUser = $oUserService->getUserInfoByMobile($mobile);
                  if(isset($mobileUser->user_id))
                  {
                      $available['mobileUser'] =  $mobileUser;
@@ -410,6 +410,11 @@ class LoginService extends BaseService
                 {
                     $return = ['result'=>0,"msg"=>"openid_used"];
                 }
+            }
+            else
+            {
+                //同时匹配不上，返回空用户
+                $return = ['result'=>1,"mobileUser"=>[]];
             }
         }
         return $return;
