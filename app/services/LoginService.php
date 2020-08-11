@@ -77,6 +77,7 @@ class LoginService extends BaseService
 
         "activity_not_no"=>"活动尚未开启，请耐心等待！",
         "activity_ended"=>"活动已结束，不可报名！",
+        "openid_used"=>"您所使用微信账号已经绑定了其他的手机号码",
         "wechat_used"=>"您所使用微信账号已经绑定了其他的手机号码",
         "wechat_mobile_used"=>"您所使用手机号码已经绑定了其他的微信账号",
         "miniprogram_used"=>"您所使用小程序账号已经绑定了其他的手机号码",
@@ -365,4 +366,52 @@ class LoginService extends BaseService
          }
          return $return;
      }
+    public function checkMobileAvailable($openid,$mobile,$app_id)
+    {
+        $oUserService =  new UserService();
+        //通过openid和app_id匹配用户
+        $userInfo = $oUserService->getWechatUserInfoByOpenId($openid,$app_id);
+        //找到用户
+        if(isset($userInfo->user_id))
+        {
+            $currentUser = $oUserService->getUserInfo($userInfo->user_id);
+            if($currentUser->test==1)
+            {
+                //如果是测试用户
+                $return = ['result'=>1,"mobileUser"=>$currentUser];
+            }
+            else
+            {
+                //如果手机号不一致
+                if($currentUser->mobile != $mobile)
+                {
+                    $return = ['result'=>0,"msg"=>"openid_used"];
+                }
+                else//手机号一致
+                {
+                    $return = ['result'=>1,"mobileUser"=>$currentUser];
+                }
+            }
+        }
+        else//没找到
+        {
+            //通过手机号匹配
+            $currentUser = $oUserService->getUserInfoByMobile($mobile);
+            //找到用户
+            if(isset($currentUser->user_id))
+            {
+                //测试用户
+                if($currentUser->test==1)
+                {
+                    //如果微信号不一致，但是手机对用用户是测试用户
+                    $return = ['result'=>1,"mobileUser"=>$currentUser];
+                }
+                else
+                {
+                    $return = ['result'=>0,"msg"=>"openid_used"];
+                }
+            }
+        }
+        return $return;
+    }
 }

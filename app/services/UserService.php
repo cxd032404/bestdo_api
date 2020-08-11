@@ -994,6 +994,22 @@ class UserService extends BaseService
             return [];
         }
     }
+    public function getWechatUserInfoByOpenId($openId = "",$app_id)
+    {
+        //获取用户信息
+        $userInfo = \HJ\OpenId::findFirst([
+            "app_id = ".$app_id." and open_id='".$openId."'",
+            'columns'=>'*',
+        ]);
+        if(isset($userInfo->id))
+        {
+            return $userInfo;
+        }
+        else
+        {
+            return [];
+        }
+    }
     //根据微信的unionid获取用户信息
     public function getUserInfoByUnionId($unionId = "")
     {
@@ -1300,6 +1316,7 @@ class UserService extends BaseService
         }
         return $return;
     }
+
     //创建用户
     public function createUser($userInfo = [])
     {
