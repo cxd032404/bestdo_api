@@ -134,6 +134,7 @@ class LoginService extends BaseService
                             {
                                 //登录流程
                                 $login = $this->loginByUser($createUser['userInfo']);
+                                (new CompanyService())->updateCompanyInfo($createCompany['companyInfo']->company_id,['create_user_id'=>$createUser['userInfo']->user_id]);
                                 return $login;
                             }
                             else

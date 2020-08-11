@@ -141,8 +141,28 @@ class CompanyService extends BaseService
         {
             return ['result'=>false];
         }
-        //ALTER TABLE `config_company` ADD `member_limit` INT(10) UNSIGNED NOT NULL DEFAULT '100' COMMENT '用户数量限制' AFTER `company_name`;
-        //ALTER TABLE `config_company` CHANGE `icon` `icon` VARCHAR(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '图标', CHANGE `detail` `detail` VARCHAR(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '备注';
-
+        //ALTER TABLE `config_company` ADD `create_user_id` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '创建人用户id' AFTER `parent_id`, ADD INDEX (`create_user_id`);
     }
+    //更新企业信息
+    public function updateCompanyInfo($company_id=0,$map)
+    {
+        //修改企业信息
+        $companyInfo = \HJ\Company::findFirst(["company_id = '".$company_id."'"]);
+        foreach($map as $key => $value)
+        {
+            if(!empty($value))
+            {
+                $companyInfo->$key = $value;
+            }
+        }
+        $companyInfo->update_time = date("Y-m-d H:i:s");
+        if ($companyInfo->update() === false) {
+            return ['result'=>false];
+        }else {
+            $companyInfo = $this->getCompanyInfo($company_id,'*',0);
+            return ['result'=>true,"companyInfo"=>$companyInfo];
+        }
+        return $return;
+    }
+
 }
