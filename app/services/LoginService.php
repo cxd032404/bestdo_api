@@ -278,7 +278,7 @@ class LoginService extends BaseService
              $miniProgramUser = $oWechatService->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
              if(isset($miniProgramUser['openid']))
              {
-                 $available = $this->$miniProgramUser($miniProgramUserInfo['openid'],$mobile,$app_id);
+                 $available = $this->checkMobileAvailable($miniProgramUser['openid'],$mobile,$app_id);
                  if($available['result']==0)
                  {
                      //$return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
