@@ -458,28 +458,12 @@ class LoginService extends BaseService
             //找到用户
             if(isset($userInfo->user_id))
             {
-                $currentUser = $oUserService->getUserInfo($userInfo->user_id);
-                if($currentUser->test==1)
-                {
-                    //如果是测试用户
-                    $return = ['result'=>1,"mobileUser"=>$currentUser];
-                }
-                else
-                {
-                    //如果手机号不一致
-                    if($currentUser->mobile != $mobile)
-                    {
-                        $return = ['result'=>0,"msg"=>"openid_used"];
-                    }
-                    else//手机号一致
-                    {
-                        $return = ['result'=>1,"mobileUser"=>$currentUser];
-                    }
-                }
+                $return = ['result'=>0,"msg"=>"openid_used"];
             }
             else//没找到
             {
-
+                //同时匹配不上，返回空用户
+                $return = ['result'=>1,"mobileUser"=>[]];
             }
         }
         return $return;
