@@ -385,23 +385,31 @@ class LoginService extends BaseService
             //获取用户关联appid的OpenId
             $openIdList = $oUserService->getOpenIdListByUser($currentUser->user_id,$app_id);
             $openIdInfo = $openIdList[$app_id]??[];
-            //如果找到且openid相符
-            if(isset($openIdInfo["open_id"]) && $openIdInfo["open_id"]== $openid)
+            //如果找到且openid
+            if(isset($openIdInfo["open_id"]))
             {
-                $return = ['result'=>1,"mobileUser"=>$currentUser,"self"=>1];
-            }
-            else
-            {
-                //测试用户
-                if($currentUser->test==1)
+                //相符 识别为本人
+                if($openIdInfo["open_id"]== $openid)
                 {
-                    //如果是测试用户，直接通过
-                    $return = ['result'=>1,"mobileUser"=>$currentUser,"self"=>0];
+                    $return = ['result'=>1,"mobileUser"=>$currentUser,"self"=>1];
                 }
                 else
                 {
-                    $return = ['result'=>0,"msg"=>"openid_used"];
+                    //测试用户
+                    if($currentUser->test==1)
+                    {
+                        //如果是测试用户，直接通过
+                        $return = ['result'=>1,"mobileUser"=>$currentUser,"self"=>0];
+                    }
+                    else
+                    {
+                        $return = ['result'=>0,"msg"=>"openid_used"];
+                    }
                 }
+            }
+            else//没找到，识别为本人
+            {
+                $return = ['result'=>1,"mobileUser"=>$currentUser,"self"=>1];
             }
         }
         else
