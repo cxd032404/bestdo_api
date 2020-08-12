@@ -501,6 +501,34 @@ class UserService extends BaseService
         }
         return $return;
     }
+    //更新用户对应的Openid列表
+    public function updateUserOpenId($user_id,$openid,$app_id)
+    {
+        $openidList = $this->getOpenIdListByUser($user_id,$app_id);
+        if(count($openidList)>0)
+        {
+            return ['result'=>true];
+        }
+        else
+        {
+            $userInfo = $this->getUserInfo($user_id,"user_id,mobile,company_id");
+            $openId = new \HJ\OpenId();
+            $openId->open_id = $openid;
+            $openId->user_id = $userInfo->user_id;
+            $openId->mobile = $userInfo->mobile;
+            $openId->company_id = $userInfo->company_id;
+            $openId->app_id = $app_id;
+            $openId->create_time = $openId->update_time = date("Y-m-d H:i:s");
+            if ($openId->create() === true)
+            {
+                return ['result'=>true];
+            }
+            else
+            {
+                return ['result'=>false];
+            }
+        }
+    }
 
     //点赞
     public function setKudosInc($post_id=0,$sender_id=0)

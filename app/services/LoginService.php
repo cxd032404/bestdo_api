@@ -288,6 +288,7 @@ class LoginService extends BaseService
                      if($available['self']==1)
                      {
                          $oWechatService->updateUserWithMiniProgram($available['mobileUser']->user_id,$miniProgramUserInfo,$app_id);
+                         $oUserService->updateUserOpenId($available['mobileUser']->user_id,$miniProgramUser['openid'],$app_id);
                      }
                  }
              }
