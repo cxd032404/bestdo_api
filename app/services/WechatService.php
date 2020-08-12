@@ -80,8 +80,6 @@ class WechatService extends BaseService
         $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'],$this->key_config->tencent, $miniProgramUserInfo['code'],$app_id );
 
         $miniProgramUserInfo = json_decode($miniProgramUserInfo['data'],true);
-        echo "解包后用户数据";
-        print_R($miniProgramUserInfo);
         if(isset($miniProgramUserInfo['openId']))
         {
             //修改用户信息
@@ -89,7 +87,7 @@ class WechatService extends BaseService
                 'nick_name'=>$miniProgramUserInfo['nickName']??"",
                 'sex'=>$miniProgramUserInfo['gender'],
                 'user_img'=>$miniProgramUserInfo['avatarUrl']];
-            (new UserService())->updateUserInfo($user_id,$userInfo);
+            (new UserService())->updateUserInfo($userInfo,$user_id);
         }
         return true;
     }
