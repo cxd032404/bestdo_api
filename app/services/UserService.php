@@ -1011,13 +1011,24 @@ class UserService extends BaseService
         }
     }
     //获取用户关联的openid列表
-    public function getOpenIdListByUser($user_id)
+    public function getOpenIdListByUser($user_id,$app_id = 0)
     {
+        if($app_id>0)
+        {
+            $params = [
+                "user_id = '".$user_id."' and app_id = '".$app_id."'",
+                'columns'=>'*',
+            ];
+        }
+        else
+        {
+            $params = [
+                "user_id = '".$user_id."'",
+                'columns'=>'*',
+            ];
+        }
         //获取用户信息
-        $openIdList= \HJ\OpenId::findFirst([
-            "user_id = '".$user_id."'",
-            'columns'=>'*',
-        ]);
+        $openIdList= \HJ\OpenId::find($params);
         $return = [];
         foreach($openIdList as $key => $value)
         {

@@ -437,11 +437,18 @@ class LoginService extends BaseService
             }
             else
             {
-                //
-                $openIdList = $oUserService->getOpenIdListByUser($currentUser->user_id);
-                print_R($openIdList);
-                die();
-                $return = ['result'=>0,"msg"=>"openid_used"];
+                //获取用户关联appid的OpenId 
+                $openIdList = $oUserService->getOpenIdListByUser($currentUser->user_id,$app_id);
+                $openIdInfo = $openIdList[$app_id]??[];
+                //如果找到且openid相符
+                if(isset($openIdInfo["open_id"]) && $openIdInfo["open_id"]== $openid)
+                {
+                    $return = ['result'=>1,"mobileUser"=>$currentUser];
+                }
+                else
+                {
+                    $return = ['result'=>0,"msg"=>"openid_used"];
+                }
             }
         }
         else
