@@ -1001,7 +1001,7 @@ class UserService extends BaseService
             "app_id = ".$app_id." and open_id='".$openId."'",
             'columns'=>'*',
         ]);
-        if(isset($userInfo->id))
+        if(isset($userInfo->user_id))
         {
             return $userInfo;
         }
@@ -1010,6 +1010,22 @@ class UserService extends BaseService
             return [];
         }
     }
+    //获取用户关联的openid列表
+    public function getOpenIdListByUser($user_id)
+    {
+        //获取用户信息
+        $openIdList= \HJ\OpenId::findFirst([
+            "user_id = '".$user_id."'",
+            'columns'=>'*',
+        ]);
+        $return = [];
+        foreach($openIdList as $key => $value)
+        {
+            $return[$value->app_id] = $value->toArray();
+        }
+        return $return;
+    }
+
     //根据微信的unionid获取用户信息
     public function getUserInfoByUnionId($unionId = "")
     {
