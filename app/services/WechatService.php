@@ -33,7 +33,7 @@ class WechatService extends BaseService
 
     //根据code获取用户微信信息
     /*更新用户微信信息*/
-    public function updateUserWithWechat($wechat=[],$user_id=0,$code="")
+    public function updateUserWithWechat($wechat=[],$user_id=0,$code="",$app_id = 0)
     {
         $wechat_cache = $this->config->cache_settings->wechat;
         $redis_key = $wechat_cache->name.$code;
@@ -80,20 +80,16 @@ class WechatService extends BaseService
         $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'],$this->key_config->tencent, $miniProgramUserInfo['code'],$app_id );
 
         $miniProgramUserInfo = json_decode($miniProgramUserInfo['data'],true);
+        echo "解包后用户数据";
+        print_R($miniProgramUserInfo);
         if(isset($miniProgramUserInfo['openId']))
         {
             //修改用户信息
-            $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
-            if($userinfo){
-                $userinfo->mini_program_id = $miniProgramUserInfo['openId']??"";
-                $userinfo->unionid = $miniProgramUserInfo['unionId']??"";
-                $userinfo->nick_name = $miniProgramUserInfo['nickName']??"";
-                $userinfo->sex = $miniProgramUserInfo['gender'];
-                $userinfo->user_img = $miniProgramUserInfo['avatarUrl'];
-                unset($miniProgramUserInfo['watermark']);
-                $userinfo->wechatinfo = json_encode($miniProgramUserInfo);
-                $userinfo->update();
-            }
+            $userInfo = ['unionid'=>$miniProgramUserInfo['unionId']??"",
+                'nick_name'=>$miniProgramUserInfo['nickName']??"",
+                'sex'=>$miniProgramUserInfo['gender'],
+                'user_img'=>$miniProgramUserInfo['avatarUrl']];
+            (new UserService())->updateUserInfo($user_id,$userInfo);
         }
         return true;
     }

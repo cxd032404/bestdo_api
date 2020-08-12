@@ -256,7 +256,7 @@ class LoginService extends BaseService
                  $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile,$app_id);
                  if($available['result']==0)
                  {
-                     $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                    //$return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
                  }
              }
              else
@@ -281,7 +281,14 @@ class LoginService extends BaseService
                  $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,$app_id);
                  if($available['result']==0)
                  {
-                     $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                     //$return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                 }
+                 else
+                 {
+                     if($available['self']==1)
+                     {
+                         $oWechatService->updateUserWithMiniProgram($available['mobileUser']->user_id,$miniProgramUserInfo,$app_id);
+                     }
                  }
              }
              else
@@ -374,21 +381,21 @@ class LoginService extends BaseService
         //找到用户
         if(isset($currentUser->user_id))
         {
-            //测试用户
-            if($currentUser->test==1)
+            //获取用户关联appid的OpenId
+            $openIdList = $oUserService->getOpenIdListByUser($currentUser->user_id,$app_id);
+            $openIdInfo = $openIdList[$app_id]??[];
+            //如果找到且openid相符
+            if(isset($openIdInfo["open_id"]) && $openIdInfo["open_id"]== $openid)
             {
-                //如果是测试用户，直接通过
-                $return = ['result'=>1,"mobileUser"=>$currentUser];
+                $return = ['result'=>1,"mobileUser"=>$currentUser,"self"=>1];
             }
             else
             {
-                //获取用户关联appid的OpenId 
-                $openIdList = $oUserService->getOpenIdListByUser($currentUser->user_id,$app_id);
-                $openIdInfo = $openIdList[$app_id]??[];
-                //如果找到且openid相符
-                if(isset($openIdInfo["open_id"]) && $openIdInfo["open_id"]== $openid)
+                //测试用户
+                if($currentUser->test==1)
                 {
-                    $return = ['result'=>1,"mobileUser"=>$currentUser];
+                    //如果是测试用户，直接通过
+                    $return = ['result'=>1,"mobileUser"=>$currentUser,"self"=>0];
                 }
                 else
                 {
