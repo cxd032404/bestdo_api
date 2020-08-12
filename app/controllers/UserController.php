@@ -38,7 +38,7 @@ class UserController extends BaseController
         $companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
-        $app_id = $this->request->getHeader("app_id")>0?$this->request->getHeader("app_id"):101;
+        $app_id = $this->request->getHeader("app_id")>0?$this->request->getHeader("app_id"):201;
         $company_id = intval($data['company_id']??0);
         $company_name = isset($data['company_name'])?substr(preg_replace('# #','',$data['company_name']),0,32):"";
         //调用手机号验证码登录方法

@@ -1017,6 +1017,7 @@ class UserService extends BaseService
         {
             $return[$value->app_id] = $value->toArray();
         }
+        return $return;
     }
     //获取用户关联的openid列表
     public function getOpenIdListByUser($user_id,$app_id = 0)

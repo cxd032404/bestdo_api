@@ -401,7 +401,7 @@ class LoginService extends BaseService
             //通过openid和app_id匹配用户
             $userList = $oUserService->getWechatUserInfoByOpenId($openid,$app_id);
             //找到用户
-            if(count($userList))
+            if(count($userList)>0)
             {
                 $return = ['result'=>0,"msg"=>"openid_used"];
             }
