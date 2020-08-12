@@ -994,20 +994,28 @@ class UserService extends BaseService
             return [];
         }
     }
-    public function getWechatUserInfoByOpenId($openId = "",$app_id)
+    public function getWechatUserInfoByOpenId($openId = "",$app_id = 0)
     {
-        //获取用户信息
-        $userInfo = \HJ\OpenId::findFirst([
-            "app_id = ".$app_id." and open_id='".$openId."'",
-            'columns'=>'*',
-        ]);
-        if(isset($userInfo->user_id))
+        if($app_id>0)
         {
-            return $userInfo;
+            $params = [
+                "open_id = '".$openId."' and app_id = '".$app_id."'",
+                'columns'=>'*',
+            ];
         }
         else
         {
-            return [];
+            $params = [
+                "open_id = '".$openId."'",
+                'columns'=>'*',
+            ];
+        }
+        //获取用户信息
+        $userList = \HJ\OpenId::find($params);
+        $return = [];
+        foreach($userList as $key => $value)
+        {
+            $return[$value->app_id] = $value->toArray();
         }
     }
     //获取用户关联的openid列表

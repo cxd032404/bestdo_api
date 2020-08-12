@@ -366,61 +366,6 @@ class LoginService extends BaseService
          }
          return $return;
      }
-    /*
-     public function checkMobileAvailable($openid,$mobile,$app_id)
-    {
-        $oUserService =  new UserService();
-        //通过openid和app_id匹配用户
-        $userInfo = $oUserService->getWechatUserInfoByOpenId($openid,$app_id);
-        //找到用户
-        if(isset($userInfo->user_id))
-        {
-            $currentUser = $oUserService->getUserInfo($userInfo->user_id);
-            if($currentUser->test==1)
-            {
-                //如果是测试用户
-                $return = ['result'=>1,"mobileUser"=>$currentUser];
-            }
-            else
-            {
-                //如果手机号不一致
-                if($currentUser->mobile != $mobile)
-                {
-                    $return = ['result'=>0,"msg"=>"openid_used"];
-                }
-                else//手机号一致
-                {
-                    $return = ['result'=>1,"mobileUser"=>$currentUser];
-                }
-            }
-        }
-        else//没找到
-        {
-            //通过手机号匹配
-            $currentUser = $oUserService->getUserInfoByMobile($mobile);
-            //找到用户
-            if(isset($currentUser->user_id))
-            {
-                //测试用户
-                if($currentUser->test==1)
-                {
-                    //如果微信号不一致，但是手机对用用户是测试用户
-                    $return = ['result'=>1,"mobileUser"=>$currentUser];
-                }
-                else
-                {
-                    $return = ['result'=>0,"msg"=>"openid_used"];
-                }
-            }
-            else
-            {
-                //同时匹配不上，返回空用户
-                $return = ['result'=>1,"mobileUser"=>[]];
-            }
-        }
-        return $return;
-    }
-    */
     public function checkMobileAvailable($openid,$mobile,$app_id)
     {
         $oUserService =  new UserService();
@@ -454,9 +399,9 @@ class LoginService extends BaseService
         else
         {
             //通过openid和app_id匹配用户
-            $userInfo = $oUserService->getWechatUserInfoByOpenId($openid,$app_id);
+            $userList = $oUserService->getWechatUserInfoByOpenId($openid,$app_id);
             //找到用户
-            if(isset($userInfo->user_id))
+            if(count($userList))
             {
                 $return = ['result'=>0,"msg"=>"openid_used"];
             }
