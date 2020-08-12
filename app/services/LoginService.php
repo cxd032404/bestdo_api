@@ -105,7 +105,7 @@ class LoginService extends BaseService
         }
         else
         {
-            return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+            return ['rusult'=>"false","msg"=>$this->msgList[$userToLogin['msg']],"code"=>400];
         }
         if(isset($userInfo->user_id))
         {
