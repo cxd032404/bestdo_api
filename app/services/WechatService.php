@@ -19,6 +19,9 @@ class WechatService extends BaseService
     /*更新用户微信信息*/
     public function getOpenIdByCode($wechat = [],$code="")
     {
+        $app_id = 101;
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
         //第二步：获取网页授权access_token和openid
@@ -72,8 +75,11 @@ class WechatService extends BaseService
     public function indexAction()
     {
         echo '测试信息';die;
-        $appid = $this->key_config->wechat->appid;
-        $appsecret = $this->key_config->wechat->appsecret;
+        $app_id = 101;
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
             $company_id = $_REQUEST['company_id']??"1";
             $redirect_url = 'http://api.staffhome.cn/Wechat/index';
@@ -111,8 +117,11 @@ class WechatService extends BaseService
     /*测试----获取用户信息并判断是否关注*/
     public function getCodeForManager()
     {
-        $appid = $this->key_config->wechat->appid;
-        $appsecret = $this->key_config->wechat->appsecret;
+        $app_id = 101;
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
             $redirect_url = $this->request->getServerName().$this->request->getURI();
             $redirect_url = str_replace("api.staffhome.cn","http://www.staffhome.cn/api",$redirect_url);
