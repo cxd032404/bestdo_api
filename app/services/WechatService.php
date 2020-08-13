@@ -100,7 +100,7 @@ class WechatService extends BaseService
             }
         }
         //第四步：根据appid和appsecret获取全局access_token
-        $access_token = $this->getAccessToken($appid,$appsecret);
+        $access_token = $this->getAccessToken(101);
         //第五步：根据全局access_token和openid获取用户信息
         $userinfo = $this->getUserInfo($access_token,$openid);
         if (array_key_exists('errcode', $userinfo) && $userinfo['errcode'] != '0') {
@@ -193,8 +193,12 @@ class WechatService extends BaseService
     }
 
     //获取全局access_token
-    public function getAccessToken($appid="",$appsecret="",$redisKey = 'access_token')
+    public function getAccessToken($app_id=101,$redisKey = 'access_token')
     {
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['app_id'];
+        $appsecret = $wechat['appsecret'];
         $access_token_redis = $this->getRedis($redisKey);
         if( $access_token_redis && $access_token_redis["expires_time"] && $access_token_redis["expires_time"]>time() ){
             $access_token = $access_token_redis;
@@ -230,7 +234,7 @@ class WechatService extends BaseService
     //获取分享所需参数
     public function getSignPackage($appid="",$appsecret="",$url="")
     {
-        $AccessToken = $this->getAccessToken($appid,$appsecret);
+        $AccessToken = $this->getAccessToken(101);
         $jsapiTicket = $this->_newGetApiTicket($AccessToken);
         // 注意 URL 一定要动态获取，不能 hardcode.
         //$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
@@ -435,7 +439,7 @@ class WechatService extends BaseService
      */
     public function wechatMenue(){
         die();
-        $access_token = $this->getAccessToken($this->key_config->aliyun->wechat->appid,$this->key_config->aliyun->wechat->appsecret);
+        $access_token = $this->getAccessToken(101);
 
         $url = 'https://api.weixin.qq.com/cgi-bin/menu/create?access_token='.$access_token;
         $menue = [
@@ -483,7 +487,7 @@ class WechatService extends BaseService
         $appid = $this->key_config->tencent->$app_id->appid;
         $appsecret = $this->key_config->tencent->$app_id->appsecret;
         $redisKey = 'miniprogram';
-        $accessToken = $this->getAccessToken($appid,$appsecret,$redisKey);
+        $accessToken = $this->getAccessToken(101,$redisKey);
         $url = 'https://api.weixin.qq.com/wxa/msg_sec_check?access_token='. $accessToken;
         $data = json_encode(array('content'=>$checkContent),JSON_UNESCAPED_UNICODE);
         $wechatReturn =(new WebCurl())->curl_post($url,$data);
