@@ -336,41 +336,6 @@ class LoginService extends BaseService
          if($userInfo->is_del==1){
              $return['msg']  = $this->msgList['mobile_prohibit'];
          }else{
-                 if(!empty($miniProgramUserInfo))
-                 {
-                     //如果尚未登录微信信息
-                     if($userInfo->mini_program_id=="")
-                     {
-                         //完善用户小程序资料
-                         $oWechatService->updateUserWithMiniProgram($userInfo->user_id,$miniProgramUserInfo);
-                     }
-                     else
-                     {
-                         if($userInfo->test!=1)
-                         {
-                             //完善用户小程序资料
-                             (new WechatService)->updateUserWithMiniProgram($userInfo->user_id,$miniProgramUserInfo);
-                         }
-                     }
-
-                 }
-                 if(!empty($code))
-                 {
-                     //如果尚未登录微信信息
-                     if($userInfo->wechatid=="")
-                     {
-                         //完善用户微信资料
-                         $oWechatService->updateUserWithWechat($this->key_config->wechat,$userInfo->user_id,$code);
-                     }
-                     else
-                     {
-                         if($userInfo->test!=1)
-                         {
-                             //完善用户微信资料
-                             $oWechatService->updateUserWithWechat($this->key_config->wechat,$userInfo->user_id,$code);
-                         }
-                     }
-                 }
                  //生成token
                  $tokeninfo = $oUserService->getToken($userInfo->user_id);
                  $currentTime = time();
