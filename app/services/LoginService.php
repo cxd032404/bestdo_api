@@ -249,7 +249,7 @@ class LoginService extends BaseService
          if(!empty($code))
          {
              //通过code获取到微信的用户信息
-             $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->tencent,$code,$app_id);
+             $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($code,$app_id);
              if(isset($WechatUserInfo['openid']))
              {
                  //检查手机号和微信Openid是否配对组合可用
@@ -257,6 +257,14 @@ class LoginService extends BaseService
                  if($available['result']==0)
                  {
                     //$return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
+                 }
+                 else
+                 {
+                     if($available['self']==1)
+                     {
+                         $oWechatService->updateUserWithWechat($available['mobileUser']->user_id,$code,$app_id);
+                         $oUserService->updateUserOpenId($available['mobileUser']->user_id,$WechatUserInfo['openid'],$app_id);
+                     }
                  }
              }
              else

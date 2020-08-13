@@ -33,42 +33,17 @@ class WechatService extends BaseService
 
     //根据code获取用户微信信息
     /*更新用户微信信息*/
-    public function updateUserWithWechat($wechat=[],$user_id=0,$code="",$app_id = 0)
+    public function updateUserWithWechat($user_id=0,$code="",$app_id = 0)
     {
-        $wechat_cache = $this->config->cache_settings->wechat;
-        $redis_key = $wechat_cache->name.$code;
-        $cache = $this->redis->get($redis_key);
-        if($cache!= "")
+        $oauth_userinfo = $this->getUserInfoByCode_Wechat($code,$app_id);
+        if(isset($oauth_userinfo['openid']))
         {
-            $oauth2 = json_decode($cache,true);
-        }
-        else
-        {
-            $appid = $wechat['appid'];
-            $appsecret = $wechat['appsecret'];
-            //第二步：获取网页授权access_token和openid
-            $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
-        }
-        //var_dump($oauth2);
-        if (!array_key_exists('errcode', $oauth2)) {
-            $openid = $oauth2['openid'];
-        }
-        //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
-        $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
-        //var_dump($oauth_userinfo);
-        if (!array_key_exists('errcode', $oauth_userinfo)) {
             //修改用户信息
-            $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
-            //var_dump($userinfo);
-            if($userinfo){
-                $userinfo->wechatid = $oauth_userinfo['openid'];
-                $userinfo->unionid = $oauth_userinfo['unionid']??"";
-                $userinfo->nick_name = $oauth_userinfo['nickname'];
-                $userinfo->sex = $oauth_userinfo['sex'];
-                $userinfo->user_img = $oauth_userinfo['headimgurl'];
-                $userinfo->wechatinfo = json_encode($oauth_userinfo);
-                $userinfo->update();
-            }
+            $userInfo = ['unionid'=>$oauth_userinfo['unionid']??"",
+                'nick_name'=>$oauth_userinfo['nickname'],
+                'sex'=>$oauth_userinfo['sex'],
+                'user_img'=>$oauth_userinfo['headimgurl']];
+            (new UserService())->updateUserInfo($userInfo,$user_id);
         }
         return true;
     }
@@ -346,8 +321,9 @@ class WechatService extends BaseService
 
     //根据code获取用户微信信息
     /*更新用户微信信息*/
-    public function getUserInfoByCode_Wechat($wechat=[],$code="",$app_id)
+    public function getUserInfoByCode_Wechat($code="",$app_id)
     {
+        $wechat = $this->key_config->tencent;
         $wechat = $wechat->$app_id;
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
