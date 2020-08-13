@@ -1113,62 +1113,6 @@ class UserService extends BaseService
         }
     }
 
-    //微信通过openID登录
-    public function wechatLogin($openId = "")
-    {
-        $userinfo = $this->getUserInfoByWechat($openId);
-        if(!$userinfo)
-        {
-            $return = [];
-            $return['result'] = 0;
-            $return['msg']  = $this->msgList['user_openid_valid'];
-        }
-        elseif($userinfo->is_del==1)
-        {
-            $return = [];
-            $return['result'] = 0;
-            $return['msg']  = $this->msgList['wechat_prohibit'];
-        }
-        else {
-            $currentTime = time();
-            //修改用户登录时间
-            $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', $currentTime),
-                'last_update_time' => date('Y-m-d H:i:s', $currentTime),
-                'last_login_source' => "WeChat"], $userinfo->user_id);
-            //生成token
-            $tokeninfo = $this->getToken($userinfo->user_id);
-            $return = ['result' => 1, 'msg' => $this->msgList['login_success'], 'code' => 200, 'data' => ['user_info' => $tokeninfo['map'], 'user_token' => $tokeninfo['token']]];
-        }
-        return $return;
-    }
-    //微信通过openID登录
-    public function miniProgramLogin($unionId = "",$miniprogramId = "")
-    {
-        $userinfo = $this->getUserInfoByUnionId($unionId);
-        if(!$userinfo)
-        {
-            $userinfo = $this->getUserInfoByMiniprogramId($miniprogramId);
-            if(!$userinfo)
-            {
-                $return = [];
-                $return['result'] = 0;
-                $return['msg']  = $this->msgList['user_unionid_valid'];
-                $return['code']  = 403;
-            }
-        }
-        if(!isset($return['result']))
-        {
-            $currentTime = time();
-            //修改用户登录时间
-            $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', $currentTime),
-                'last_update_time' => date('Y-m-d H:i:s', $currentTime),
-                'last_login_source' => "MiniProgram"], $userinfo->user_id);
-            //生成token
-            $tokeninfo = $this->getToken($userinfo->user_id);
-            $return = ['result' => 1, 'msg' => $this->msgList['login_success'], 'code' => 200, 'data' => ['user_info' => $tokeninfo['map'], 'user_token' => $tokeninfo['token']]];
-        }
-        return $return;
-    }
     public function fixUserDepartment($user_id = 0)
     {
         if($user_id>0)

@@ -17,16 +17,15 @@ class WechatService extends BaseService
 
 
     /*更新用户微信信息*/
-    public function getOpenIdByCode($wechat = [],$code="")
+    public function getOpenIdByCode($code="",$app_id=101)
     {
-        $app_id = 101;
         $wechat = $this->key_config->tencent;
         $wechat = $wechat->$app_id;
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
         //第二步：获取网页授权access_token和openid
         $this->wechat_code_logger->info("openIdByCode");
-        $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+        $oauth2 = $this->getOauthAccessToken($app_id,$code);
         $openId = "";
         if (!array_key_exists('errcode', $oauth2)) {
             $openId = $oauth2['openid'];
@@ -88,7 +87,7 @@ class WechatService extends BaseService
         }else{
             //第二步：获取网页授权access_token和openid
             $code = $_REQUEST['code']??"";
-            $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+            $oauth2 = $this->getOauthAccessToken(101,$code);
             if (array_key_exists('errcode', $oauth2) && $oauth2['errcode'] != '0') {
                 return $this->failure($oauth2);
             }
@@ -130,7 +129,7 @@ class WechatService extends BaseService
         }else{
             //第二步：获取网页授权access_token和openid
             $code = $_REQUEST['code']??"";
-            $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+            $oauth2 = $this->getOauthAccessToken(101,$code);
             if (array_key_exists('errcode', $oauth2) && $oauth2['errcode'] != '0') {
                 return $this->failure($oauth2);
             }
@@ -157,8 +156,12 @@ class WechatService extends BaseService
     }
 
     //获取网页授权access_token
-    public function getOauthAccessToken($appid="",$appsecret="",$code="")
+    public function getOauthAccessToken($app_id="",$code="")
     {
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
         $wechat_cache = $this->config->cache_settings->wechat;
         $redis_key = $wechat_cache->name.$code;
         $cache = $this->redis->get($redis_key);
@@ -341,7 +344,7 @@ class WechatService extends BaseService
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
         //第二步：获取网页授权access_token和openid
-        $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+        $oauth2 = $this->getOauthAccessToken($app_id,$code);
         $oauth_userinfo = [];
         if (!array_key_exists('errcode', $oauth2))
         {

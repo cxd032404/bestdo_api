@@ -112,7 +112,7 @@ class LoginService extends BaseService
             //用户找到，不需要对应的名单ID了
             $companyuser_id = 0;
             //登录流程
-            $login = $this->loginByUser($userInfo);
+            $login = $this->loginByUser($userInfo,$app_id);
             //修改验证码记录状态
             $sendcode = $oUserService->setMobileCode($mobile,$logincode);
             return $login;
@@ -136,7 +136,7 @@ class LoginService extends BaseService
                             if($createUser['result']==true)
                             {
                                 //登录流程
-                                $login = $this->loginByUser($createUser['userInfo']);
+                                $login = $this->loginByUser($createUser['userInfo'],$app_id);
                                 $oCompanyService->updateCompanyInfo($createCompany['companyInfo']->company_id,['create_user_id'=>$createUser['userInfo']->user_id]);
                                 return $login;
                             }
@@ -164,7 +164,7 @@ class LoginService extends BaseService
                     if($createUser['result']==true)
                     {
                         //登录流程
-                        $login = $this->loginByUser($createUser['userInfo']);
+                        $login = $this->loginByUser($createUser['userInfo'],$app_id);
                         return $login;
                     }
                     else
@@ -203,7 +203,7 @@ class LoginService extends BaseService
                     if($createUser['result']==true)
                     {
                         //登录流程
-                        $login = $this->loginByUser($createUser['userInfo']);
+                        $login = $this->loginByUser($createUser['userInfo'],$app_id);
                         return $login;
                     }
                     else
@@ -213,6 +213,80 @@ class LoginService extends BaseService
                 }
             }
         }
+    }
+    //微信通过openID登录
+    public function miniProgramLogin($unionId = "",$miniprogramId = "",$app_id)
+    {
+        $oUserService = (new UserService());
+        //通过Openid查找用户
+        $userinfo = $oUserService->getUserInfoByUnionId($unionId);
+        //如果没找到
+        if(!$userinfo)
+        {
+            //通过openid查找用户
+            $userinfo = $oUserService->getWechatUserInfoByOpenId($miniprogramId,$app_id);
+            if(!isset($userinfo[$app_id]))
+            {
+                $return = [];
+                $return['result'] = 0;
+                $return['msg']  = $this->msgList['user_unionid_valid'];
+                $return['code']  = 403;
+            }
+            else
+            {
+                if($userinfo[$app_id]->is_del==1)
+                {
+                    $return = [];
+                    $return['result'] = 0;
+                    $return['msg']  = $this->msgList['wechat_prohibit'];
+                }
+                else
+                {
+                    $userinfo = $userinfo[$app_id];
+                }
+            }
+        }
+        if(!isset($return['result']))
+        {
+            //登录流程
+            $login = $this->loginByUser($userinfo,$app_id);
+            return $login;
+        }
+        return $return;
+    }
+    //微信通过openID登录
+    public function wechatLogin($openId = "",$app_id=101)
+    {
+        $oUserService = (new UserService());
+        //通过openid查找用户
+        $userinfo = $oUserService->getWechatUserInfoByOpenId($openId,$app_id);
+        if(!isset($userinfo[$app_id]))
+        {
+            $return = [];
+            $return['result'] = 0;
+            $return['msg']  = $this->msgList['user_unionid_valid'];
+            $return['code']  = 403;
+        }
+        else
+        {
+            if($userinfo[$app_id]->is_del==1)
+            {
+                $return = [];
+                    $return['result'] = 0;
+                    $return['msg']  = $this->msgList['wechat_prohibit'];
+            }
+            else
+            {
+                $userinfo = $userinfo[$app_id];
+            }
+        }
+        if(!isset($return['result']))
+        {
+            //登录流程
+            $login = $this->loginByUser($userinfo,$app_id);
+            return $login;
+        }
+        return $return;
     }
     //校验手机号码和验证码
      public function checkMobileCode($mobile,$logincode)
@@ -328,10 +402,9 @@ class LoginService extends BaseService
          return $available;
      }
      //登录
-     public function loginByUser($userInfo)
+     public function loginByUser($userInfo,$app_id = 101)
      {
          $oUserService = (new UserService());
-         $oWechatService = (new WechatService());
          //用户存在只修改验证码状态及生产token
          if($userInfo->is_del==1){
              $return['msg']  = $this->msgList['mobile_prohibit'];
@@ -342,7 +415,7 @@ class LoginService extends BaseService
                  //修改用户登录时间
                  $oUserService->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
                      'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
-                     'last_login_source'=>"Mobile"],$userInfo->user_id);
+                     'last_login_source'=>$app_id],$userInfo->user_id);
                  $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
          }
          return $return;
