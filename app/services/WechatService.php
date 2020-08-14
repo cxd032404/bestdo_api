@@ -235,8 +235,12 @@ class WechatService extends BaseService
     }
 
     //获取分享所需参数
-    public function getSignPackage($appid="",$appsecret="",$url="")
+    public function getSignPackage($app_id=101,$url="")
     {
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['app_id'];
+        $appsecret = $wechat['appsecret'];
         $AccessToken = $this->getAccessToken(101);
         $jsapiTicket = $this->_newGetApiTicket($AccessToken);
         // 注意 URL 一定要动态获取，不能 hardcode.

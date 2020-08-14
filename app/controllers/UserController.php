@@ -38,13 +38,11 @@ class UserController extends BaseController
         $companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
-        $app_id = $this->request->getHeader("app_id")>0?$this->request->getHeader("app_id"):201;
+        $app_id = $this->request->getHeader("appId")??101;
         $company_id = intval($data['company_id']??0);
         $company_name = isset($data['company_name'])?substr(preg_replace('# #','',$data['company_name']),0,32):"";
         //调用手机号验证码登录方法
         $return  = (new LoginService())->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo,$company_id,$company_name,$app_id);
-        print_R($return);
-        die();
         //返回值判断
         if($return['result']!=1){
             return $this->failure([],$return['msg'],$return['code']);
@@ -90,7 +88,7 @@ class UserController extends BaseController
 		$companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
 		$code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
-        $app_id = $this->request->getHeader("app_id")??101;
+        $app_id = $this->request->getHeader("appId")??101;
         //调用手机号验证码登录方法
 		$return  = (new UserService)->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo,$app_id);
 		//返回值判断
@@ -110,7 +108,7 @@ class UserController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
-        $app_id = $this->request->getHeader("app_id")??201;
+        $app_id = $this->request->getHeader("appId")??101;
         //调用手机号验证码登录方法
         $openId = (new WechatService)->getOpenIdByCode($code,$app_id);
         //调用手机号验证码登录方法
@@ -120,6 +118,37 @@ class UserController extends BaseController
             return $this->failure([],$return['msg'],$return['code']);
         }
         return $this->success($return['data']);
+    }
+    /*
+  * 小程序code登录
+  * 参数
+  * code
+  * （必填）：微信授权code
+  * */
+    public function miniProgramLoginAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        $app_id = $this->request->getHeader("appId")??201;
+        //通过code获取sessionKey,openid,Unionid
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
+        if($wechatUserInfo['openid'])
+        {
+            $return  = (new LoginService())->miniProgramLogin($wechatUserInfo['unionid']??"",$wechatUserInfo['openid']??"",$app_id);
+            if($return['result'])
+            {
+                return $this->success($return['data']);
+            }
+            else
+            {
+                $this->failure([],$return['msg'],$return['code']);
+            }
+        }
+        else
+        {
+            return $this->failure([],"用户身份获取失败",403);
+        }
     }
 
 	/*

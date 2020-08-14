@@ -20,9 +20,10 @@ class WechatController extends BaseController
         if(!preg_match('/http:\/\/[\w.]+[\w\/]*[\w.]*\??[\w=&\+\%]*/is',$url)){
             return $this->failure([],'请传输正确的url地址！',400);
         }
-        $app_id = $this->key_config->wechat->appid??"";
-        $appsecret = $this->key_config->wechat->appsecret??"";
-        $return  = (new WechatService)->getSignPackage($app_id,$appsecret,$url);
+        $app_id = $this->request->getHeader("appId")??101;
+        //$app_id = $this->key_config->wechat->appid??"";
+        //$appsecret = $this->key_config->wechat->appsecret??"";
+        $return  = (new WechatService)->getSignPackage($app_id,$url);
         return $this->success($return);
     }
 
@@ -34,7 +35,7 @@ class WechatController extends BaseController
     }
     
     /*
-     * 小程序通过code获取sessionKey
+     * 小程序code登录
      * 参数
      * code
      * （必填）：微信授权code
@@ -44,7 +45,7 @@ class WechatController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
-        $app_id = $this->request->getHeader("app_id")??201;
+        $app_id = $this->request->getHeader("appId")??201;
         //通过code获取sessionKey,openid,Unionid
         $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
         if($wechatUserInfo['openid'])
@@ -65,17 +66,17 @@ class WechatController extends BaseController
         }
     }
     /*
- * 小程序通过code获取sessionKey
- * 参数
- * code
- * （必填）：微信授权code
- * */
+     * 小程序通过code获取sessionKey
+     * 参数
+     * code
+     * （必填）：微信授权code
+     * */
     public function getSessionKeyAction()
     {
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
-        $app_id = $this->request->getHeader("app_id")??101;
+        $app_id = $this->request->getHeader("appId")??101;
         //通过code获取sessionKey,openid,Unionid
         $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
         if($wechatUserInfo['openid'])
@@ -98,7 +99,7 @@ class WechatController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
-        $app_id = $this->request->getHeader("app_id")??201;
+        $app_id = $this->request->getHeader("appId")??101;
         //调用手机号验证码登录方法
         $openId = (new WechatService)->getOpenIdByCode($code,$app_id);
         //调用手机号验证码登录方法
@@ -123,7 +124,7 @@ class WechatController extends BaseController
         $code = trim($data['code']??"");
         $iv = trim($data['iv']??"");
         $data = trim($data['encryptedData']??"");
-        $app_id = $this->request->getHeader("app_id")??101;
+        $app_id = $this->request->getHeader("appId")??201;
         //解码
         $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->tencent,$code,$app_id);
         if($decrypt['result'])
@@ -209,7 +210,7 @@ class WechatController extends BaseController
      */
     public function wechatMsgCheckAction(){
         $checkContent =  $_GET["checkMsg"]??'';
-        $app_id = $this->request->getHeader("app_id")??101;
+        $app_id = $this->request->getHeader("appId")??101;
         $return = (new WechatService())->wechatMsgCheck($checkContent,$app_id);
         if($return['result'])
         {
