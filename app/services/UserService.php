@@ -917,7 +917,7 @@ class UserService extends BaseService
     }
 
     //获取用户信息
-    public function getUserInfo($user_id,$columns = 'user_id,nick_name,true_name,user_img,is_del',$cache = 1)
+    public function getUserInfo($user_id,$columns = 'user_id,company_id,nick_name,true_name,user_img,is_del',$cache = 1)
     {
         $cacheSetting = $this->config->cache_settings->user_info;
         $cacheName = $cacheSetting->name.$user_id;

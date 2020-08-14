@@ -270,6 +270,7 @@ class LoginService extends BaseService
         }
         else
         {
+            $userinfo[$app_id] = $oUserService->getUserInfo($userinfo[$app_id]['user_id']);
             if($userinfo[$app_id]->is_del==1)
             {
                 $return = [];
