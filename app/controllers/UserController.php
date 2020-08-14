@@ -132,7 +132,7 @@ class UserController extends BaseController
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $app_id = $this->request->getHeader("appId")??201;
         //通过code获取sessionKey,openid,Unionid
-        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($code,$app_id);
         if($wechatUserInfo['openid'])
         {
             $return  = (new LoginService())->miniProgramLogin($wechatUserInfo['unionid']??"",$wechatUserInfo['openid']??"",$app_id);

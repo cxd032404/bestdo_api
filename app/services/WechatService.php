@@ -376,8 +376,9 @@ class WechatService extends BaseService
     }
 
     //根据code获取小程序的用户身份信息
-    public function getUserInfoByCode_mini_program($wechat = [],$code="",$app_id)
+    public function getUserInfoByCode_mini_program($code="",$app_id)
     {
+        $wechat = $this->key_config->tencent;
         $wechat = $wechat->$app_id;
         $wechat_cache = $this->config->cache_settings->mini_program_code;
         $redis_key = $wechat_cache->name."_".$app_id."_".$code;
@@ -424,7 +425,7 @@ class WechatService extends BaseService
     public function decryptData( $encryptedData, $iv, $wechat, $code,$app_id)
     {
         $wechat = $this->key_config->tencent->$app_id;
-        $sessionKey = $this->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
+        $sessionKey = $this->getUserInfoByCode_mini_program($code,$app_id);
         $decryptClass = new WXBizDataCrypt($wechat['appid'],$sessionKey['session_key']??"");
         $errCode = $decryptClass->decryptData($encryptedData, $iv, $data );
         $log = ['encryptedData'=>$encryptedData,'iv'=>$iv,'code'=>$code,'sessionKey'=>$sessionKey,'errorCode'=>$errCode,'data'=>$data];

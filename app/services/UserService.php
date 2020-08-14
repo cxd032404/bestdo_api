@@ -169,7 +169,7 @@ class UserService extends BaseService
             elseif(!empty($miniProgramUserInfo))
             {
                 $code = json_decode($miniProgramUserInfo,true)['code'];
-                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->tencent,$code,$app_id);
+                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($code,$app_id);
                 if(isset($miniProgramUserInfo['openid']))
                 {
                     $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
