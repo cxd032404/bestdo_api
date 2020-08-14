@@ -51,6 +51,7 @@ class PageElementService extends BaseService
             $data['data']['data'][$k]->source[0]['title'] = $postDetail->title;
             $data['data']['data'][$k]->list_type = $listInfo->list_type;
             $data['data']['data'][$k]->content = htmlspecialchars_decode($postDetail->content);
+            $data['data']['data'][$k]->key = $k;
             $t = json_decode(json_encode($data['data']['data'][$k]->user_info),true);
             unset($data['data']['data'][$k]->user_info);
             foreach ($t as $userkey=>$value)
@@ -422,7 +423,7 @@ class PageElementService extends BaseService
            foreach ($activity as $key=>$value)
            {
                $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
-               if(!isset($activity_info->status) || $activity_info->status == 0 || $activity_info->club_id<=0)
+               if(!isset($activity_info->status) || $activity_info->status == 0 || $activity_info->system == 1)
                {
                    continue;
                }
@@ -432,29 +433,27 @@ class PageElementService extends BaseService
                $activity_list[$key]['Usercount'] = $activity_member_count;
                $activity_list[$key]['activity_id'] = $value['activity_id'];
                $activity_list[$key]['activity_name'] = $activity_info->activity_name;
-               $activity_list[$key]['club_id'] = $activity_info->club_id;
-               $activity_list[$key]['icon'] = $club_info->icon;
                $activity_list[$key]['create_time'] = $value['create_time']; //报名记录创建的时间最近的排最前
                $activity_list[$key]['start_time'] = date('Y-m-d H:i',strtotime($activity_info->start_time));
                $activity_list[$key]['end_time'] = date('Y-m-d H:i',strtotime($activity_info->end_time));
                $activity_list[$key]['apply_start_time'] = date('Y-m-d H:i',strtotime($activity_info->apply_start_time));
                $activity_list[$key]['apply_end_time'] = date('Y-m-d H:i',strtotime($activity_info->apply_end_time));
+
+               //俱乐部信息
+               $club_info = (new ClubService())->getClubInfo($activity_info->club_id);
+               $activity_list[$key]['club_id'] = $activity_info->club_id??0;
+               $activity_list[$key]['club_name'] = $club_info->club_name??'未关联俱乐部';
+               $activity_list[$key]['icon'] = $club_info->icon??'';
+
                $detail = json_decode($activity_info->detail,true);
                if(isset($detail['checkin'])&&$detail['checkin'])
                {
-                   $activity_list[$key]['position'] = $detail['checkin']['address'];
+                   $activity_list[$key]['position'] = $detail['checkin']['address']??'';
                }else
                {
                    $activity_list[$key]['position'] = [];
                }
-               if($activity_info->club_id==0)
-               {
-                   $activity_list[$key]['club_name'] = '';
-               }else
-               {
-                   $club_info = (new ClubService())->getClubInfo($activity_info->club_id);
-                   $activity_list[$key]['club_name'] = $club_info->club_name;
-               }
+
                if(time()<strtotime($activity_info->start_time))
                {
                    $status = 0; //未开始的活动
@@ -510,6 +509,7 @@ class PageElementService extends BaseService
         else
         {
             $activityLog = (new ActivityService())->getActivityLogByUser($user_info['data']['user_id'],$data['detail']['activity_id']);
+            //判断用户是否已参加活动
             if(!$activityLog)
             {
                 $data['detail']['applied'] = 0;
@@ -621,33 +621,53 @@ class PageElementService extends BaseService
         {
             $activity_id = $this->getFromParams($params,$data['detail']['from_params'],0);
         }
-        $res = (new ActivityService())->checkUserActivity($user_info['data']['user_id'],$activity_id);
         $activity_info = (new ActivityService())->getActivityInfo($activity_id,'*');
         $data['detail']['activity_info'] = $activity_info;
         //活动剩余名额
         $detail = json_decode($activity_info->detail);
-        $data['detail']['activity_info']->checkin = $detail->checkin??[];
-        $chinese_apply_start_date = date('m月d日',strtotime($activity_info->apply_start_time)).date('H:i',strtotime($activity_info->apply_start_time));
-        $chinese_apply_end_date = date('m月d日',strtotime($activity_info->apply_end_time)).date('H:i',strtotime($activity_info->apply_end_time));
+        //初始化位置信息
+        $checkin = new \stdClass;
+        $checkin->longitude = 0;
+        $checkin->latitude = 0;
+        $checkin->address = '';
+        $activity_checkin = empty($detail->checkin)?$checkin:$detail->checkin;
+         $data['detail']['activity_info']->checkin = $activity_checkin;
+
+        //各种不同的日期格式.....
+        $chinese_apply_start_date = date('m月d日 H:i',strtotime($activity_info->apply_start_time));
+        $chinese_apply_end_date = date('m月d日 H:i',strtotime($activity_info->apply_end_time));
         $activity_info->chinese_apply_start_time = $chinese_apply_start_date;
         $activity_info->chinese_apply_end_time = $chinese_apply_end_date;
-        $chinese_start_date = date('m月d日',strtotime($activity_info->start_time)).date('H:i',strtotime($activity_info->start_time));
-        $chinese_end_date = date('m月d日',strtotime($activity_info->end_time)).date('H:i',strtotime($activity_info->end_time));
+        $chinese_start_date = date('m月d日 H:i',strtotime($activity_info->start_time));
+        $chinese_end_date = date('m月d日 H:i',strtotime($activity_info->end_time));
         $activity_info->chinese_start_time = $chinese_start_date;
         $activity_info->chinese_end_time = $chinese_end_date;
         $activity_info->format_apply_start_time = date('Y/m/d',strtotime($activity_info->apply_start_time));
         $activity_info->format_apply_end_time = date('Y/m/d',strtotime($activity_info->apply_end_time));
         $activity_info->format_start_time = date('Y/m/d',strtotime($activity_info->start_time));
         $activity_info->format_end_time = date('Y/m/d',strtotime($activity_info->end_time));
+        //活动时间拼接
+        if(date('Y',strtotime($activity_info->start_time)) != date('Y',strtotime($activity_info->end_time)))
+        {  //跨年加上年份
+            $activity_info->miniprogram_start_time_format = date('Y年m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('Y年m月d日 H:i',strtotime($activity_info->end_time));
+        }elseif(date('m-d',strtotime($activity_info->start_time)) != date('m-d',strtotime($activity_info->end_time))){
+            //跨天的加上月份
+            $activity_info->miniprogram_start_time_format = date('m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('m月d日 H:i',strtotime($activity_info->end_time));
+        }else
+        {
+            $activity_info->miniprogram_start_time_format = date('m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('H:i',strtotime($activity_info->end_time));
+        }
+
         //活动头图
         $header_image = $detail->header_image??'';
         $activity_info->header_image = $header_image;
         //如果头图不存在 取默认图片
-
-
+        //公司名
+        $company_info = (new  CompanyService())->getCompanyInfo($company_id,'company_id,company_name,detail');
+        $activity_info->company_name = $company_info->company_name;
+       
         if(!$header_image)
         {
-            $company_info = (new  CompanyService())->getCompanyInfo($company_id,'company_id,company_name,detail');
             $detail = json_decode($company_info->detail,true);
                     $bannerList = [];
                     //需默认Banner
@@ -676,22 +696,23 @@ class PageElementService extends BaseService
         }
 
         $data['detail']['activity_info']->activity_name = mb_substr($activity_info->activity_name,0,20);
+        // 用户是否已报名
+        $res = (new ActivityService())->checkUserActivity($user_info['data']['user_id'],$activity_id);
         $data['detail']['aplied'] = isset($res->id)?1:0;
         //活动关联的俱乐部信息
         $club_info = (new ClubService())->getClubInfo($activity_info->club_id,"club_id,icon,detail");
+        $club_info = json_decode(json_encode($club_info),true);
         if($club_info)
         {
-            $data['detail']['icon'] = $club_info->icon;
-        
+            $data['detail']['icon'] = $club_info['icon'];
         }else
         {
             $data['detail']['icon'] = '';
         }
         $data['detail']['club_info'] = $club_info;
-        $detail = json_decode($club_info->detail??'');
-        unset($data['detail']['club_info']->detail);
+        $detail = json_decode($club_info['detail']??'');
+        unset($data['detail']['club_info']['detail']);
         //需默认banner
-    
         if($detail && isset($detail->banner))
         {
             //存在且有banner
@@ -699,7 +720,7 @@ class PageElementService extends BaseService
         }else
         {
             $data['detail']['club_info']['banner'] = [];
-        }
+        } 
         $member_list = (new ActivityService())->getActivityMemberList($activity_id);
         $activity_member_list = [];
         foreach ($member_list as $value)
@@ -746,10 +767,17 @@ class PageElementService extends BaseService
             {
                 $club_info = (new ClubService())->getClubInfo($value['club_id'],'club_id,club_name,icon');
                 $club_info = json_decode(json_encode($club_info),true);
+                $club_info['club_id'] = $club_info['club_id']??0;
+                $club_info['club_name'] = $club_info['club_name']??'未关联俱乐部';
+                $club_info['club_icon'] = $club_info['club_id']??'';
                 $managed_activity_list[$key]['club_info'] = $club_info;
             }else
             {
-                $managed_activity_list[$key]['club_info'] = [];
+                $managed_activity_list[$key]['club_info'] = [
+                    'club_id'=>0,
+                    'club_name'=>'未关联俱乐部',
+                    'club_icon'=>''
+                ];
             }
             $managed_activity_list[$key] = array_merge($managed_activity_list[$key],$managed_activity_list[$key]['club_info']);
         }
@@ -891,7 +919,7 @@ class PageElementService extends BaseService
     public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
         $culture = $this->getFromParams($params,'culture',0);
         $already_applied = $this->getFromParams($params,'already_applied',0); //已参加的活动 0未参加
-        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,club_id,activity_name,comment,icon,apply_start_time,apply_end_time,start_time,end_time',$club_id = -1);
+        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,club_id,activity_name,comment,icon,system,apply_start_time,apply_end_time,start_time,end_time',$club_id = -1);
         $currentTime = time();
         $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
@@ -899,14 +927,15 @@ class PageElementService extends BaseService
                 if($culture)
                 {
                     //文体汇活动
-                    if($activity_info->club_id>0)
+                    if($activity_info->system == 0)
                     {
                         unset($activity_list[$key]);
                         continue;
                     }
                 }else
                 {
-                    if (!$activity_info || $activity_info->club_id<=0) {
+                    //去除文体汇的活动
+                    if (!$activity_info || $activity_info->system == 1) {
                         unset($activity_list[$key]);
                         continue;
                     }
@@ -921,7 +950,7 @@ class PageElementService extends BaseService
                     }
                 }
                 if (($activity_info->status == 1) && (strtotime($activity_info->apply_start_time) <= $currentTime) && (strtotime($activity_info->apply_end_time) >= $currentTime)) {
-                    //文体汇俱乐部id为0
+                    //小程序club_id为0
                     if($activity_info->club_id == 0)
                     {
                         $clubInfo = [];
@@ -1017,12 +1046,16 @@ class PageElementService extends BaseService
 
     public function getElementPage_attendActivityListToCheckin($data,$params,$user_info,$company_id){
         $checkin_time = $this->config->activity->activity_checkin_time;
-        $activity = (new ActivityService())->getActivityList($user_info['data']['user_id']);
+        $activityList = (new ActivityService())->getActivityList($user_info['data']['user_id']);
         $activity_list = [];
-        foreach ($activity as $key=>$value)
+        //企业信息
+        $company_info = (new  CompanyService())->getCompanyInfo($company_id,'company_id,company_name,detail');
+
+        foreach ($activityList as $key=>$value)
         {
 
             $activity_info = (new ActivityService())->getActivityInfo($value->activity_id,'*');
+
             if( $activity_info->status== 0)
             {
                 continue;
@@ -1031,16 +1064,17 @@ class PageElementService extends BaseService
             {
                 continue;
             }
-            if(!isset($activity_info->club_id) || $activity_info->club_id==0)
+            if($activity_info->system == 1)
             {
                 continue;
             }
             //可以签到的时间
             $checkin_doing_time =strtotime($activity_info->start_time)-$checkin_time;
             $activity_status = 0;
-            $activity_status_name = '未签到';
+            $activity_status_name = '去签到';
             $activity_color = '#cccccc';
             $activity_checkin_time ='';
+
             if(time()<$checkin_doing_time)
             { //活动开始前一小时的活动剔除
                 continue;
@@ -1049,7 +1083,7 @@ class PageElementService extends BaseService
                 $activity_status = 2;
                 $activity_status_name = '已过期';
                 $activity_color = '#DDDDDD';
-            }elseif($value->checkin_status == 1)
+            }elseif($value->checkin_status !=0)
             {
                 $activity_status = 1; //已签到
                 $activity_status_name = '签到成功';
@@ -1077,11 +1111,34 @@ class PageElementService extends BaseService
             $activity_list[$key]['activity_id'] = $activity_info->activity_id;
             $activity_list[$key]['checkin_count'] = $checkin_count;
             $activity_list[$key]['activity_name'] = $activity_info->activity_name;
-            $activity_list[$key]['club_id'] = $activity_info->club_id;
-            $activity_list[$key]['club_icon'] = $club_info->icon;
-            $activity_list[$key]['club_name'] = $club_info->club_name;
+            $activity_list[$key]['club_id'] = $activity_info->club_id??0;
+            $activity_list[$key]['club_icon'] = $club_info->icon??'';
+            $activity_list[$key]['club_name'] = $club_info->club_name??'';
             $activity_list[$key]['start_time'] = $activity_info->start_time;
             $activity_list[$key]['end_time'] = $activity_info->end_time;
+
+            //活动头图
+            $header_image = $detail->header_image??'';
+            $activity_list[$key]['header_image'] = $header_image;
+            //如果头图不存在 取默认图片
+            $activity_list[$key]['company_name'] = $company_info->company_name;
+
+            if(!$header_image)
+            {
+                $detail = json_decode($company_info->detail,true);
+                $bannerList = [];
+                //需默认Banner
+                if(isset($detail['clubBanner']))
+                {
+                    $bannerList = $detail['clubBanner'];
+                }
+                $default_header_image = $bannerList[0]['img_url'];
+            }else
+            {
+                $default_header_image = '';
+            }
+            $activity_list[$key]['defalut_header_image'] = $default_header_image;
+
 
             $hour = date('H', strtotime($activity_info->start_time));
             if($hour>12)
@@ -1276,7 +1333,7 @@ class PageElementService extends BaseService
         {
             $month = '0'.$month;
         }
-        $activity_list = (new ActivityService())->getMonthlyActivityList($company_id,$month,$this->getFromParams($params,'type','h5'));
+        $activity_list = (new ActivityService())->getMonthlyActivityList($company_id,$month,$this->getFromParams($params,'app_type','h5'));
         $data['detail']['user_monthly_activities'] = $activity_list;
         return $data;
     }
@@ -1407,7 +1464,7 @@ class PageElementService extends BaseService
         return $data;
     }
     /*
-     * 精彩回顾列表
+     * 俱乐部精彩回顾列表
      * userinfo 用户信息
      * company_id 公司id
      * data 用户包含的element信息
@@ -1462,27 +1519,115 @@ class PageElementService extends BaseService
     }
     /*
      * 获取公司下所有的活动
+     *
      */
-    public function getElementPage_allActivities($data,$params,$user_info,$company_id)
+    public function getElementPage_companyActivityList($data,$params,$user_info,$company_id)
     {
-        $activityList = (new ActivityService())->getActivityListByCompany(1,'activity_id,status,activity_name,start_time,system,detail',$club_id = -1);
+        //用户当前位置
+        $current_lat = $this->getFromParams($params,'latitude',0);
+        $current_lng = $this->getFromParams($params,'longitude',0);
+
+        //分页参数
+        $page = $this->getFromParams($params,'page',1);
+        $pageSize = $this->getFromParams($params,'pageSize',3);
+        //公司活动列表
+        $activityList = (new ActivityService())->getActivityListByCompany(1,'activity_id,status,activity_name,start_time,system,comment,start_time,end_time,apply_start_time,apply_end_time,detail,create_time',$club_id = -1);
+        $company_info = (new CompanyService())->getCompanyInfo($company_id,'company_id,company_name,detail');
+
+        //去除文体汇的活动和无效的活动
         foreach ($activityList as $key =>$activity_info)
         {
-            //去除文体汇的活动和无效的活动
-            if($activity_info->system == 1 || $activity_info->status = 0 )
+            if($activity_info->system == 1 || $activity_info->status == 0 )
             {
               unset($activityList[$key]);
               continue;
             }
-            $detail =json_encode($activity_info->detail,true);
-            $lat = $detail['checkin']['lat']??'';
-            $lng = $detail['checkin']['lng']??'';
-            $activityList[$key]->lat = $lat;
-            $activityList[$key]->lng = $lng;
-            unset($activityList[$key]->detail);
         }
-       
-        $data['detail']['all_activities'] =  array_values($activityList);
+
+         $activityList =  json_decode(json_encode($activityList),true);
+         //按状态排序
+         $activityList = (new ActivityService())->activitySort($activityList);
+
+         //分页
+         $offset = ($page-1)*$pageSize;
+         if($offset+$pageSize >= count($activityList))
+         {
+             $residuals = 0;
+         }else
+         {
+             $residuals = 1;
+         }
+        $activityList = array_slice($activityList,$offset,$pageSize);
+         //处理需要的数据 经纬度和公司信息 头图等
+         foreach ($activityList as $key=>$activity_info)
+         {
+             $activityList[$key]['company_name'] = $company_info->company_name;
+             $detail = $activity_info['detail'];
+             $activtiy_lat = $detail['checkin']['latitude']??0;
+             $activity_lng = $detail['checkin']['longitude']??0;
+
+             //取出活动地点的经纬度
+             $distance = Common::getDistance($current_lat,$current_lng,$activtiy_lat,$activity_lng);
+             //校验距离 小于3000米的活动位置在地图显示 否则不显示
+             $is_show = $distance < 3000 ?1:0;
+             $activityList[$key]['latitude'] = $activtiy_lat;
+             $activityList[$key]['longitude'] = $activity_lng;
+             $activityList[$key]['is_show'] = $is_show;
+             //活动头图
+             $header_image = $detail['header_image']??'';
+             $activityList[$key]['header_image'] = $header_image;
+             //头图不存在取默认图片
+             if(!$header_image)
+             {
+                 $detail = json_decode($company_info->detail,true);
+                 $bannerList = [];
+                 //需默认Banner
+                 if(isset($detail['clubBanner']))
+                 {
+                     $bannerList = $detail['clubBanner'];
+                 }
+                 $default_header_image = $bannerList[0]['img_url'];
+             }else
+             {
+                 $default_header_image = '';
+             }
+             $activityList[$key]['defalut_header_image'] = $default_header_image;
+             unset($activityList[$key]['detail']);
+
+             // 用户是否已报名
+             $res = (new ActivityService())->checkUserActivity($user_info['data']['user_id'],$activity_info['activity_id']);
+             $activityList[$key]['applied'] = isset($res->id)?1:0;
+
+             //活动人员列表
+             $member_list = (new ActivityService())->getActivityMemberList($activity_info['activity_id']);
+             $activity_member_list = [];
+             foreach ($member_list as $value)
+             {
+                 $userInfo = (new UserService())->getUserInfo($value->user_id,'user_id,nick_name,true_name,user_img');
+                 $activity_member_list[] = $userInfo;
+             }
+             $activityList[$key]['activity_member_list'] = $activity_member_list;
+             $activityList[$key]['user_count'] = (new ActivityService())->getActivityMemberCount($activity_info['activity_id']);
+             //日期格式
+             $month = date("m月",strtotime($activity_info['start_time']));
+             $day = date("d",strtotime($activity_info['start_time']));
+             if(date('Y',strtotime($activity_info['start_time'])) != date('Y',strtotime($activity_info['end_time'])))
+             {  //跨年加上年份
+                $chinese_format_time = date('Y年m月d日 H:i',strtotime($activity_info['start_time'])).'-'.date('Y年m月d日 H:i',strtotime($activity_info['end_time']));
+             }elseif(date('m-d',strtotime($activity_info['start_time'])) != date('m-d',strtotime($activity_info['end_time']))){
+                 //跨天的加上月份
+                 $chinese_format_time = date('m月d日 H:i',strtotime($activity_info['start_time'])).'-'.date('m月d日 H:i',strtotime($activity_info['end_time']));
+             }else
+             {
+                 $chinese_format_time = date('H:i',strtotime($activity_info['start_time'])).'-'.date('H:i',strtotime($activity_info['end_time']));
+             }
+             $activityList[$key]['start_month'] = $month;
+             $activityList[$key]['start_day'] = $day;
+             $activityList[$key]['chinese_format_time'] = $chinese_format_time;
+         }
+
+         $data['detail']['activity_list'] = $activityList;
+         $data['detail']['residuals'] = $residuals;
          return $data;
     }
 }

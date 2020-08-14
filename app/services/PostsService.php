@@ -20,10 +20,27 @@ class PostsService extends BaseService
         }
         else
         {
-
+            //小程序文件提前上传了 只需要保存链接
+                $uploads_files = $this->request->getPost('upload_files')??'';
+                $uploads_files = json_decode(($uploads_files),true);
+                $uploads = [];
+                $number = [];
+                foreach ($uploads_files as $key =>$file)
+                {
+                    if(isset($number[$file['type']]))
+                    {
+                        $number[$file['type']]++;
+                    }else
+                    {
+                        $number[$file['type']] = 1;
+                    }
+                    $uploads['upload_'.$file['type'].'.'.$number[$file['type']]] = $file['url'];
+                }
             //计算可用的文件数量
             $count = $oUpload->getAvailableSourceCount([],$listInfo->detail);
             $upload = $oUpload->getUploadedFile([],[],0,0,$count);
+            $upload = array_merge($upload,$uploads);
+
             if(isset($upload['name']))
             {
                 $return = ['result'=>false,'data'=>['msg'=>"您所发布的".$upload['name']."数量已经超过限制，请重新提交"]];

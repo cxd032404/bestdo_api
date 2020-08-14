@@ -15,13 +15,14 @@ class ActivityService extends BaseService
         "activity_checkin_fail"=>"签到失败！",
         "checkin_over_distance"=>"距离过远",
         "activity_log_not_found"=>"没有找到报名记录",
-        "activity_update_success"=>"活动更新成功",
+        "activity_update_success"=>"活动更新成功",  
         "activity_update_fail"=>"活动更新失败",
         "activity_member_limit"=>"活动人数已满",
         "activity_club_limit"=>"申请加入",
         "activity_apply_time"=>"报名开始时间不可大于报名结束时间",
         "activity_start_time"=>"活动开始时间不可大于活动结束时间",
         "activity_time"=>"报名结束时间不可大于活动开始时间",
+        "checkin_address_null"=>"此活动未设置签到地点",
     ];
     //生成每周的重复性活动数据
     public function generateNextActivityWeekly($activityParams)
@@ -444,7 +445,7 @@ class ActivityService extends BaseService
         }
         foreach($activity_list as $key => $activityInfo)
         {
-            if(!$activityInfo || $activityInfo->club_id == 0 || $activityInfo->status==0 )
+            if(!$activityInfo || $activityInfo->system == 1 || $activityInfo->status==0 )
             {
                 unset($activity_list[$key]);
             }
@@ -462,23 +463,7 @@ class ActivityService extends BaseService
                 {
                     $activity_list[$created->activity_id] = $created;
                 }
-/*
-                $flag = 0;
-
-                foreach ($activity_list as $key2 => $manager) {
-                    if (!$manager) {
-                        continue;
-                    }
-                    if ($created->activity_id == $manager->activity_id) {
-                        $flag = 1;
-                        break;
-                    }
-                }
-                if ($flag == 1) {
-                    continue;
-                }
-                $activity_list[] = $created;
-*/            }
+            }
         }
 
           $activity_list = $this->activitySort(json_decode(json_encode($activity_list),true),$activity_status);
@@ -516,7 +501,7 @@ class ActivityService extends BaseService
     * 5.活动已结束 4
     * 6.活动已取消 5
     */
-    public function activitySort($activity_list = [],$activity_status){
+    public function activitySort($activity_list = [],$activity_status = -1){
         $current_time = time();
         foreach ($activity_list as $key=>$value)
         {
@@ -569,6 +554,7 @@ class ActivityService extends BaseService
             $member_count = (new ActivityService())->getActivityMemberCount($activity_id);
             //检测是否是俱乐部成员
             $is_member = (new ClubService())->checkUserIsClubMember($user_id,$activityInfo->club_id);
+
             if(!isset($activityInfo->activity_id)){
                 $return['msg']  = $this->msgList['activity_empty'];
             }
@@ -584,7 +570,8 @@ class ActivityService extends BaseService
             }else if($member_count>=$activityInfo->member_limit && $activityInfo->member_limit!=0){
                 $return['msg']  = $this->msgList['activity_member_limit'];
                 $rerurn['code'] = $this->config->special_code['activity_member_full'];
-            }else if($activityInfo->club_member_only&&$is_member == 0){
+                //仅限俱乐部人员参加 并且不是俱乐部成员 活动没有关联俱乐部 再返回没有参加俱乐部
+            }else if($activityInfo->club_member_only&&$is_member == 0 && $activityInfo->club_id != 0){
                     $club_info = (new ClubService())->getClubInfo($activityInfo->club_id,'club_id,club_name');
                     $return['msg']  = $this->msgList['activity_club_limit'].$club_info->club_name;
                     $return['code'] = $this->config->special_code['need_club_membership'];
@@ -608,7 +595,12 @@ class ActivityService extends BaseService
                     if ($useractivitylog->create() === false) {
                         $return['msg']  = $this->msgList['activity_apply_fail'];
                     }else{
+                        //刷新人数缓存
                         (new ActivityService())->getActivityMemberCount($activity_id,0);
+                        //刷新人员列表缓存
+                        (new ActivityService())->getActivityMemberList($activity_id,0);
+                        //刷新是否参加活动中缓存
+                        (new ActivityService())->checkUserActivity($activity_id,$user_id,0);
                         $return  = ['result'=>1, 'msg'=>$this->msgList['activity_apply_success'], 'code'=>200, 'data'=>$useractivitylog];
                     }
                 }
@@ -634,7 +626,7 @@ class ActivityService extends BaseService
             $conditions .= " and club_id = ".$club_id;
         }
         $cacheSetting = $this->config->cache_settings->activity_list_by_company;
-        $cacheName = $cacheSetting->name.$company_id;
+        $cacheName = $cacheSetting->name.$company_id.'club_id:'.$club_id;
         $params = [
             $conditions,
             'columns'=>'activity_id',
@@ -789,6 +781,11 @@ class ActivityService extends BaseService
         if(isset($activityInfo->activity_id))
         {
             $detail = json_decode($activityInfo->detail,true);
+            if(!isset($detail['checkin']['latitude']))
+            {
+                $return  = ['result'=>0,"msg"=>$this->msgList["checkin_address_null"],'code'=>400];
+                return   $return;
+            }
             $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
             if($distance <= $this->config->checkin_max_distance)
             {
@@ -814,9 +811,9 @@ class ActivityService extends BaseService
         {
             if($activityInfo->status==1)
             {
-                $currentTime = time();
-                if((strtotime($activityInfo->apply_start_time)<=$currentTime) && (strtotime($activityInfo->apply_end_time)>=$currentTime))
-                {
+//                $currentTime = time();
+//                if((strtotime($activityInfo->apply_start_time)<=$currentTime) && (strtotime($activityInfo->apply_end_time)>=$currentTime))
+//                {
                     $detail = json_decode($activityInfo->detail,true);
                     $distance = Common::getDistance($position['latitude'],$position['longitude'],$detail['checkin']['latitude'],$detail['checkin']['longitude']);
                     //校验距离
@@ -841,6 +838,8 @@ class ActivityService extends BaseService
                                 $update = $this->updateActivityLog($activityLog->id,$data);
                                 if($update)
                                 {
+                                    //刷新签到人数缓存
+                                    $this->getActivityCheckinCount($activityLog->id,0);
                                     $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
                                 }
                                 else
@@ -858,11 +857,11 @@ class ActivityService extends BaseService
                     {
                         $return  = ['result'=>0,"msg"=>$this->msgList["checkin_over_distance"],'code'=>400];
                     }
-                }
-                else
-                {
-                    $return  = ['result'=>0,"msg"=>$this->msgList['activity_expire'],'code'=>400];
-                }
+//                }
+//                else
+//                {
+//                    $return  = ['result'=>0,"msg"=>$this->msgList['activity_expire'],'code'=>400];
+//                }
             }
             else
             {
@@ -907,12 +906,33 @@ class ActivityService extends BaseService
     /*
      * 活动成员列表
      */
-    public function getActivityMemberList($activity_id){
-        $params = [
-            'activity_id ='.$activity_id,
-            'columns'=>'user_id'
-        ];
-        $member_list = (new \HJ\UserActivityLog())->find($params);
+    public function getActivityMemberList($activity_id,$cache = 1){
+        $cache_settings = $this->config->cache_settings->activity_member_list;
+        $redis_key = $cache_settings->name.$activity_id;
+        if($cache == 1)
+        {
+            $member_list = json_decode($this->redis->get($redis_key));
+            if(is_null($member_list))
+            {
+                $params = [
+                    'activity_id ='.$activity_id,
+                    'columns'=>'user_id'
+                ];
+                $member_list = (new \HJ\UserActivityLog())->find($params);
+                $this->redis->set($redis_key,json_encode($member_list));
+                $this->redis->expire($redis_key,$cache_settings->expire);
+            }
+        }else
+        {
+            $params = [
+                'activity_id ='.$activity_id,
+                'columns'=>'user_id'
+            ];
+            $member_list = (new \HJ\UserActivityLog())->find($params);
+            $this->redis->set($redis_key,json_encode($member_list));
+            $this->redis->expire($redis_key,$cache_settings->expire);
+        }
+        $member_list = json_decode(json_encode($member_list));
         return $member_list;
     }
 
@@ -990,6 +1010,7 @@ class ActivityService extends BaseService
         if ($activityInfo->update() === false) {
             $return['msg']  = '修改失败';
         }else {
+            //刷新缓存
             $activityInfo = $this->getActivityInfo($activityInfo->activity_id,'*',0);
             if($activityInfo->club_id>0)
             {
@@ -1025,21 +1046,24 @@ class ActivityService extends BaseService
     /*
      * 获取某公司活动列表
      */
-    public function getMonthlyActivityList($company_id,$month,$type = 'h5'){
+    public function getMonthlyActivityList($company_id,$month,$app_type = 'h5'){
         $year = date('Y',time());
         $date =$year.'-'.$month;
         $monthly_activities = [];
         $date_list = []; //日期下标数据
+
+        //公司信息
+        $company_info = (new  CompanyService())->getCompanyInfo($company_id,'company_id,company_name,detail');
+
         $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_start_time"]);
         foreach ($activity_list as $key=>$activity_info) {
-            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,system,status,club_id,start_time,end_time,apply_end_time,icon,comment,detail");
-         
+            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,activity_name,system,status,club_id,start_time,end_time,apply_end_time,icon,comment,detail");
+
             $activity_info = json_decode(json_encode($activity_info));
 
             if (isset($activity_info->activity_id) && ($activity_info->status == 1) && $activity_info->system == 0)
             {
                 //公司信息
-                $company_info = (new  CompanyService())->getCompanyInfo($company_id,'company_id,company_name,detail');
                 $activity_start_time = '';
                 $activity_start_time = date('Y-m',strtotime($activity_info->start_time));
                 if($activity_start_time!=$date)
@@ -1053,10 +1077,14 @@ class ActivityService extends BaseService
                 $monthly_activities[$day] = $activity_data;
                 $activity_data = [];
                 $activity_data['activity_id'] = $activity_info->activity_id;
+                $activity_data['activity_name'] = $activity_info->activity_name;
                 $activity_data['comment'] = mb_substr($activity_info->comment,0,15);
                 $activity_data['time'] = date('h:i',strtotime($activity_info->start_time));
-                $activity_data['club_icon'] = '';
-                $activity_data['club_name'] = '';
+                //俱乐部信息
+                $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
+                $activity_data['club_icon'] = $club_info->icon??'';
+                $activity_data['club_name'] = $club_info->club_name??'未关联俱乐部';
+
                 $activity_data['company_name'] = $company_info->company_name;
                 $activity_data['apply_end_time'] = $activity_info->apply_end_time;
                 $detail =  json_encode($activity_info->detail,true);
@@ -1070,21 +1098,25 @@ class ActivityService extends BaseService
                     {
                         $bannerList = $detail['clubBanner'];
                     }
-                    $header_image = $bannerList[0]['img_url'];
+                    $defalut_header_iamge = $bannerList[0]['img_url'];
                 }
 
                 $activity_data['header_image'] = $header_image;
+                $activity_data['defalut_header_image'] = $defalut_header_iamge;
+                //参加活动人员id
                 $member_list = (new ActivityService())->getActivityMemberList($activity_info->activity_id);
-                $activity_data['activity_member_list'] = $member_list;
-                if( $activity_info->club_id>0)
+                $activity_member_list = [];
+                foreach ($member_list as $value)
                 {
-                    $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
-                    $activity_data['club_icon'] = $club_info->icon;
-                    $activity_data['club_name'] = $club_info->club_name;
+                    $userInfo = (new UserService())->getUserInfo($value->user_id,'user_id,nick_name,true_name,user_img');
+                    $activity_member_list[] = $userInfo;
                 }
+                $activity_data['activity_member_list'] = $activity_member_list;
+                //参加人数
+                $activity_data['user_count'] = $this->getActivityMemberCount($activity_info->activity_id);
                 $date_list[$day][] = $activity_data;
             }
-        
+
         }
        // print_r($date_list);die();
         /*每月初始展示的活动*/
@@ -1112,7 +1144,7 @@ class ActivityService extends BaseService
             }
         }
         //h5页面只取每天第一个报名未结束的活动 ,俱乐部小程序需要每天的所有活动
-        if($type == 'h5') {
+        if($app_type == 'h5') {
             foreach ($date_list as $key => $day_activity_list) {
                 $flag = 0;
                 foreach ($day_activity_list as $activity_info) {
@@ -1142,23 +1174,82 @@ class ActivityService extends BaseService
         return ['month_activities'=>array_values($monthly_activities),'date_data'=>$date_list,'first_activity_info'=>$first_activity_info];
     }
     /*
-     * 获取活动已签到人数
+     * 获取活动已签到人数   /// 做缓存
      */
-    public function getActivityCheckinCount($activity_id){
-        $activity_count = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id.' and checkin_status = 1','columns'=>'count(activity_id)']);
-        return $activity_count->{0};
+//    public function getActivityCheckinCount($activity_id){
+//        $activity_count = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id.' and checkin_status = 1','columns'=>'count(activity_id)']);
+//        return $activity_count->{0};
+//    }
+//
+//    /*
+//     * 查询用户是否参加某个活动  //做缓存
+//     */
+//    public function checkUserActivity($user_id,$activity_id){
+//           $params = [
+//             'user_id ='.$user_id.' and activity_id = '.$activity_id,
+//             'columns'=>'id'
+//           ];
+//           return (new \HJ\UserActivityLog())->findFirst($params);
+//    }
+    /*
+    * 获取活动已签到人数   /// 做缓存
+    */
+    public function getActivityCheckinCount($activity_id,$cache = 1){
+        $cache_settings = $this->config->cache_settings->activity_checkin_count;
+        $redis_key = $cache_settings->name.$activity_id;
+        if($cache ==  1)
+        {
+            $checkin_number = $this->redis->get($redis_key);
+            if(is_null($checkin_number))
+            {
+                $user_count = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id.' and checkin_status = 1','columns'=>'count(activity_id)']);
+                $checkin_number = $user_count->{0};
+                $this->redis->set($redis_key,$checkin_number);
+                $this->redis->expire($redis_key,$cache_settings->expire);
+            }
+        }else
+        {
+            $user_count = (new \HJ\UserActivityLog())->findFirst(['activity_id ='.$activity_id.' and checkin_status = 1','columns'=>'count(activity_id)']);
+            $checkin_number = $user_count->{0};
+            $this->redis->set($redis_key,$checkin_number);
+            $this->redis->expire($redis_key,$cache_settings->expire);
+        }
+        return $checkin_number;
+    }
+    /*
+    * 查询用户是否参加某个活动  //做缓存
+    */
+    public function checkUserActivity($user_id,$activity_id,$cache = 1){
+        $cache_settings = $this->config->cache_settings->check_user_activity_log;
+        $redis_key  = $cache_settings->name.'user_id:'.$user_id.'activity_id:'.$activity_id;
+        if($cache == 1)
+        {
+          $is_attend = json_decode($this->redis->get($redis_key));
+          if(is_null($is_attend))
+          {
+              //查库
+              $params = [
+                  'user_id ='.$user_id.' and activity_id = '.$activity_id,
+                  'columns'=>'id'
+              ];
+              $is_attend =  (new \HJ\UserActivityLog())->findFirst($params);
+              $this->redis->set($redis_key,json_encode($is_attend));
+              $this->redis->expire($redis_key,$cache_settings->expire);
+          }
+        }else
+        {
+            //查库
+            $params = [
+                'user_id ='.$user_id.' and activity_id = '.$activity_id,
+                'columns'=>'id'
+            ];
+            $is_attend =  (new \HJ\UserActivityLog())->findFirst($params);
+            $this->redis->set($redis_key,json_encode($is_attend));
+            $this->redis->expire($redis_key,$cache_settings->expire);
+        }
+        return json_decode(json_encode($is_attend));
     }
 
-    /*
-     * 查询用户是否参加某个活动
-     */
-    public function checkUserActivity($user_id,$activity_id){
-           $params = [
-             'user_id ='.$user_id.' and activity_id = '.$activity_id,
-             'columns'=>'id'
-           ];
-           return (new \HJ\UserActivityLog())->findFirst($params);
-    }
 
 
 
