@@ -112,7 +112,7 @@ class LoginService extends BaseService
             //用户找到，不需要对应的名单ID了
             $companyuser_id = 0;
             //登录流程
-            $login = $this->loginByUser($userInfo,$app_id);
+            $login = $this->loginByUser($userInfo->user_id,$app_id);
             //修改验证码记录状态
             $sendcode = $oUserService->setMobileCode($mobile,$logincode);
             return $login;
@@ -136,7 +136,7 @@ class LoginService extends BaseService
                             if($createUser['result']==true)
                             {
                                 //登录流程
-                                $login = $this->loginByUser($createUser['userInfo'],$app_id);
+                                $login = $this->loginByUser($createUser['userInfo']->user_id,$app_id);
                                 $oCompanyService->updateCompanyInfo($createCompany['companyInfo']->company_id,['create_user_id'=>$createUser['userInfo']->user_id]);
                                 return $login;
                             }
@@ -203,7 +203,7 @@ class LoginService extends BaseService
                     if($createUser['result']==true)
                     {
                         //登录流程
-                        $login = $this->loginByUser($createUser['userInfo'],$app_id);
+                        $login = $this->loginByUser($createUser['userInfo']->user_id,$app_id);
                         return $login;
                     }
                     else
@@ -250,7 +250,7 @@ class LoginService extends BaseService
         if(!isset($return['result']))
         {
             //登录流程
-            $login = $this->loginByUser($userinfo,$app_id);
+            $login = $this->loginByUser($userinfo['user_id'],$app_id);
             return $login;
         }
         return $return;
@@ -284,7 +284,7 @@ class LoginService extends BaseService
         if(!isset($return['result']))
         {
             //登录流程
-            $login = $this->loginByUser($userinfo,$app_id);
+            $login = $this->loginByUser($userinfo['user_id'],$app_id);
             return $login;
         }
         return $return;
@@ -403,9 +403,10 @@ class LoginService extends BaseService
          return $available;
      }
      //登录
-     public function loginByUser($userInfo,$app_id = 101)
+     public function loginByUser($user_id,$app_id = 101)
      {
          $oUserService = (new UserService());
+         $userInfo = $oUserService->getUserInfo($user_id);
          //用户存在只修改验证码状态及生产token
          if($userInfo->is_del==1){
              $return['msg']  = $this->msgList['mobile_prohibit'];
