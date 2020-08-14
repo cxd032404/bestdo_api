@@ -164,7 +164,7 @@ class LoginService extends BaseService
                     if($createUser['result']==true)
                     {
                         //登录流程
-                        $login = $this->loginByUser($createUser['userInfo'],$app_id);
+                        $login = $this->loginByUser($createUser['userInfo']->user_id,$app_id);
                         return $login;
                     }
                     else
@@ -285,7 +285,7 @@ class LoginService extends BaseService
         if(!isset($return['result']))
         {
             //登录流程
-            $login = $this->loginByUser($userinfo['user_id'],$app_id);
+            $login = $this->loginByUser($userinfo->user_id,$app_id);
             return $login;
         }
         return $return;
