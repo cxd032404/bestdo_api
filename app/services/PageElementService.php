@@ -769,14 +769,14 @@ class PageElementService extends BaseService
                 $club_info = json_decode(json_encode($club_info),true);
                 $club_info['club_id'] = $club_info['club_id']??0;
                 $club_info['club_name'] = $club_info['club_name']??'未关联俱乐部';
-                $club_info['club_icon'] = $club_info['club_id']??'';
+                $club_info['icon'] = $club_info['icon']??'';
                 $managed_activity_list[$key]['club_info'] = $club_info;
             }else
             {
                 $managed_activity_list[$key]['club_info'] = [
                     'club_id'=>0,
                     'club_name'=>'未关联俱乐部',
-                    'club_icon'=>''
+                    'icon'=>''
                 ];
             }
             $managed_activity_list[$key] = array_merge($managed_activity_list[$key],$managed_activity_list[$key]['club_info']);
