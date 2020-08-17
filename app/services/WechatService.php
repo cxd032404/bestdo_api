@@ -499,6 +499,7 @@ class WechatService extends BaseService
         $url = 'https://api.weixin.qq.com/wxa/msg_sec_check?access_token='. $accessToken;
         $data = json_encode(array('content'=>$checkContent),JSON_UNESCAPED_UNICODE);
         $wechatReturn =(new WebCurl())->curl_post($url,$data);
+        print_r($wechatReturn);die();
         if($wechatReturn['errcode'] != 0)
         {
             $return = ['result'=>false,'msg'=>'您提交的内容含有敏感词汇'];

@@ -34,7 +34,7 @@ class WebCurl extends Component {
 	 */
 	public function post_request($url, $data) {
 		$data = json_encode($data);
-		$post = array(CURLOPT_POSTFIELDS => $data);
+        $post = array(CURLOPT_POSTFIELDS => $data);
 		return $this -> send($url, $post);
 	}
 
@@ -98,7 +98,9 @@ class WebCurl extends Component {
 			CURLOPT_AUTOREFERER => true, # 当根据Location:重定向时，自动设置header中的Referer:信息。
 			CURLOPT_CONNECTTIMEOUT => 2, # 在发起连接前等待的时间，如果设置为0，则无限等待。
 			CURLOPT_TIMEOUT => 10, # 设置cURL允许执行的最长秒数。
-			CURLOPT_MAXREDIRS => 4	# 指定最多的HTTP重定向的数量，这个选项是和CURLOPT_FOLLOWLOCATION一起使用的。
+			CURLOPT_MAXREDIRS => 4,	# 指定最多的HTTP重定向的数量，这个选项是和CURLOPT_FOLLOWLOCATION一起使用的。
+            CURLOPT_SSL_VERIFYPEER=>FALSE,
+            CURLOPT_SSL_VERIFYHOST=>FALSE
 		);
 		if (is_array($post) && count($post) > 0) {
 			$options[CURLOPT_POST] = 1;
@@ -114,7 +116,7 @@ class WebCurl extends Component {
 		$this -> _status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
 		$content = json_decode($this->_content,true);
-		$return = $content;
+		$return = [$this->_error,$this->_content,$this->_status];
 		
 		# 返回状态码
 		return $return;

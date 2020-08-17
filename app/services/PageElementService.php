@@ -862,7 +862,7 @@ class PageElementService extends BaseService
     public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
         $culture = $this->getFromParams($params,'culture',0);
         $already_applied = $this->getFromParams($params,'already_applied',0); //已参加的活动 0未参加
-        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,club_id,activity_name,comment,icon,apply_start_time,apply_end_time,start_time,end_time',$club_id = -1,0);
+        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,club_id,activity_name,comment,icon,apply_start_time,apply_end_time,start_time,end_time',$club_id = -1);
         $currentTime = time();
         $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
@@ -1247,7 +1247,7 @@ class PageElementService extends BaseService
         {
             $month = '0'.$month;
         }
-        $activity_list = (new ActivityService())->getMonthlyActivityList($company_id,$month,$this->getFromParams($params,'number','1'));
+        $activity_list = (new ActivityService())->getMonthlyActivityList($company_id,$month,$this->getFromParams($params,'type','h5'));
         $data['detail']['user_monthly_activities'] = $activity_list;
         return $data;
     }
@@ -1430,5 +1430,22 @@ class PageElementService extends BaseService
         $userImg = $userImg->content['0']['img_url']??"";
         $data['detail'] = ['user_img'=>$userImg,'true_name'=>"欢迎您",'nick_name'=>"欢迎您"];
         return $data;
+    }
+    /*
+     * 获取公司下所有的活动
+     */
+    public function getElementPage_CompanyActivityList($data,$params,$user_info,$company_id)
+    {
+         $activityList = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,activity_name,start_time',$club_id = -1);
+         foreach ($activityList as $key =>$activity_info)
+         {
+             if($activity_info->system != 0)
+             {
+               unset($activityList[$key]);
+             }
+         }
+         $activityList = array_values($activityList);
+         print_r($activityList);die();
+         return $data['detail'] = 1;die();
     }
 }

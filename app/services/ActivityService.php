@@ -148,7 +148,16 @@ class ActivityService extends BaseService
         else
         {
             //检查对当前俱乐部的权限
-            $permission = (new ClubService())->getUserClubPermission($user_info->user_id,$activityParams['club_id'],1);
+//            $permission = (new ClubService())->getUserClubPermission($user_info->user_id,$activityParams['club_id'],1);
+            if($activityParams['club_id']>0)
+            {
+                //检查对当前俱乐部的权限
+                $permission = (new ClubService())->getUserClubPermission($user_info->user_id,$activityParams['club_id'],1);
+            }
+            else
+            {
+                $permission = $user_info->manager_id>0?9:0;
+            }
             if(intval($permission) == 0)
             {
                 $return  = ['result'=>0,"msg"=>"您没有执行此操作的权限哦",'code'=>403];
@@ -156,18 +165,13 @@ class ActivityService extends BaseService
             else
             {
 
-                /*
-                //检查名称是否重复
-                $nameExists = $this->getActivityByName($activityParams['activity_name'],$activityParams['end_time'],$user_info->company_id);
-                if(isset($nameExists->activity_id))
-                {
-                    $return  = ['result'=>0,"msg"=>"活动名称已经存在了哦，请重新输入",'code'=>400];
-                }
-                else
-                {
-                */
-                    //$activityParams['weekly_rebuild'] = ($activityParams['weekly_rebuild']>=0 && $activityParams['weekly_rebuild']<=6)?$activityParams['weekly_rebuild']:-1;
-                    //写入数据
+                    /*写入数据*/
+                   //文件上传
+                echo 3333;die();
+                   $oUpload = new UploadService();
+                   $upload = $oUpload->getUploadedFile([],[],0,0,['pic'=>1]);//['pic'=>1];
+
+
                     $activity = new Activity();
                     $activity->activity_name = $activityParams['activity_name'];
                     $activity->comment = $activityParams['comment'];
@@ -186,11 +190,13 @@ class ActivityService extends BaseService
                     $activity->activity_sign = "";
                     $activity->connect_activity_id = $activityParams['connect_activity_id'];
                     $activity->status = 1;
+                    $header_image = $upload['upload_pic.1']??"";
                     $activity->detail = json_encode(
                         [
                             "checkin"=>$activityParams['checkin']??[],
                             "monthly_apply_limit"=>$activityParams['monthly_apply_limit'],
-                            "weekly_rebuild"=>$activityParams['weekly_rebuild']??-1
+                            "weekly_rebuild"=>$activityParams['weekly_rebuild']??-1,
+                            'header_image'=>$header_image
                             ]
                     );
                     $create = $activity->create();
@@ -213,6 +219,7 @@ class ActivityService extends BaseService
                                 }
                             }
                         }
+                        $this->getActivityListByCompany($user_info->company_id,$columns = 'activity_id,activity_name',$club_id = -1,$cache = 0);
                         $return  = ['result'=>1,"msg"=>"活动创建成功！",'activity_id'=>$activity->activity_id,'data'=>$this->getActivityInfo($activity->activity_id,"*",0),'code'=>200];
                     }
                //}
@@ -287,12 +294,18 @@ class ActivityService extends BaseService
         {
             //检查对当前活动的权限
             $permission = (new ActivityService())->getUserActivityPermission($user_info->user_id,$activityId);
+
             if(!$permission)
             {
                 $return  = ['result'=>0,"msg"=>"您没有执行此操作的权限哦",'code'=>403];
             }
             else
             {
+                     //文件上传
+                    $oUpload = new UploadService();
+                    $upload = $oUpload->getUploadedFile([],[],0,0,['pic'=>1]);//['pic'=>1];
+
+
                     $activityParams['weekly_rebuild'] = ($activityParams['weekly_rebuild']>=0 && $activityParams['weekly_rebuild']<=6)?$activityParams['weekly_rebuild']:-1;
                     //写入数据
                     $activity = (new Activity())::findFirst(['activity_id='.$activityId]);
@@ -310,11 +323,17 @@ class ActivityService extends BaseService
                     $activity->member_limit = $activityParams['member_limit'];
                     $activity->icon = "";
                     $activity->status = 1;
+                    $header_image = json_encode($activity->detail,true)['header_img']??'';
+                    if(count($upload) != 0)
+                    {
+                       $header_image = $upload['upload_pic.1'];
+                    }
                     $activity->detail = json_encode(
                         [
                             "checkin"=>$activityParams['checkin']??[],
                             "monthly_apply_limit"=>$activityParams['monthly_apply_limit'],
-                            "weekly_rebuild"=>$activityParams['weekly_rebuild']??-1
+                            "weekly_rebuild"=>$activityParams['weekly_rebuild']??-1,
+                            "header_image"=>$header_image
                         ]
                     );
                     $update = $activity->save();
@@ -966,11 +985,11 @@ class ActivityService extends BaseService
             }
             return $return;
     }
-    //更新用户信息
+    //更新活动信息
     public function updateActivityInfo($map,$activity_id=0)
     {
         $return = ['result'=>0,'data'=>[],'msg'=>"",'code'=>400];
-        //修改用户信息
+        //修改活动信息
         $activityInfo = \HJ\Activity::findFirst(["activity_id =".$activity_id]);
         foreach($map as $key => $value)
         {
@@ -1015,18 +1034,20 @@ class ActivityService extends BaseService
     /*
      * 获取某公司活动列表
      */
-    public function getMonthlyActivityList($company_id,$month,$number = 1){
+    public function getMonthlyActivityList($company_id,$month,$type = 'h5'){
         $year = date('Y',time());
         $date =$year.'-'.$month;
         $monthly_activities = [];
         $date_list = []; //日期下标数据
         $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_start_time"]);
         foreach ($activity_list as $key=>$activity_info) {
-            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,status,club_id,start_time,end_time,apply_end_time,icon,comment");
+            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,system,status,club_id,start_time,end_time,apply_end_time,icon,comment,detail",0);
             $activity_info = json_decode(json_encode($activity_info));
 
-            if (isset($activity_info->activity_id) && ($activity_info->status == 1))
+            if (isset($activity_info->activity_id) && ($activity_info->status == 1) && $activity_info->system == 0)
             {
+                //公司信息
+                $company_info = (new  CompanyService())->getCompanyInfo($company_id,'company_id,company_name,detail');
                 $activity_start_time = '';
                 $activity_start_time = date('Y-m',strtotime($activity_info->start_time));
                 if($activity_start_time!=$date)
@@ -1044,8 +1065,26 @@ class ActivityService extends BaseService
                 $activity_data['time'] = date('h:i',strtotime($activity_info->start_time));
                 $activity_data['club_icon'] = '';
                 $activity_data['club_name'] = '';
+                $activity_data['company_name'] = $company_info->company_name;
                 $activity_data['apply_end_time'] = $activity_info->apply_end_time;
-                if($activity_info->club_id>0)
+                $detail =  json_encode($activity_info->detail,true);
+                $header_image = $detail['header_image']??'';
+                if(!$header_image)
+                {
+                    $detail = json_decode($company_info->detail,true);
+                    $bannerList = [];
+                    //需默认Banner
+                    if(isset($detail['clubBanner']))
+                    {
+                        $bannerList = $detail['clubBanner'];
+                    }
+                    $header_image = $bannerList[0]['img_url'];
+                }
+
+                $activity_data['header_image'] = $header_image;
+                $member_list = (new ActivityService())->getActivityMemberList($activity_info->activity_id);
+                $activity_data['activity_member_list'] = $member_list;
+                if( $activity_info->club_id>0)
                 {
                     $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
                     $activity_data['club_icon'] = $club_info->icon;
@@ -1056,34 +1095,58 @@ class ActivityService extends BaseService
         }
        // print_r($date_list);die();
         /*每月初始展示的活动*/
+        $current = time();
+        $today = date('d',$current);
         ksort($date_list);
         foreach ($date_list as $key=>$day_activity_list)
         {
-            if($key>=$month) {
+            $flag = 0;
+            //今天往后的数据
+            if($key>=$today) {
                 foreach ($day_activity_list as $activity_info) {
                     //取出第一个报名未结束的活动
                     if (strtotime($activity_info['apply_end_time']) > time()) {
                         $first_activity_info = $activity_info;
+                        $flag = 1;
                         break;
                     }
                 }
             }
+            //获取到数据不再循环
+            if($flag == 1)
+            {
+                break;
+            }
         }
-        if($number == 1) {
+        //h5页面只取每天第一个报名未结束的活动
+        if($type == 'h5') {
             foreach ($date_list as $key => $day_activity_list) {
+                $flag = 0;
                 foreach ($day_activity_list as $activity_info) {
                     //取出第一个没结束的活动
                     if (strtotime($activity_info['apply_end_time']) > time()) {
                         $date_list[$key] = $activity_info;
+                        $flag = 1;
                         break;
                     }
                 }
+                //没有报名没结束的活动获取第一条
+                if($flag == 0)
+                {
+                    $date_list[$key] = $day_activity_list[0];
+                }
+            }
+            if(!isset($first_activity_info))
+            {
+                $first_activity_info = current($date_list);
             }
         }
+
         if(!isset($first_activity_info))
         {
             $first_activity_info = current($date_list);
         }
+
         return ['month_activities'=>$monthly_activities,'date_data'=>$date_list,'first_activity_info'=>$first_activity_info];
     }
     /*
