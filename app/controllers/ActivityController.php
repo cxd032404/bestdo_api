@@ -32,6 +32,7 @@ class ActivityController extends BaseController
 	 * apply_start_time/apply_end_time：报名时间
 	 * club_member_only：是否只允许俱乐部内成员参加
 	 * weekly_rebuild -1表示不重复 0-6周日-周六
+     * header_image 活动头图
      * */
 	public function activityCreateAction()
 	{
@@ -41,13 +42,13 @@ class ActivityController extends BaseController
             return $this->failure([],$return['msg'],$return['code']);
         }
         $userInfo = $return['data']['user_info'];
-	    //接收参数并格式化
+	   //接收参数并格式化
 		$data = $this->request->get();
         $activityData['activity_name'] = isset($data['activity_name'])?substr(trim($data['activity_name'],'#'),0,32):"";
         $activityData['comment'] = isset($data['comment'])?trim($data['comment'],'#'):"";
         $activityData['start_time'] = isset($data['start_time'])?trim($data['start_time'],'#'):"";
         $activityData['end_time'] = isset($data['end_time'])?trim($data['end_time'],'#'):"";
-        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):date('Y-m-d H:i',time()+30); //俱乐部小程序没有报名开始时间 默认给个现在+30秒
+        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):date('Y-m-d H:i',time()+30*60); //俱乐部小程序没有报名开始时间 默认给个现在+30秒
         $activityData['apply_end_time'] = isset($data['apply_end_time'])?trim($data['apply_end_time'],'#'):"";
         $activityData['club_member_only'] = intval($data['club_member_only']??1);
         $activityData['member_limit'] = intval($data['member_limit']??100);
@@ -56,6 +57,7 @@ class ActivityController extends BaseController
         $activityData['weekly_rebuild'] = $data['weekly_rebuild']??[];
         $activityData['connect_activity_id'] = intval($data['connect_activity_id']??0);
         $activityData['checkin'] = json_decode($data['checkin']??"",true);
+        $activityData['header_image'] = $data['header_image']??'';
         //ALTER TABLE `config_activity` ADD `connect_activity_id` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '关联的活动id' AFTER `activity_id`, ADD INDEX (`connect_activity_id`);
         //创建活动
         $create = (new ActivityService())->createActivity($activityData, $userInfo);
@@ -73,7 +75,7 @@ class ActivityController extends BaseController
     /*
      * 更新活动
      * 参数
-     * activityId（必填）：活动ID
+     * activity_id（必填）：活动ID
      * activityName（必填）：活动名称
 	 * club_id：对应俱乐部
 	 * comment：说明文字
@@ -82,6 +84,7 @@ class ActivityController extends BaseController
 	 * start_time/end_time：活动时间
 	 * apply_start_time/apply_end_time：报名时间
 	 * club_member_only：是否只允许俱乐部内成员参加
+     * header_image 活动头图
      * */
     public function activityUpdateAction()
     {
@@ -98,7 +101,7 @@ class ActivityController extends BaseController
         $activityData['comment'] = isset($data['comment'])?trim($data['comment'],'#'):"";
         $activityData['start_time'] = isset($data['start_time'])?trim($data['start_time'],'#'):"";
         $activityData['end_time'] = isset($data['end_time'])?trim($data['end_time'],'#'):"";
-        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):"";
+        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):date('Y-m-d H:i',time()+30*60); //俱乐部小程序没有报名开始时间 默认给个现在+30秒
         $activityData['apply_end_time'] = isset($data['apply_end_time'])?trim($data['apply_end_time'],'#'):"";
         $activityData['club_member_only'] = intval($data['club_member_only']??1);
         $activityData['member_limit'] = intval($data['member_limit']??100);
@@ -107,7 +110,7 @@ class ActivityController extends BaseController
         $activityData['weekly_rebuild'] = intval($data['weekly_rebuild']??-1);
         $activityData['connect_activity_id'] = intval($data['connect_activity_id']??0);
         $activityData['checkin'] = json_decode($data['checkin']??"",true);
-
+        $activityData['header_image'] = $data['header_image']??'';
         //更新活动
         $update = (new ActivityService())->updateActivity($activityId,$activityData, $userInfo);
         if($update['result'])
@@ -223,7 +226,7 @@ class ActivityController extends BaseController
         }
     }
     /*
-     * 活动签到也活动俱乐部名称和活动时间
+     * 活动签到活动俱乐部名称和活动时间
      */
     public function activityInfoAction(){
         /*验证token开始*/
@@ -236,15 +239,26 @@ class ActivityController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $activity_id = isset($data['activity_id'])?intval($data['activity_id']):0;
-        $activity_info = (new ActivityService())->getActivityInfo($activity_id,'activity_id,club_id,start_time,end_time');
+        $activity_info = (new ActivityService())->getActivityInfo($activity_id,'activity_id,activity_name,club_id,start_time,end_time');
         $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,club_name,icon');
-        $time = date('Y年m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('H:i',strtotime($activity_info->end_time));
+
+        if(date('Y',strtotime($activity_info->start_time)) != date('Y',strtotime($activity_info->end_time)))
+        {
+            $time = date('Y年m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('Y年m月d日 H:i',strtotime($activity_info->end_time));
+        }elseif(date('m-d',strtotime($activity_info->start_time)) != date('m-d',strtotime($activity_info->end_time))){
+            $time = date('m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('m月d日 H:i',strtotime($activity_info->end_time));
+        }else
+        {
+            $time = date('m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('H:i',strtotime($activity_info->end_time));
+        }
+
         $data = [
-            'club_name'=>$club_info->club_name,
-            'club_icon'=>$club_info->icon,
+            'activity_name'=>$activity_info->activity_name,
+            'club_name'=>$club_info->club_name??'',
+            'club_icon'=>$club_info->icon??'',
             'time'=>$time
         ];
-        if($activity_info && $club_info)
+        if($activity_info)
         {
             $this->success($data??[],'请求成功');
         }else
