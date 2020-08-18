@@ -105,7 +105,7 @@ class LoginService extends BaseService
         }
         else
         {
-            return ['rusult'=>"false","msg"=>$this->msgList[$userToLogin['msg']],"code"=>400];
+            return ['result'=>"false","msg"=>$this->msgList[$userToLogin['msg']],"code"=>400];
         }
         if(isset($userInfo->user_id))
         {
@@ -142,17 +142,17 @@ class LoginService extends BaseService
                             }
                             else
                             {
-                                return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                                return ['result'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
                             }
                         }
                         else
                         {
-                            return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                            return ['result'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
                         }
                     }
                     else
                     {
-                        return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                        return ['result'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
                     }
                 }
                 else
@@ -169,7 +169,7 @@ class LoginService extends BaseService
                     }
                     else
                     {
-                        return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                        return ['result'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
                     }
                 }
             }
@@ -187,7 +187,7 @@ class LoginService extends BaseService
                 if(!isset($companyuserInfo->id))
                 {
                     //返回失败
-                    return ['rusult'=>"false","msg"=>$this->msgList["companyuser_empty"],"code"=>400];
+                    return ['result'=>"false","msg"=>$this->msgList["companyuser_empty"],"code"=>400];
                 }
                 else
                 {
@@ -208,7 +208,7 @@ class LoginService extends BaseService
                     }
                     else
                     {
-                        return ['rusult'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                        return ['result'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
                     }
                 }
             }
@@ -250,7 +250,7 @@ class LoginService extends BaseService
         if(!isset($return['result']))
         {
             //登录流程
-            $login = $this->loginByUser($userinfo['user_id'],$app_id);
+            $login = $this->loginByUser($userinfo->user_id,$app_id);
             return $login;
         }
         return $return;
@@ -316,7 +316,7 @@ class LoginService extends BaseService
          }
          return $return;
      }
-    //获取可能可用的手机号码对应用户用以登录
+    //获取可能可用的手机n码对应用户用以登录
     public function getUserToLogin($mobile,$code,$miniProgramUserInfo,$app_id)
      {
          $oWechatService = new WechatService();
