@@ -225,18 +225,36 @@ class WechatController extends BaseController
      *生成小程序二维码
      */
     public function miniprogramQrcodeAction(){
-        $company_id = $this->request->getPost('company_id');
+
+        /*验证token开始*/
+        $return  = (new UserService)->getDecrypt();
+        if($return['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        /*验证token结束*/
+        $user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+
+        $company_id = $this->request->getPost('company_id')??1;
+        $company_info = (new CompanyService())->getCompanyInfo($company_id,'company_id,company_name');
+        $company_name = $company_info->company_name;
         $access_token = (new WechatService())->getAccessToken(202);
-         $path="pages/shareb/shareb?company_d=$company_id";
-         $width='430';
-         $post_data='{"path":"'.$path.'","width":'.$width.'}';
-         $url="https://api.weixin.qq.com/wxa/getwxacode?access_token=".$access_token;
-         $res = (new WebCurl())->curl_post($url,$post_data,0);
-         $file_name = '/runtime/codes/qrcode_company_id_'.$company_id.'.png';
-         $file_path = ROOT_PATH.$file_name;
+        $path="pages/shareb/shareb?company_d=$company_id&user_id=$user_id";
+      //  print_r($path);die();
+        $width='430';
+        $post_data='{"path":"'.$path.'","width":'.$width.'}';
+        $url="https://api.weixin.qq.com/cgi-bin/wxaapp/createwxaqrcode?access_token=".$access_token;
+        $res = (new WebCurl())->curl_post($url,$post_data,0);
+
+         //文件后缀  公司名加分享人id
+        $suffix = 'company_id_'.$company_id.'user_id_'.$user_id;
+        $suffix = md5($suffix);
+        $file_name = '/runtime/codes/qrcode_'.$suffix.'.png';
+        $file_path = ROOT_PATH.$file_name;
         if(file_exists($file_path))
-         {
-             return $this->success($file_path);
+         { //域名
+             $host = $_SERVER['HTTP_HOST'];
+
+             return $this->success($host.$file_name);
          }
          if(!is_dir(ROOT_PATH."/runtime/codes/"))
          {
