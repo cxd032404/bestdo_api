@@ -196,12 +196,16 @@ class WechatService extends BaseService
     }
 
     //获取全局access_token
-    public function getAccessToken($app_id=101,$redisKey = 'access_token')
+    public function getAccessToken($app_id=101)
     {
         $wechat = $this->key_config->tencent;
         $wechat = $wechat->$app_id;
-        $appid = $wechat['app_id'];
+        $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
+        //缓存配置名称
+        $cache_settings =  $this->config->cache_settings->accessToken;
+        //redis key
+        $redisKey = $cache_settings->name.'app_id:'.$app_id;
         $access_token_redis = $this->getRedis($redisKey);
         if( $access_token_redis && $access_token_redis["expires_time"] && $access_token_redis["expires_time"]>time() ){
             $access_token = $access_token_redis;
@@ -492,10 +496,8 @@ class WechatService extends BaseService
         {
             return json_decode($check_result,true);
         }
-        $appid = $this->key_config->tencent->$app_id->appid;
-        $appsecret = $this->key_config->tencent->$app_id->appsecret;
         $redisKey = 'miniprogram';
-        $accessToken = $this->getAccessToken(101,$redisKey);
+        $accessToken = $this->getAccessToken(101);
         $url = 'https://api.weixin.qq.com/wxa/msg_sec_check?access_token='. $accessToken;
         $data = json_encode(array('content'=>$checkContent),JSON_UNESCAPED_UNICODE);
         $wechatReturn =(new WebCurl())->curl_post($url,$data);

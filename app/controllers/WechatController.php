@@ -221,4 +221,37 @@ class WechatController extends BaseController
         }
     }
 
+    /*
+     *生成小程序二维码
+     */
+    public function miniprogramQrcodeAction(){
+        $company_id = $this->request->getPost('company_id');
+        $access_token = (new WechatService())->getAccessToken(202);
+         $path="pages/shareb/shareb?company_d=$company_id";
+         $width='430';
+         $post_data='{"path":"'.$path.'","width":'.$width.'}';
+         $url="https://api.weixin.qq.com/wxa/getwxacode?access_token=".$access_token;
+         $res = (new WebCurl())->curl_post($url,$post_data,0);
+         $file_name = '/runtime/codes/qrcode_company_id_'.$company_id.'.png';
+         $file_path = ROOT_PATH.$file_name;
+        if(file_exists($file_path))
+         {
+             return $this->success($file_path);
+         }
+         if(!is_dir(ROOT_PATH."/runtime/codes/"))
+         {
+             mkdir(ROOT_PATH."/runtime/codes/",0777,true);
+         }
+         if($res)
+         {
+             file_put_contents($file_path,$res);
+             $host = $_SERVER['HTTP_HOST'];
+
+             return $this->success($host.$file_name);
+         }else
+         {
+             return $this->error([],'生成失败');
+         }
+    }
+
 }

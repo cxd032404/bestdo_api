@@ -714,7 +714,7 @@ class UserService extends BaseService
         if(isset($userinfo->company_id)){
             $configcompany = \HJ\Company::findFirst([
                 "company_id=:company_id:",
-                'bind'=>['company_id'=>$userinfo->user_id], 'order'=>'company_id desc'
+                'bind'=>['company_id'=>$userinfo->company_id], 'order'=>'company_id desc'
             ]);
             if(isset($configcompany->company_id)){
                 $company_name = $configcompany->company_name;
