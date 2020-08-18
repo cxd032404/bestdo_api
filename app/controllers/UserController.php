@@ -38,7 +38,7 @@ class UserController extends BaseController
         $companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
-        $app_id = $this->request->getHeader("appId")??101;
+        $app_id = $this->request->getHeader("Appid")??101;
         $company_id = intval($data['company_id']??0);
         $company_name = isset($data['company_name'])?substr(preg_replace('# #','',$data['company_name']),0,32):"";
         //调用手机号验证码登录方法
@@ -88,7 +88,7 @@ class UserController extends BaseController
 		$companyuser_id = isset($data['companyuser_id'])?preg_replace('# #','',$data['companyuser_id']):0;
 		$code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
         $miniProgramUserInfo = trim($data['miniProgramUserInfo']??"");
-        $app_id = $this->request->getHeader("appId")??101;
+        $app_id = $this->request->getHeader("Appid")??101;
         //调用手机号验证码登录方法
 		$return  = (new UserService)->mobileCodeLogin($mobile,$logincode,$companyuser_id,$code,$miniProgramUserInfo,$app_id);
 		//返回值判断
@@ -108,7 +108,7 @@ class UserController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
-        $app_id = $this->request->getHeader("appId")??101;
+        $app_id = $this->request->getHeader("Appid")??101;
         //调用手机号验证码登录方法
         $openId = (new WechatService)->getOpenIdByCode($code,$app_id);
         //调用手机号验证码登录方法
@@ -130,7 +130,7 @@ class UserController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
-        $app_id = $this->request->getHeader("appId")??201;
+        $app_id = $this->request->getHeader("Appid")??201;
         //通过code获取sessionKey,openid,Unionid
         $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($code,$app_id);
         if($wechatUserInfo['openid'])
