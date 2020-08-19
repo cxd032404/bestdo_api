@@ -125,20 +125,28 @@ class LoginService extends BaseService
                 {
                     if($company_name != "")
                     {
-                        //创建企业
-                        $createCompany = $oCompanyService->createCompany(["company_name"=>$company_name,"member_limit"=>10,'parent_id'=>0,'display'=>1]);
-                        if($createCompany['result']==true)
+                        $companyInfo = $oCompanyService->getCompanyInfoByName($company_name,'company_id');
+                        if(!isset($companyInfo->company_id))
                         {
-                            $createUser = $oUserService->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
-                                "company_id"=>$createCompany['companyInfo']->company_id,
-                                'mobile'=>$mobile,'department_id'=>0,
-                                'department_id_1'=>0,'department_id_2'=>0,'department_id_3'=>0,'last_login_source'=>"Mobile",'is_del'=>0]);
-                            if($createUser['result']==true)
+                            //创建企业
+                            $createCompany = $oCompanyService->createCompany(["company_name"=>$company_name,"member_limit"=>10,'parent_id'=>0,'display'=>1]);
+                            if($createCompany['result']==true)
                             {
-                                //登录流程
-                                $login = $this->loginByUser($createUser['userInfo']->user_id,$app_id);
-                                $oCompanyService->updateCompanyInfo($createCompany['companyInfo']->company_id,['create_user_id'=>$createUser['userInfo']->user_id]);
-                                return $login;
+                                $createUser = $oUserService->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
+                                    "company_id"=>$createCompany['companyInfo']->company_id,
+                                    'mobile'=>$mobile,'department_id'=>0,
+                                    'department_id_1'=>0,'department_id_2'=>0,'department_id_3'=>0,'last_login_source'=>"Mobile",'is_del'=>0]);
+                                if($createUser['result']==true)
+                                {
+                                    //登录流程
+                                    $login = $this->loginByUser($createUser['userInfo']->user_id,$app_id);
+                                    $oCompanyService->updateCompanyInfo($createCompany['companyInfo']->company_id,['create_user_id'=>$createUser['userInfo']->user_id]);
+                                    return $login;
+                                }
+                                else
+                                {
+                                    return ['result'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                                }
                             }
                             else
                             {
@@ -147,8 +155,23 @@ class LoginService extends BaseService
                         }
                         else
                         {
-                            return ['result'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                            $createUser = $oUserService->createUser(["username"=>$mobile,'nickname'=>"用户".$mobile,'true_name'=>"用户".$mobile,
+                                "company_id"=>$companyInfo->company_id,
+                                'mobile'=>$mobile,'department_id'=>0,
+                                'department_id_1'=>0,'department_id_2'=>0,'department_id_3'=>0,'last_login_source'=>"Mobile",'is_del'=>0]);
+                            if($createUser['result']==true)
+                            {
+                                //登录流程
+                                $login = $this->loginByUser($createUser['userInfo']->user_id,$app_id);
+                                //$oCompanyService->updateCompanyInfo($createCompany['companyInfo']->company_id,['create_user_id'=>$createUser['userInfo']->user_id]);
+                                return $login;
+                            }
+                            else
+                            {
+                                return ['result'=>"false","msg"=>$this->msgList["login_fail"],"code"=>400];
+                            }
                         }
+
                     }
                     else
                     {

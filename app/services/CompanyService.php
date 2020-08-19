@@ -164,5 +164,16 @@ class CompanyService extends BaseService
         }
         return $return;
     }
+    //根据公司名称获取公司信息
+
+    public function getCompanyInfoByName($company_name,$columns = "company_name,company_id,icon,detail")
+    {
+        $params = [
+            "company_name='" . $company_name . "'",
+            'columns' => $columns,
+        ];
+        $company_info = \HJ\Company::findFirst($params);
+        return $company_info;
+    }
 
 }

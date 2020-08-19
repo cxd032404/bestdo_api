@@ -19,6 +19,7 @@ class ApiController extends BaseController
 {
     public function testAction($id = 0)
     {
+           
             $return = (new TestService)->test();
             //$return = $oService->test();
             $this->logger->info(json_encode($return));

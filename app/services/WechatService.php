@@ -496,8 +496,7 @@ class WechatService extends BaseService
         {
             return json_decode($check_result,true);
         }
-        $redisKey = 'miniprogram';
-        $accessToken = $this->getAccessToken(101);
+        $accessToken = $this->getAccessToken(201);
         $url = 'https://api.weixin.qq.com/wxa/msg_sec_check?access_token='. $accessToken;
         $data = json_encode(array('content'=>$checkContent),JSON_UNESCAPED_UNICODE);
         $wechatReturn =(new WebCurl())->curl_post($url,$data);
