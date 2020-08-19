@@ -1087,7 +1087,7 @@ class ActivityService extends BaseService
 
                 $activity_data['company_name'] = $company_info->company_name;
                 $activity_data['apply_end_time'] = $activity_info->apply_end_time;
-                $detail =  json_encode($activity_info->detail,true);
+                $detail =  json_decode($activity_info->detail,true);
                 $header_image = $detail['header_image']??'';
                 if(!$header_image)
                 {
