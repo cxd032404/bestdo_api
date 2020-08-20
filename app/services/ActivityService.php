@@ -19,7 +19,7 @@ class ActivityService extends BaseService
         "activity_update_fail"=>"活动更新失败",
         "activity_member_limit"=>"活动人数已满",
         "activity_club_limit"=>"申请加入",
-        "activity_apply_time"=>"报名开始时间不可大于报名结束时间",
+        "activity_apply_time"=>"报名时间有误",
         "activity_start_time"=>"活动开始时间不可大于活动结束时间",
         "activity_time"=>"报名结束时间不可大于活动开始时间",
         "checkin_address_null"=>"此活动未设置签到地点",
@@ -1057,7 +1057,7 @@ class ActivityService extends BaseService
 
         $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_start_time"]);
         foreach ($activity_list as $key=>$activity_info) {
-            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,activity_name,system,status,club_id,start_time,end_time,apply_end_time,icon,comment,detail");
+            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,activity_name,system,status,club_id,start_time,create_time,end_time,apply_end_time,icon,comment,detail");
 
             $activity_info = json_decode(json_encode($activity_info));
 
@@ -1079,7 +1079,7 @@ class ActivityService extends BaseService
                 $activity_data['activity_id'] = $activity_info->activity_id;
                 $activity_data['activity_name'] = $activity_info->activity_name;
                 $activity_data['comment'] = mb_substr($activity_info->comment,0,15);
-                $activity_data['time'] = date('h:i',strtotime($activity_info->start_time));
+                $activity_data['create_time'] = $activity_info->create_time;
                 //俱乐部信息
                 $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
                 $activity_data['club_icon'] = $club_info->icon??'';
@@ -1143,6 +1143,14 @@ class ActivityService extends BaseService
                 break;
             }
         }
+
+        //每天得活动排序 按照 创建时间排序
+        foreach ($date_list as $key =>$activity_info)
+        {
+            $create_time_sort = array_column($date_list[$key],'create_time');
+            array_multisort($create_time_sort,SORT_DESC,$date_list[$key]);
+        }
+
         //h5页面只取每天第一个报名未结束的活动 ,俱乐部小程序需要每天的所有活动
         if($app_type == 'h5') {
             foreach ($date_list as $key => $day_activity_list) {
