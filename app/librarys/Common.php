@@ -146,7 +146,7 @@ class Common extends Component {
      * @param float $lat 纬度值
      * @param float $lng 经度值
      */
-    static function getDistance($lat1, $lng1, $lat2, $lng2){
+    static function getDistance($lat1 = 0 , $lng1 = 0, $lat2 = 0, $lng2 = 0){
         $earthRadius = 6367000; //approximate radius of earth in meters
         $lat1 = ($lat1 * pi() ) / 180;
         $lng1 = ($lng1 * pi() ) / 180;

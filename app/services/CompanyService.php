@@ -98,9 +98,9 @@ class CompanyService extends BaseService
                     $company['detail'][$banner_type] = [];
                 }
             }
+            $company['detail'] = json_encode($company['detail']);
         }
         $company = json_decode(json_encode($company));
-        $company->detail = json_encode($company->detail);
         return $company;
     }
     //获取企业列表

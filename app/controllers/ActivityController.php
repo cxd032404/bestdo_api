@@ -32,6 +32,7 @@ class ActivityController extends BaseController
 	 * apply_start_time/apply_end_time：报名时间
 	 * club_member_only：是否只允许俱乐部内成员参加
 	 * weekly_rebuild -1表示不重复 0-6周日-周六
+     * header_image 活动头图
      * */
 	public function activityCreateAction()
 	{
@@ -74,7 +75,7 @@ class ActivityController extends BaseController
     /*
      * 更新活动
      * 参数
-     * activityId（必填）：活动ID
+     * activity_id（必填）：活动ID
      * activityName（必填）：活动名称
 	 * club_id：对应俱乐部
 	 * comment：说明文字
@@ -83,6 +84,7 @@ class ActivityController extends BaseController
 	 * start_time/end_time：活动时间
 	 * apply_start_time/apply_end_time：报名时间
 	 * club_member_only：是否只允许俱乐部内成员参加
+     * header_image 活动头图
      * */
     public function activityUpdateAction()
     {
@@ -224,7 +226,7 @@ class ActivityController extends BaseController
         }
     }
     /*
-     * 活动签到也活动俱乐部名称和活动时间
+     * 活动签到活动俱乐部名称和活动时间
      */
     public function activityInfoAction(){
         /*验证token开始*/
@@ -237,15 +239,26 @@ class ActivityController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $activity_id = isset($data['activity_id'])?intval($data['activity_id']):0;
-        $activity_info = (new ActivityService())->getActivityInfo($activity_id,'activity_id,club_id,start_time,end_time');
+        $activity_info = (new ActivityService())->getActivityInfo($activity_id,'activity_id,activity_name,club_id,start_time,end_time');
         $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,club_name,icon');
-        $time = date('Y年m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('H:i',strtotime($activity_info->end_time));
+
+        if(date('Y',strtotime($activity_info->start_time)) != date('Y',strtotime($activity_info->end_time)))
+        {
+            $time = date('Y年m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('Y年m月d日 H:i',strtotime($activity_info->end_time));
+        }elseif(date('m-d',strtotime($activity_info->start_time)) != date('m-d',strtotime($activity_info->end_time))){
+            $time = date('m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('m月d日 H:i',strtotime($activity_info->end_time));
+        }else
+        {
+            $time = date('m月d日 H:i',strtotime($activity_info->start_time)).'-'.date('H:i',strtotime($activity_info->end_time));
+        }
+
         $data = [
-            'club_name'=>$club_info->club_name,
-            'club_icon'=>$club_info->icon,
+            'activity_name'=>$activity_info->activity_name,
+            'club_name'=>$club_info->club_name??'',
+            'club_icon'=>$club_info->icon??'',
             'time'=>$time
         ];
-        if($activity_info && $club_info)
+        if($activity_info)
         {
             $this->success($data??[],'请求成功');
         }else
