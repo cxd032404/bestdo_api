@@ -436,7 +436,7 @@ class ActivityService extends BaseService
     /*
      * 获取用户管理的活动列表
      */
-    public function getUserActivityListWithPermission($user_id,$club_id,$columns,$start = 0,$page=1,$pageSize =4,$activity_status = -1){
+    public function getUserActivityListWithPermission($app_id = 101,$user_id,$club_id,$columns,$start = 0,$page=1,$pageSize =4,$activity_status = -1){
         //查询用户是否有超级管理员权限
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
@@ -471,6 +471,15 @@ class ActivityService extends BaseService
         }
 
           $activity_list = $this->activitySort(json_decode(json_encode($activity_list),true),$activity_status);
+        //去除不是本app的活动
+        foreach ($activity_list as $key =>$value)
+        {
+            if($value['app_id'] != $app_id)
+            {
+                unset($activity_list[$key]);
+            }
+        }
+        $activity_list = array_values($activity_list);
 
         if($start>0)
         {
@@ -1050,7 +1059,7 @@ class ActivityService extends BaseService
     /*
      * 获取某公司活动列表
      */
-    public function getMonthlyActivityList($company_id,$month,$app_type = 'h5'){
+    public function getMonthlyActivityList($app_id = 101,$company_id,$month,$app_type = 'h5'){
         $year = date('Y',time());
         $date =$year.'-'.$month;
         $monthly_activities = [];
@@ -1061,11 +1070,11 @@ class ActivityService extends BaseService
 
         $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_start_time"]);
         foreach ($activity_list as $key=>$activity_info) {
-            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,activity_name,system,status,club_id,start_time,create_time,end_time,apply_end_time,icon,comment,detail");
+            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,activity_name,system,app_id,status,club_id,start_time,create_time,end_time,apply_end_time,icon,comment,detail");
 
             $activity_info = json_decode(json_encode($activity_info));
 
-            if (isset($activity_info->activity_id) && ($activity_info->status == 1) && $activity_info->system == 0)
+            if (isset($activity_info->activity_id) && ($activity_info->status == 1) && $activity_info->system == 0 && $activity_info->app_id == $app_id)
             {
                 //公司信息
                 $activity_start_time = '';
