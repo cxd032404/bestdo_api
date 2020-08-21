@@ -160,6 +160,9 @@ $config = [
         'config'=>['name'=>'config_','expire'=>86400*7],
         'activity_member_count'=>['name'=>'activity_member_count_','expire'=>3600],
         'wechat_comment_check'=>['name'=>'wechat_comment_check_','expire'=>1200],
+        'activity_member_list'=>['name'=>'activity_member_list_','expire'=>3600], // 活动人员列表
+        'check_user_activity_log'=>['name'=>'check_user_activity_log_','expire'=>3600], // 检测是否参加活动
+        'activity_checkin_count'=>['name'=>'activity_checkin_count_','expire'=>3600], // 活动签到人数统计
     ],
     'special_code'=>[
         "need_club_membership"=>999,
