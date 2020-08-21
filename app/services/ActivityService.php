@@ -145,6 +145,9 @@ class ActivityService extends BaseService
         elseif($activityParams['activity_name'] == "")
         {
             $return  = ['result'=>0,"msg"=>"活动名称有误，请重新输入",'code'=>400];
+        }//地址判断
+        elseif(!$activityParams['checkin']){
+            $return  = ['result'=>0,"msg"=>"请选择活动地点",'code'=>400];
         }
         else
         {
@@ -187,6 +190,7 @@ class ActivityService extends BaseService
                     $activity->activity_sign = "";
                     $activity->connect_activity_id = $activityParams['connect_activity_id'];
                     $activity->status = 1;
+                    $activity->app_id = $activityParams['app_id'];
                     $header_image = $activityParams['header_image'];
                     $activity->detail = json_encode(
                         [

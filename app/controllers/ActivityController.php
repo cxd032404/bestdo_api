@@ -43,7 +43,9 @@ class ActivityController extends BaseController
         }
         $userInfo = $return['data']['user_info'];
 	   //接收参数并格式化
+        $app_id = $this->request->getHeader('Appid');
 		$data = $this->request->get();
+		$activityData['app_id'] = $app_id;
         $activityData['activity_name'] = isset($data['activity_name'])?substr(trim($data['activity_name'],'#'),0,32):"";
         $activityData['comment'] = isset($data['comment'])?trim($data['comment'],'#'):"";
         $activityData['start_time'] = isset($data['start_time'])?trim($data['start_time'],'#'):"";
