@@ -46,18 +46,18 @@ class ConfigService extends BaseService
                 $config = [];
             }
         }
-        $source_array = json_decode($config->content,true);
-        foreach ($source_array as $key =>$value)
-        {
-            if(!is_array($value))
-            {
-                $source = \HJ\Source::findFirst(['source_id ='. $value])->toArray();
-                if (isset($source['source_id'])) {
-                    $source_array[$key] = $source;
-                }q  q
+        if($config->config_type == source) {
+            $source_array = json_decode($config->content, true);
+            foreach ($source_array as $key => $value) {
+                if (!is_array($value)) {
+                    $source = \HJ\Source::findFirst(['source_id =' . $value])->toArray();
+                    if (isset($source['source_id'])) {
+                        $source_array[$key] = $source;
+                    }
+                }
             }
+            $config->content = json_encode($source_array);
         }
-        $config->content = json_encode($source_array);
         return $config;
     }
 }
