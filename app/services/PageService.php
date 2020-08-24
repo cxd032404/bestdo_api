@@ -20,6 +20,8 @@ class PageService extends BaseService
 	    else
         {
             $params = json_decode($params,true);
+            $app_id = $this->request->getHeader('Appid')??101;
+            $params['app_id'] = $app_id;
             //获取页面元素详情
 	        $pageElementList  = $this->getPageElementByPage($pageInfo->page_id,"element_sign,element_name,element_type,detail",$params['element_sign_list']??[]);
             foreach($pageElementList as $key => $elementDetail)

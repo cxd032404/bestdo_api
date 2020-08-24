@@ -259,6 +259,7 @@ class WechatMessageService extends BaseService
      */
     public function sendWechatMessage()
     {
+        $accessToken = (new WechatService())->getAccessToken(101);
         $redisKey = $this->config->redisQueue->wechatMessageQueue;
         for($i = 0 ;$i<10;$i++)
         {
@@ -266,7 +267,6 @@ class WechatMessageService extends BaseService
             if($message)
             {
                 //有数据发送
-                $accessToken = (new WechatService())->getAccessToken($this->key_config->aliyun->wechat->appid,$this->key_config->aliyun->wechat->appsecret);
                 $sendUrl = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=$accessToken";
                 $res = $this->curl->curl_post($sendUrl,$message);
                 if($res['errcode']!=0)

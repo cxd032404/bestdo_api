@@ -125,4 +125,55 @@ class CompanyService extends BaseService
         ];
         return (new Protocal())->findFirst($params);
     }
+    //创建企业
+    public function createCompany($companyInfo = [])
+    {
+        $company = new \HJ\Company();
+        foreach($companyInfo as $key => $value)
+        {
+            $company->$key = $value;
+        }
+        $company->create_time = $company->update_time = date("Y-m-d H:i:s");
+        if ($company->create() === true) {
+            return ['result'=>true,"companyInfo"=>$company];
+        }
+        else
+        {
+            return ['result'=>false];
+        }
+        //ALTER TABLE `config_company` ADD `create_user_id` INT(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '创建人用户id' AFTER `parent_id`, ADD INDEX (`create_user_id`);
+    }
+    //更新企业信息
+    public function updateCompanyInfo($company_id=0,$map)
+    {
+        //修改企业信息
+        $companyInfo = \HJ\Company::findFirst(["company_id = '".$company_id."'"]);
+        foreach($map as $key => $value)
+        {
+            if(!empty($value))
+            {
+                $companyInfo->$key = $value;
+            }
+        }
+        $companyInfo->update_time = date("Y-m-d H:i:s");
+        if ($companyInfo->update() === false) {
+            return ['result'=>false];
+        }else {
+            $companyInfo = $this->getCompanyInfo($company_id,'*',0);
+            return ['result'=>true,"companyInfo"=>$companyInfo];
+        }
+        return $return;
+    }
+    //根据公司名称获取公司信息
+
+    public function getCompanyInfoByName($company_name,$columns = "company_name,company_id,icon,detail")
+    {
+        $params = [
+            "company_name='" . $company_name . "'",
+            'columns' => $columns,
+        ];
+        $company_info = \HJ\Company::findFirst($params);
+        return $company_info;
+    }
+
 }

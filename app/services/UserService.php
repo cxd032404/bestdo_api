@@ -116,7 +116,7 @@ class UserService extends BaseService
         return $return;
     }
     //手机号验证码登录方法
-    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "")
+    public function mobileCodeLogin($mobile="",$logincode="",$companyuser_id=0,$code="",$miniProgramUserInfo = "",$app_id = 101)
     {
         $common = new Common();
         $oWechatService = (new WechatService());
@@ -143,11 +143,11 @@ class UserService extends BaseService
             if(!empty($code))
             {
                 //通过code获取到微信的用户信息
-                $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->wechat,$code);
+                $WechatUserInfo = $oWechatService->getUserInfoByCode_Wechat($this->key_config->tencent,$code,$app_id);
                 if(isset($WechatUserInfo['openid']))
                 {
                     //检查手机号和微信Openid是否配对组合可用
-                    $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile);
+                    $available = $this->checkMobileAvailable($WechatUserInfo['openid'],$mobile,$app_id);
                     if($available['result']==0)
                     {
                         $return = ['result'=>0,'data'=>[],'msg'=>$this->msgList[$available['msg']],'code'=>400];
@@ -155,7 +155,7 @@ class UserService extends BaseService
                 }
                 else
                 {
-                    $mobileUser = $this->getUserInfoByMobile($mobile);
+                    $mobileUser = $this->getUserInfoByMobile($mobile,$app_id);
                     if(isset($mobileUser->user_id))
                     {
                         $available['mobileUser'] =  $mobileUser;
@@ -169,7 +169,7 @@ class UserService extends BaseService
             elseif(!empty($miniProgramUserInfo))
             {
                 $code = json_decode($miniProgramUserInfo,true)['code'];
-                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+                $miniProgramUserInfo = $oWechatService->getUserInfoByCode_mini_program($code,$app_id);
                 if(isset($miniProgramUserInfo['openid']))
                 {
                     $available = $this->checkMobileAvailable($miniProgramUserInfo['openid'],$mobile,'miniprogram');
@@ -180,7 +180,7 @@ class UserService extends BaseService
                 }
                 else
                 {
-                    $mobileUser = $this->getUserInfoByMobile($mobile);
+                    $mobileUser = $this->getUserInfoByMobile($mobile,$app_id);
                     if(isset($mobileUser->user_id))
                     {
                         $available['mobileUser'] =  $mobileUser;
@@ -217,8 +217,7 @@ class UserService extends BaseService
             }
             if(isset($userinfo->user_id))
             {
-                if($companyuser_id==0)
-                {
+
                     //用户存在只修改验证码状态及生产token
                     if($userinfo->is_del==1){
                         $return['msg']  = $this->msgList['mobile_prohibit'];
@@ -274,83 +273,11 @@ class UserService extends BaseService
                             $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
                                 'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
                                 'last_login_source'=>"Mobile"],$userinfo->user_id);
-                            $this->redis->expire('login_'.$mobile,0);
                             $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
                         }
                     }
-                }
-                else
-                {
-                    //查找企业名单
-                    $companyUserInfo = \HJ\CompanyUserList::findFirst(["id=:id:", 'bind'=>['id'=>$companyuser_id]]);
-                    //如果已经绑定且和当前用户一致
-                    if(isset($companyUserInfo->user_id) && $companyUserInfo->user_id == $userinfo->user_id)
-                    {
-                        //用户存在只修改验证码状态及生产token
-                        if($userinfo->is_del==1){
-                            $return['msg']  = $this->msgList['mobile_prohibit'];
-                        }else{
-                            //修改验证码记录状态
-                            $sendcode = $this->setMobileCode($mobile,$logincode);
-                            if(!$sendcode){
-                                $return['msg']  = $this->msgList['code_status_error'];
-                            }else{
-                                if(!empty($miniProgramUserInfo))
-                                {
-                                    //如果尚未登录微信信息
-                                    if($userinfo->mini_program_id=="")
-                                    {
-                                        $this->wechat_code_logger->info("入驻登录更新小程序信息");
-                                        //完善用户小程序资料
-                                        (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
-                                    }
-                                    else
-                                    {
-                                        if($userinfo->test!=1)
-                                        {
-                                            $this->wechat_code_logger->info("入驻登录更新小程序信息");
-                                            //完善用户小程序资料
-                                            (new WechatService)->updateUserWithMiniProgram($userinfo->user_id,$miniProgramUserInfo);
-                                        }
-                                    }
 
-                                }
-                                if(!empty($code))
-                                {
-                                    //如果尚未登录微信信息
-                                    if($userinfo->wechatid=="")
-                                    {
-                                        $this->wechat_code_logger->info("入驻登录更新微信信息");
-                                        //完善用户微信资料
-                                        (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
-                                    }
-                                    else
-                                    {
-                                        if($userinfo->test!=1)
-                                        {
-                                            $this->wechat_code_logger->info("入驻登录更新微信信息");
-                                            //完善用户微信资料
-                                            (new WechatService)->updateUserWithWechat($this->key_config->wechat,$userinfo->user_id,$code);
-                                        }
-                                    }
-                                }
-                                //生成token
-                                $tokeninfo = $this->getToken($userinfo->user_id);
-                                $currentTime = time();
-                                //修改用户登录时间
-                                $this->updateUserInfo(['last_login_time'=>date('Y-m-d H:i:s',$currentTime),
-                                    'last_update_time'=>date('Y-m-d H:i:s',$currentTime),
-                                    'last_login_source'=>"Mobile"],$userinfo->user_id);
-                                $this->redis->expire('login_'.$mobile,0);
-                                $return  = ['result'=>1, 'msg'=>$this->msgList['login_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token']]];
-                            }
-                        }
-                    }
-                    else
-                    {
-                        $return['msg']  = $this->msgList['company_user_existed'];
-                    }
-                }
+
             }else{//用户不存在 需创建用户+修改验证码状态+修改企业名单状态+生成token
                 try {
                     //启用事务
@@ -416,7 +343,6 @@ class UserService extends BaseService
                     //生成token
                     $tokeninfo = $this->getToken($user->user_id);
                     $return  = ['result'=>1, 'msg'=>$this->msgList['register_success'], 'code'=>200, 'data'=>['user_info'=>$tokeninfo['map'], 'user_token'=>$tokeninfo['token'] ]];
-                    $this->redis->expire('login_'.$mobile,0);
                     $transaction->commit($return);
                 } catch (TxFailed $e) {
                     // 捕获失败回滚的错误
@@ -575,6 +501,34 @@ class UserService extends BaseService
         }
         return $return;
     }
+    //更新用户对应的Openid列表
+    public function updateUserOpenId($user_id,$openid,$app_id)
+    {
+        $openidList = $this->getOpenIdListByUser($user_id,$app_id);
+        if(count($openidList)>0)
+        {
+            return ['result'=>true];
+        }
+        else
+        {
+            $userInfo = $this->getUserInfo($user_id,"user_id,mobile,company_id");
+            $openId = new \HJ\OpenId();
+            $openId->open_id = $openid;
+            $openId->user_id = $userInfo->user_id;
+            $openId->mobile = $userInfo->mobile;
+            $openId->company_id = $userInfo->company_id;
+            $openId->app_id = $app_id;
+            $openId->create_time = $openId->update_time = date("Y-m-d H:i:s");
+            if ($openId->create() === true)
+            {
+                return ['result'=>true];
+            }
+            else
+            {
+                return ['result'=>false];
+            }
+        }
+    }
 
     //点赞
     public function setKudosInc($post_id=0,$sender_id=0)
@@ -724,12 +678,6 @@ class UserService extends BaseService
         return $return;
     }
 
-
-
-
-
-    
-
     //修改验证码状态
     public function setMobileCode($mobile,$code){
         //修改验证码记录状态
@@ -742,6 +690,7 @@ class UserService extends BaseService
                 return false;
             }
         }
+        $this->redis->expire('login_'.$mobile,0);
         return true;
     }
 
@@ -765,7 +714,7 @@ class UserService extends BaseService
         if(isset($userinfo->company_id)){
             $configcompany = \HJ\Company::findFirst([
                 "company_id=:company_id:",
-                'bind'=>['company_id'=>$userinfo->user_id], 'order'=>'company_id desc'
+                'bind'=>['company_id'=>$userinfo->company_id], 'order'=>'company_id desc'
             ]);
             if(isset($configcompany->company_id)){
                 $company_name = $configcompany->company_name;
@@ -968,7 +917,7 @@ class UserService extends BaseService
     }
 
     //获取用户信息
-    public function getUserInfo($user_id,$columns = 'user_id,nick_name,true_name,user_img',$cache = 1)
+    public function getUserInfo($user_id,$columns = 'user_id,company_id,nick_name,true_name,user_img,is_del',$cache = 1)
     {
         $cacheSetting = $this->config->cache_settings->user_info;
         $cacheName = $cacheSetting->name.$user_id;
@@ -1073,6 +1022,58 @@ class UserService extends BaseService
             return [];
         }
     }
+    public function getWechatUserInfoByOpenId($openId = "",$app_id = 0)
+    {
+        if($app_id>0)
+        {
+            $params = [
+                "open_id = '".$openId."' and app_id = '".$app_id."'",
+                'columns'=>'*',
+            ];
+        }
+        else
+        {
+            $params = [
+                "open_id = '".$openId."'",
+                'columns'=>'*',
+            ];
+        }
+        //获取用户信息
+        $userList = \HJ\OpenId::find($params);
+        $return = [];
+        foreach($userList as $key => $value)
+        {
+            $return[$value->app_id] = $value->toArray();
+        }
+        return $return;
+    }
+    //获取用户关联的openid列表
+    public function getOpenIdListByUser($user_id,$app_id = 0)
+    {
+        if($app_id>0)
+        {
+            $params = [
+                "user_id = '".$user_id."' and app_id = '".$app_id."'",
+                'columns'=>'*',
+            ];
+        }
+        else
+        {
+            $params = [
+                "user_id = '".$user_id."'",
+                'columns'=>'*',
+            ];
+        }
+        //获取用户信息
+        $openIdList= \HJ\OpenId::find($params);
+        $return = [];
+        foreach($openIdList as $key => $value)
+        {
+            $return[$value->app_id] = $value->toArray();
+        }
+        return $return;
+    }
+
     //根据微信的unionid获取用户信息
     public function getUserInfoByUnionId($unionId = "")
     {
@@ -1112,62 +1113,6 @@ class UserService extends BaseService
         }
     }
 
-    //微信通过openID登录
-    public function wechatLogin($openId = "")
-    {
-        $userinfo = $this->getUserInfoByWechat($openId);
-        if(!$userinfo)
-        {
-            $return = [];
-            $return['result'] = 0;
-            $return['msg']  = $this->msgList['user_openid_valid'];
-        }
-        elseif($userinfo->is_del==1)
-        {
-            $return = [];
-            $return['result'] = 0;
-            $return['msg']  = $this->msgList['wechat_prohibit'];
-        }
-        else {
-            $currentTime = time();
-            //修改用户登录时间
-            $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', $currentTime),
-                'last_update_time' => date('Y-m-d H:i:s', $currentTime),
-                'last_login_source' => "WeChat"], $userinfo->user_id);
-            //生成token
-            $tokeninfo = $this->getToken($userinfo->user_id);
-            $return = ['result' => 1, 'msg' => $this->msgList['login_success'], 'code' => 200, 'data' => ['user_info' => $tokeninfo['map'], 'user_token' => $tokeninfo['token']]];
-        }
-        return $return;
-    }
-    //微信通过openID登录
-    public function miniProgramLogin($unionId = "",$miniprogramId = "")
-    {
-        $userinfo = $this->getUserInfoByUnionId($unionId);
-        if(!$userinfo)
-        {
-            $userinfo = $this->getUserInfoByMiniprogramId($miniprogramId);
-            if(!$userinfo)
-            {
-                $return = [];
-                $return['result'] = 0;
-                $return['msg']  = $this->msgList['user_unionid_valid'];
-                $return['code']  = 403;
-            }
-        }
-        if(!isset($return['result']))
-        {
-            $currentTime = time();
-            //修改用户登录时间
-            $this->updateUserInfo(['last_login_time' => date('Y-m-d H:i:s', $currentTime),
-                'last_update_time' => date('Y-m-d H:i:s', $currentTime),
-                'last_login_source' => "MiniProgram"], $userinfo->user_id);
-            //生成token
-            $tokeninfo = $this->getToken($userinfo->user_id);
-            $return = ['result' => 1, 'msg' => $this->msgList['login_success'], 'code' => 200, 'data' => ['user_info' => $tokeninfo['map'], 'user_token' => $tokeninfo['token']]];
-        }
-        return $return;
-    }
     public function fixUserDepartment($user_id = 0)
     {
         if($user_id>0)
@@ -1378,5 +1323,24 @@ class UserService extends BaseService
             }
         }
         return $return;
+    }
+
+    //创建用户
+    public function createUser($userInfo = [])
+    {
+        $user = new \HJ\UserInfo();
+        foreach($userInfo as $key => $value)
+        {
+            $user->$key = $value;
+        }
+        $user->create_time = $user->update_time = date("Y-m-d H:i:s");
+        if ($user->create() === true) {
+            return ['result'=>true,"userInfo"=>$user];
+        }
+        else
+        {
+            return ['result'=>false];
+        }
+
     }
 }

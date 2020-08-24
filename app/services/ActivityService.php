@@ -19,7 +19,7 @@ class ActivityService extends BaseService
         "activity_update_fail"=>"活动更新失败",
         "activity_member_limit"=>"活动人数已满",
         "activity_club_limit"=>"申请加入",
-        "activity_apply_time"=>"报名开始时间不可大于报名结束时间",
+        "activity_apply_time"=>"报名时间有误",
         "activity_start_time"=>"活动开始时间不可大于活动结束时间",
         "activity_time"=>"报名结束时间不可大于活动开始时间",
         "checkin_address_null"=>"此活动未设置签到地点",
@@ -145,6 +145,9 @@ class ActivityService extends BaseService
         elseif($activityParams['activity_name'] == "")
         {
             $return  = ['result'=>0,"msg"=>"活动名称有误，请重新输入",'code'=>400];
+        }//地址判断
+        elseif(!$activityParams['checkin']){
+            $return  = ['result'=>0,"msg"=>"请选择活动地点",'code'=>400];
         }
         else
         {
@@ -187,6 +190,7 @@ class ActivityService extends BaseService
                     $activity->activity_sign = "";
                     $activity->connect_activity_id = $activityParams['connect_activity_id'];
                     $activity->status = 1;
+                    $activity->app_id = $activityParams['app_id'];
                     $header_image = $activityParams['header_image'];
                     $activity->detail = json_encode(
                         [
@@ -432,7 +436,7 @@ class ActivityService extends BaseService
     /*
      * 获取用户管理的活动列表
      */
-    public function getUserActivityListWithPermission($user_id,$club_id,$columns,$start = 0,$page=1,$pageSize =4,$activity_status = -1){
+    public function getUserActivityListWithPermission($app_id = 101,$user_id,$club_id,$columns,$start = 0,$page=1,$pageSize =4,$activity_status = -1){
         //查询用户是否有超级管理员权限
         $user_info = (new UserService())->getUserInfo($user_id,'user_id,manager_id,company_id');
         if(isset($user_info->manager_id)&&$user_info->manager_id!=0)
@@ -467,6 +471,15 @@ class ActivityService extends BaseService
         }
 
           $activity_list = $this->activitySort(json_decode(json_encode($activity_list),true),$activity_status);
+        //去除不是本app的活动
+        foreach ($activity_list as $key =>$value)
+        {
+            if($value['app_id'] != $app_id)
+            {
+                unset($activity_list[$key]);
+            }
+        }
+        $activity_list = array_values($activity_list);
 
         if($start>0)
         {
@@ -1046,7 +1059,7 @@ class ActivityService extends BaseService
     /*
      * 获取某公司活动列表
      */
-    public function getMonthlyActivityList($company_id,$month,$app_type = 'h5'){
+    public function getMonthlyActivityList($app_id = 101,$company_id,$month,$app_type = 'h5'){
         $year = date('Y',time());
         $date =$year.'-'.$month;
         $monthly_activities = [];
@@ -1057,11 +1070,11 @@ class ActivityService extends BaseService
 
         $activity_list = (new \HJ\Activity())->find(['company_id = '.$company_id,'columns'=>'activity_id',"order"=>"apply_start_time"]);
         foreach ($activity_list as $key=>$activity_info) {
-            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,activity_name,system,status,club_id,start_time,end_time,apply_end_time,icon,comment,detail");
+            $activity_info = $this->getActivityInfo($activity_info->activity_id, "activity_id,activity_name,system,app_id,status,club_id,start_time,create_time,end_time,apply_end_time,icon,comment,detail");
 
             $activity_info = json_decode(json_encode($activity_info));
 
-            if (isset($activity_info->activity_id) && ($activity_info->status == 1) && $activity_info->system == 0)
+            if (isset($activity_info->activity_id) && ($activity_info->status == 1) && $activity_info->system == 0 && $activity_info->app_id == $app_id)
             {
                 //公司信息
                 $activity_start_time = '';
@@ -1079,7 +1092,7 @@ class ActivityService extends BaseService
                 $activity_data['activity_id'] = $activity_info->activity_id;
                 $activity_data['activity_name'] = $activity_info->activity_name;
                 $activity_data['comment'] = mb_substr($activity_info->comment,0,15);
-                $activity_data['time'] = date('h:i',strtotime($activity_info->start_time));
+                $activity_data['create_time'] = $activity_info->create_time;
                 //俱乐部信息
                 $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
                 $activity_data['club_icon'] = $club_info->icon??'';
@@ -1087,7 +1100,7 @@ class ActivityService extends BaseService
 
                 $activity_data['company_name'] = $company_info->company_name;
                 $activity_data['apply_end_time'] = $activity_info->apply_end_time;
-                $detail =  json_encode($activity_info->detail,true);
+                $detail =  json_decode($activity_info->detail,true);
                 $header_image = $detail['header_image']??'';
                 if(!$header_image)
                 {
@@ -1143,6 +1156,14 @@ class ActivityService extends BaseService
                 break;
             }
         }
+
+        //每天得活动排序 按照 创建时间排序
+        foreach ($date_list as $key =>$activity_info)
+        {
+            $create_time_sort = array_column($date_list[$key],'create_time');
+            array_multisort($create_time_sort,SORT_DESC,$date_list[$key]);
+        }
+
         //h5页面只取每天第一个报名未结束的活动 ,俱乐部小程序需要每天的所有活动
         if($app_type == 'h5') {
             foreach ($date_list as $key => $day_activity_list) {

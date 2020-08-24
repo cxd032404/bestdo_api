@@ -124,7 +124,7 @@ class WebCurl extends Component {
     /*
 * post请求
 */
-    public function curl_post($url,$data){
+    public function curl_post($url,$data,$json = 1){
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HEADER, FALSE);
@@ -136,7 +136,12 @@ class WebCurl extends Component {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data); // json数据
         $res = curl_exec($ch); // 返回值
         curl_close($ch);
-        $result = json_decode($res,true);
+        if($json == 1) {
+            $result = json_decode($res, true);
+        }else
+        {
+            $result = $res;
+        }
         return $result;
 
     }
