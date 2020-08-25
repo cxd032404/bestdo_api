@@ -524,8 +524,22 @@ class UserController extends BaseController
         }
         return $this->success($userInfo,'请求成功');
 
-
     }
+
+    /*
+     * 单独获取用户数据 小程序分享页面需要使用
+     */
+
+   public function getUserInfoByUserIdAction(){
+       $user_id = $this->request->getPost('user_id');
+       $user_info = (new UserService())->getUserInfo($user_id,'*');
+       $data['user_name'] = $user_info->true_name??$user_info->nick_name;
+       $data['user_img'] = $user_info->user_img;
+       $company_info = (new CompanyService())->getCompanyInfo($user_info->company_id,'company_id,company_name');
+       $data['company_name'] = $company_info->company_name;
+       return $this->success($data,'请求成功');
+
+   }
 
 
 
