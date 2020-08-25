@@ -46,7 +46,7 @@ class ConfigService extends BaseService
                 $config = [];
             }
         }
-        if($config->config_type == source) {
+        if($config->config_type == 'source') {
             $source_array = json_decode($config->content, true);
             foreach ($source_array as $key => $value) {
                 if (!is_array($value)) {
