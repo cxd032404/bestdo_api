@@ -852,7 +852,7 @@ class ActivityService extends BaseService
                                 if($update)
                                 {
                                     //刷新签到人数缓存
-                                    $this->getActivityCheckinCount($activityLog->id,0);
+                                    $this->getActivityCheckinCount($activityLog->activity_id,0);
                                     $return  = ['result'=>1,"msg"=>$this->msgList['activity_checkin_success'],'data'=>[],'code'=>200];
                                 }
                                 else
