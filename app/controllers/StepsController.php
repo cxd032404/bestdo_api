@@ -46,7 +46,7 @@ class StepsController extends BaseController
         $code = trim($data['code']??"");
         $iv = trim($data['iv']??"");
         $data = trim($data['encryptedData']??"");
-        $app_id = $this->request->getHeader("app_id")??101;
+        $app_id = $this->request->getHeader("Appid")??201;
         //解码
         $stepsData = (new WechatService)->decryptData($data,$iv,$this->key_config->tencent,$code,$app_id);
         //更新步数
