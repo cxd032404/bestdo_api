@@ -613,7 +613,7 @@ class ActivityService extends BaseService
                         //刷新人员列表缓存
                         (new ActivityService())->getActivityMemberList($activity_id,0);
                         //刷新是否参加活动中缓存
-                        (new ActivityService())->checkUserActivity($activity_id,$user_id,0);
+                        (new ActivityService())->checkUserActivity($user_id,$activity_id,0);
                         $return  = ['result'=>1, 'msg'=>$this->msgList['activity_apply_success'], 'code'=>200, 'data'=>$useractivitylog];
                     }
                 }
