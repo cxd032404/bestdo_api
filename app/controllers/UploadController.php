@@ -10,5 +10,4 @@ class UploadController  extends BaseController
         $upload = $oUpload->getUploadedFile([],[],0,0,['pic'=>1,'video'=>1,'txt'=>1]);
         return $this->success(array_values($upload));
     }
-
 }
