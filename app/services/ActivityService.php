@@ -1091,7 +1091,7 @@ class ActivityService extends BaseService
                 $activity_data = [];
                 $activity_data['activity_id'] = $activity_info->activity_id;
                 $activity_data['activity_name'] = $activity_info->activity_name;
-                $activity_data['comment'] = mb_substr($activity_info->comment,0,15);
+                $activity_data['comment'] = $activity_info->comment;
                 $activity_data['create_time'] = $activity_info->create_time;
                 //俱乐部信息
                 $club_info = (new ClubService())->getClubInfo($activity_info->club_id,'club_id,icon,club_name');
