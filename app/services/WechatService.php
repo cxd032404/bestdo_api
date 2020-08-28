@@ -510,7 +510,7 @@ class WechatService extends BaseService
         }
         //结果缓存20分钟
         $this->redis->set($comment_redis_key,json_encode($return));
-        $this->redis->expire($cache_settings->expire,1200);
+        $this->redis->expire($comment_redis_key,$cache_settings->expire);
         return $return;
     }
 
