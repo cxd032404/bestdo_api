@@ -10,9 +10,6 @@ class configController extends BaseController
 
          $params =  $this->request->get('params');
          $params = json_decode($params,true);
-         $data = [];
-
-
          foreach ($params as $key =>$value)
          {
               $config_data = (new ConfigService())->getConfig($value);

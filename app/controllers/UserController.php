@@ -463,6 +463,27 @@ class UserController extends BaseController
         }
         return $this->success($userInfo,'请求成功');
 
+    }
+
+
+    /*
+     * 官网手机号保存待回电
+     * mobile 手机号
+     * logincode 验证码
+     */
+
+    public function websiteMobileSaveAction(){
+        $data = $this->request->getPost();
+        $mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
+        $logincode = isset($data['logincode'])?preg_replace('# #','',$data['logincode']):"";
+        $return = (new UserService())->phoneNumberSave($mobile,$logincode);
+        if($return['result'] == 1)
+        {
+            return $this->success([],$return['msg']);
+        }else
+        {
+            return $this->failure([],$return['msg']);
+        }
 
     }
 
