@@ -1383,32 +1383,17 @@ class UserService extends BaseService
     /*
  * 保存官网预留手机号
  */
-    public function phoneNumberSave($phone_number, $logincode)
+    public function phoneNumberSave($phone_number)
     {
-        $common = new Common();
-        $oWechatService = (new WechatService());
-        $login_code = $this->redis->get('login_' . $phone_number);
-        //后台配置的测试号码
-        $test_phone_number = (new ConfigService())->getConfig("phoneNumber")->content ?? '';
-        //配置文件中的测试号
-        $testMoblie = $this->config->testMoblie;
-        if (strstr($test_phone_number, $phone_number) || in_array($phone_number, (array)$testMoblie)) {
-            $login_code = json_encode(['code' => 123456]);
-        }
-        $return = ['result' => 0, 'data' => [], 'msg' => "", 'code' => 400];
-        if (empty($phone_number) || !$common->check_mobile($phone_number)) {
-            $return['msg'] = $this->msgList['mobile_empty'];
-        } else if (empty($logincode)) {
-            $return['msg'] = $this->msgList['sendcode_empty'];
-        } else if (!$login_code) {
-            $return['msg'] = $this->msgList['sendcode_error'];
-        } else if ($logincode != json_decode($login_code)->code) {
-            $return['msg'] = $this->msgList['sendcode_error'];
-        }else {
 
+            if($phone_number == '')
+            {
+                $return = ['result' => 0, 'data' => [], 'msg' => "请输入手机号", 'code' => 400];
+                return $return;
+            }
             $website_mobile = new \HJ\WebsiteMobile();
             $website_mobile->phone_number = $phone_number;
-            $website_mobile->create_time  = date('Y-m-d',time());
+            $website_mobile->create_time  = date('Y-m-d H:i:s',time());
             $website_mobile->status = 1;
             $website_mobile->detail = '';
             $res = $website_mobile->create();
@@ -1419,7 +1404,6 @@ class UserService extends BaseService
             {
                 $return = ['result' => 0, 'data' => [], 'msg' => "保留手机号失败，请重试", 'code' => 400];
             }
-        }
         return $return;
     }
 }

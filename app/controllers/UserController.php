@@ -475,8 +475,7 @@ class UserController extends BaseController
     public function websiteMobileSaveAction(){
         $data = $this->request->getPost();
         $mobile = isset($data['mobile'])?substr(preg_replace('# #','',$data['mobile']),0,11):"";
-        $logincode = isset($data['logincode'])?preg_replace('# #','',$data['logincode']):"";
-        $return = (new UserService())->phoneNumberSave($mobile,$logincode);
+        $return = (new UserService())->phoneNumberSave($mobile);
         if($return['result'] == 1)
         {
             return $this->success([],$return['msg']);
