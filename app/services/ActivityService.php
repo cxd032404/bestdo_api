@@ -449,7 +449,7 @@ class ActivityService extends BaseService
         }
         foreach($activity_list as $key => $activityInfo)
         {
-            if(!$activityInfo || $activityInfo->system == 1 || $activityInfo->status==0 )
+            if(!$activityInfo || $activityInfo->system == 1)
             {
                 unset($activity_list[$key]);
             }
