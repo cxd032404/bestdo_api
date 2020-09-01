@@ -37,7 +37,7 @@ try {
     header("Access-Control-Allow-Origin: *");
     header('Content-Type: application/json; charset=utf-8');
 
-	error_reporting(E_ALL);
+	error_reporting(0);
     require_once ROOT_PATH . "/vendor/autoload.php";
 
 	require_once ROOT_PATH . "/configs/bootstrap.php";
