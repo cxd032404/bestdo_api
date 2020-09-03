@@ -35,11 +35,13 @@ class ListController extends BaseController
         $detail = $this->request->getPost('detail') ?? [];
         $detail['comment'] = $this->request->getPost("comment") ?? "";
 
-        //检测上传的内容是否包含敏感词
-        $check_result  = (new WechatService())->wechatMsgCheck($detail['comment'],$app_id);
-        if(!$check_result['result'])
-        {
-            return $this->failure([], $check_result['msg']);
+        //内容不为空时检测 否则微信接口报错
+        if($detail['comment']) {
+            //检测上传的内容是否包含敏感词
+            $check_result = (new WechatService())->wechatMsgCheck($detail['comment'], $app_id);
+            if (!$check_result['result']) {
+                return $this->failure([], $check_result['msg']);
+            }
         }
 
         $detail['title'] = $this->request->getPost("title") ?? "";
