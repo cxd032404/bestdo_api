@@ -18,7 +18,16 @@ class configController extends BaseController
          }
          return $this->success($data);
      }
+     /*
+      * 获取官网tdk
+      */
 
+     public function getTdkAction(){
+         $params = $this->request->get('web');
+         $title_config_name = $params
+
+
+     }
 
 
 }
