@@ -140,7 +140,7 @@ class CacheController extends BaseController
         }
         elseif($type=="config")
         {
-            $config = (new ConfigService())->getConfig($id,"*",0);
+            $config = (new ConfigService())->getConfig($id,0);
             if(isset($config->config_sign))
             {
                 $this->success([$config],"ok",200);
