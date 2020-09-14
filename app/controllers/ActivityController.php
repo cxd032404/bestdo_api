@@ -43,12 +43,14 @@ class ActivityController extends BaseController
         }
         $userInfo = $return['data']['user_info'];
 	   //接收参数并格式化
+        $app_id = $this->request->getHeader('Appid');
 		$data = $this->request->get();
+		$activityData['app_id'] = $app_id;
         $activityData['activity_name'] = isset($data['activity_name'])?substr(trim($data['activity_name'],'#'),0,32):"";
         $activityData['comment'] = isset($data['comment'])?trim($data['comment'],'#'):"";
         $activityData['start_time'] = isset($data['start_time'])?trim($data['start_time'],'#'):"";
         $activityData['end_time'] = isset($data['end_time'])?trim($data['end_time'],'#'):"";
-        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):date('Y-m-d H:i',time()+30*60); //俱乐部小程序没有报名开始时间 默认给个现在+30秒
+        $activityData['apply_start_time'] = isset($data['apply_start_time'])?trim($data['apply_start_time'],'#'):date('Y-m-d H:i',time()+60); //俱乐部小程序没有报名开始时间 默认给个现在+30秒
         $activityData['apply_end_time'] = isset($data['apply_end_time'])?trim($data['apply_end_time'],'#'):"";
         $activityData['club_member_only'] = intval($data['club_member_only']??1);
         $activityData['member_limit'] = intval($data['member_limit']??100);

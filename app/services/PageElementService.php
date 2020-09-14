@@ -418,17 +418,17 @@ class PageElementService extends BaseService
      * params 页面标识和company_id
      */
      public function getElementPage_attendActivityList($data,$params,$user_info,$company_id){
+           $app_id = $this->getFromParams($params,'app_id',101);
            $activity = (new ActivityService())->getActivityList($user_info['data']['user_id'])->toArray();
            $activity_list = [];
            foreach ($activity as $key=>$value)
            {
                $activity_info = (new ActivityService())->getActivityInfo($value['activity_id'],'*');
-               if(!isset($activity_info->status) || $activity_info->status == 0 || $activity_info->system == 1)
+               if(!isset($activity_info->status) || $activity_info->status == 0 || $activity_info->system == 1 || $activity_info->app_id != $app_id)
                {
                    continue;
                }
                $activity_member_count = (new ActivityService())->getActivityMemberCount($value['activity_id']);
-               $club_info = (new ClubService())->getClubInfo($activity_info->club_id);
                //活动人数
                $activity_list[$key]['Usercount'] = $activity_member_count;
                $activity_list[$key]['activity_id'] = $value['activity_id'];
@@ -745,8 +745,10 @@ class PageElementService extends BaseService
         {
             $club_id = $this->getFromParams($params,$data['detail']['from_params'],-1);
         }
-        $return  = (new ActivityService())->getUserActivityListWithPermission($user_info['data']['user_id'],$club_id,
-            'activity_id,activity_name,start_time,apply_start_time,apply_end_time,end_time,club_id,status,detail,create_time,system',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',5),$this->getFromParams($params,'activity_status',-1));
+        $app_id = $this->getFromParams($params,'app_id',101);
+
+        $return  = (new ActivityService())->getUserActivityListWithPermission($app_id,$user_info['data']['user_id'],$club_id,
+            'activity_id,activity_name,start_time,apply_start_time,apply_end_time,end_time,club_id,status,detail,create_time,system,app_id',$this->getFromParams($params,'start',0),$this->getFromParams($params,'page',1),$this->getFromParams($params,'pageSize',5),$this->getFromParams($params,'activity_status',-1));
         $managed_club_list = (new ClubService())->getUserClubListWithPermission($user_info['data']['user_id']);
         $managed_activity_list = $return['activity_list'];
         foreach ($managed_activity_list as $key=>$value)
@@ -918,8 +920,9 @@ class PageElementService extends BaseService
     */
     public function getElementPage_applyingAcitivity($data,$params,$user_info,$company_id){
         $culture = $this->getFromParams($params,'culture',0);
+        $app_id = $this->getFromParams($params,'app_id',101);
         $already_applied = $this->getFromParams($params,'already_applied',0); //已参加的活动 0未参加
-        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,club_id,activity_name,comment,icon,system,apply_start_time,apply_end_time,start_time,end_time',$club_id = -1);
+        $activity_list = (new ActivityService())->getActivityListByCompany($user_info['data']['company_id'],'activity_id,status,club_id,activity_name,comment,icon,system,apply_start_time,app_id,apply_end_time,start_time,end_time',$club_id = -1);
         $currentTime = time();
         $clubService = new ClubService();
         foreach ($activity_list as $key=> $activity_info)
@@ -935,7 +938,7 @@ class PageElementService extends BaseService
                 }else
                 {
                     //去除文体汇的活动
-                    if (!$activity_info || $activity_info->system == 1) {
+                    if (!$activity_info || $activity_info->system == 1 || $activity_info->app_id != $app_id) {
                         unset($activity_list[$key]);
                         continue;
                     }
@@ -1045,6 +1048,7 @@ class PageElementService extends BaseService
      */
 
     public function getElementPage_attendActivityListToCheckin($data,$params,$user_info,$company_id){
+        $app_id = $this->getFromParams($params,'app_id',101);
         $checkin_time = $this->config->activity->activity_checkin_time;
         $activityList = (new ActivityService())->getActivityList($user_info['data']['user_id']);
         $activity_list = [];
@@ -1064,7 +1068,7 @@ class PageElementService extends BaseService
             {
                 continue;
             }
-            if($activity_info->system == 1)
+            if($activity_info->system == 1 || $activity_info->app_id != $app_id)
             {
                 continue;
             }
@@ -1333,7 +1337,8 @@ class PageElementService extends BaseService
         {
             $month = '0'.$month;
         }
-        $activity_list = (new ActivityService())->getMonthlyActivityList($company_id,$month,$this->getFromParams($params,'app_type','h5'));
+        $app_id = $this->getFromParams($params,'app_id',101);
+        $activity_list = (new ActivityService())->getMonthlyActivityList($app_id,$company_id,$month,$this->getFromParams($params,'app_type','h5'));
         $data['detail']['user_monthly_activities'] = $activity_list;
         return $data;
     }
@@ -1523,6 +1528,7 @@ class PageElementService extends BaseService
      */
     public function getElementPage_companyActivityList($data,$params,$user_info,$company_id)
     {
+        $app_id = $this->getFromParams($params,'app_id',101);
         //用户当前位置
         $current_lat = $this->getFromParams($params,'latitude',0);
         $current_lng = $this->getFromParams($params,'longitude',0);
@@ -1531,13 +1537,13 @@ class PageElementService extends BaseService
         $page = $this->getFromParams($params,'page',1);
         $pageSize = $this->getFromParams($params,'pageSize',3);
         //公司活动列表
-        $activityList = (new ActivityService())->getActivityListByCompany(1,'activity_id,status,activity_name,start_time,system,comment,start_time,end_time,apply_start_time,apply_end_time,detail,create_time',$club_id = -1);
+        $activityList = (new ActivityService())->getActivityListByCompany(1,'activity_id,status,activity_name,start_time,system,app_id,comment,start_time,end_time,apply_start_time,apply_end_time,detail,create_time',$club_id = -1);
         $company_info = (new CompanyService())->getCompanyInfo($company_id,'company_id,company_name,detail');
 
-        //去除文体汇的活动和无效的活动
+        //去除文体汇的活动和无效的活动 和非本app活动
         foreach ($activityList as $key =>$activity_info)
         {
-            if($activity_info->system == 1 || $activity_info->status == 0 )
+            if($activity_info->system == 1 || $activity_info->status == 0 || $activity_info->app_id != $app_id)
             {
               unset($activityList[$key]);
               continue;

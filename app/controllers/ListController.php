@@ -29,13 +29,14 @@ class ListController extends BaseController
         $visible = intval($this->request->getPost('visible') ?? 0);
         $list_id = intval($this->request->getPost('list_id') ?? 0);
         $post_id = intval($this->request->getPost('post_id') ?? 0);
+        $app_id = $this->request->getHeader("app_id")??101;
         $user_id = $tokenInfo['data']['user_info']->user_id ?? 0;
         $manager_id = $tokenInfo['data']['user_info']->manager_id ?? 0;
         $detail = $this->request->getPost('detail') ?? [];
         $detail['comment'] = $this->request->getPost("comment") ?? "";
 
         //检测上传的内容是否包含敏感词
-        $check_result  = (new WechatService())->wechatMsgCheck($detail['comment']);
+        $check_result  = (new WechatService())->wechatMsgCheck($detail['comment'],$app_id);
         if(!$check_result['result'])
         {
             return $this->failure([], $check_result['msg']);

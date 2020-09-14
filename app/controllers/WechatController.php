@@ -20,9 +20,10 @@ class WechatController extends BaseController
         if(!preg_match('/http:\/\/[\w.]+[\w\/]*[\w.]*\??[\w=&\+\%]*/is',$url)){
             return $this->failure([],'请传输正确的url地址！',400);
         }
-        $appid = $this->key_config->wechat->appid??"";
-        $appsecret = $this->key_config->wechat->appsecret??"";
-        $return  = (new WechatService)->getSignPackage($appid,$appsecret,$url);
+        $app_id = $this->request->getHeader("Appid")??101;
+        //$app_id = $this->key_config->wechat->appid??"";
+        //$appsecret = $this->key_config->wechat->appsecret??"";
+        $return  = (new WechatService)->getSignPackage($app_id,$url);
         return $this->success($return);
     }
 
@@ -34,7 +35,7 @@ class WechatController extends BaseController
     }
     
     /*
-     * 小程序通过code获取sessionKey
+     * 小程序code登录
      * 参数
      * code
      * （必填）：微信授权code
@@ -44,11 +45,12 @@ class WechatController extends BaseController
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        $app_id = $this->request->getHeader("Appid")??201;
         //通过code获取sessionKey,openid,Unionid
-        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($code,$app_id);
         if($wechatUserInfo['openid'])
         {
-            $return  = (new UserService)->miniProgramLogin($wechatUserInfo['unionid']??"",$wechatUserInfo['openid']??"");
+            $return  = (new LoginService())->miniProgramLogin($wechatUserInfo['unionid']??"",$wechatUserInfo['openid']??"",$app_id);
             if($return['result'])
             {
                 return $this->success($return['data']);
@@ -64,18 +66,19 @@ class WechatController extends BaseController
         }
     }
     /*
- * 小程序通过code获取sessionKey
- * 参数
- * code
- * （必填）：微信授权code
- * */
+     * 小程序通过code获取sessionKey
+     * 参数
+     * code
+     * （必填）：微信授权code
+     * */
     public function getSessionKeyAction()
     {
         //接收参数并格式化
         $data = $this->request->get();
         $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        $app_id = $this->request->getHeader("Appid")??101;
         //通过code获取sessionKey,openid,Unionid
-        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        $wechatUserInfo = (new WechatService)->getUserInfoByCode_mini_program($code,$app_id);
         if($wechatUserInfo['openid'])
         {
             return $this->success($wechatUserInfo);
@@ -84,6 +87,28 @@ class WechatController extends BaseController
         {
             return $this->failure([],"用户身份获取失败",403);
         }
+    }
+    /*
+     * 微信code登录
+     * 参数
+     * code
+     * （必填）：微信授权code
+     * */
+    public function wechatCodeLoginAction()
+    {
+        //接收参数并格式化
+        $data = $this->request->get();
+        $code = (isset($data['code']) && !empty($data['code']) && $data['code']!=='undefined' )?preg_replace('# #','',$data['code']):"";
+        $app_id = $this->request->getHeader("Appid")??101;
+        //调用手机号验证码登录方法
+        $openId = (new WechatService)->getOpenIdByCode($code,$app_id);
+        //调用手机号验证码登录方法
+        $return  = (new LoginService())->wechatLogin($openId,$app_id);
+        //返回值判断
+        if($return['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        return $this->success($return['data']);
     }
     /*
      * 小程序数据解码
@@ -99,8 +124,9 @@ class WechatController extends BaseController
         $code = trim($data['code']??"");
         $iv = trim($data['iv']??"");
         $data = trim($data['encryptedData']??"");
+        $app_id = $this->request->getHeader("Appid")??201;
         //解码
-        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->wechat_mini_program,$code);
+        $decrypt = (new WechatService)->decryptData($data,$iv,$this->key_config->tencent,$code,$app_id);
         if($decrypt['result'])
         {
             $this->success($decrypt['data']??[],"",$decrypt['code']);
@@ -184,7 +210,8 @@ class WechatController extends BaseController
      */
     public function wechatMsgCheckAction(){
         $checkContent =  $_GET["checkMsg"]??'';
-        $return = (new WechatService())->wechatMsgCheck($checkContent);
+        $app_id = $this->request->getHeader("Appid")??101;
+        $return = (new WechatService())->wechatMsgCheck($checkContent,$app_id);
         if($return['result'])
         {
             return $this->success();
@@ -192,6 +219,55 @@ class WechatController extends BaseController
         {
             $this->success($return['msg']);
         }
+    }
+
+    /*
+     *生成小程序二维码
+     */
+    public function miniprogramQrcodeAction(){
+
+        /*验证token开始*/
+        $return  = (new UserService)->getDecrypt();
+        if($return['result']!=1){
+            return $this->failure([],$return['msg'],$return['code']);
+        }
+        /*验证token结束*/
+        $user_id = isset($return['data']['user_info']->user_id)?$return['data']['user_info']->user_id:0;
+
+        $company_id = $this->request->getPost('company_id')??1;
+
+         //文件后缀  公司名加分享人id
+        $suffix = 'company_id_'.$company_id.'user_id_'.$user_id;
+        $suffix = md5($suffix);
+        $file_name = '/runtime/codes/qrcode_'.$suffix.'.png';
+        $file_path = ROOT_PATH.$file_name;
+
+        if(file_exists($file_path))
+         { //域名
+             $host = $_SERVER['HTTP_HOST'];
+
+             return $this->success($host.$file_name);
+         }
+         if(!is_dir(ROOT_PATH."/runtime/codes/"))
+         {
+             mkdir(ROOT_PATH."/runtime/codes/",0777,true);
+         }
+        $access_token = (new WechatService())->getAccessToken(202);
+        $path="pages/shareb/shareb?company_d=$company_id&user_id=$user_id";
+        $width='430';
+        $post_data='{"path":"'.$path.'","width":'.$width.'}';
+        $url="https://api.weixin.qq.com/wxa/getwxacode?access_token=$access_token";
+        $res = (new WebCurl())->curl_post($url,$post_data,0);
+         if($res)
+         {
+             file_put_contents($file_path,$res);
+             $host = $_SERVER['HTTP_HOST'];
+
+             return $this->success($host.$file_name);
+         }else
+         {
+             return $this->error([],'生成失败');
+         }
     }
 
 }

@@ -9,7 +9,6 @@
 // | Author:   huzhichao@laoyuegou.com
 // | Created:  2017-xx-xx
 // +----------------------------------------------------------------------
-use Robots as robotModel;
 use Phalcon\Mvc\Model\Query;
 use Phalcon\Mvc\User\Component;
 
@@ -18,13 +17,15 @@ class WechatService extends BaseService
 
 
     /*更新用户微信信息*/
-    public function getOpenIdByCode($wechat = [],$code="")
+    public function getOpenIdByCode($code="",$app_id=101)
     {
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
         //第二步：获取网页授权access_token和openid
         $this->wechat_code_logger->info("openIdByCode");
-        $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+        $oauth2 = $this->getOauthAccessToken($app_id,$code);
         $openId = "";
         if (!array_key_exists('errcode', $oauth2)) {
             $openId = $oauth2['openid'];
@@ -34,67 +35,36 @@ class WechatService extends BaseService
 
     //根据code获取用户微信信息
     /*更新用户微信信息*/
-    public function updateUserWithWechat($wechat=[],$user_id=0,$code="")
+    public function updateUserWithWechat($user_id=0,$code="",$app_id = 0)
     {
-        $wechat_cache = $this->config->cache_settings->wechat;
-        $redis_key = $wechat_cache->name.$code;
-        $cache = $this->redis->get($redis_key);
-        if($cache!= "")
+        $oauth_userinfo = $this->getUserInfoByCode_Wechat($code,$app_id);
+        if(isset($oauth_userinfo['openid']))
         {
-            $oauth2 = json_decode($cache,true);
-        }
-        else
-        {
-            $appid = $wechat['appid'];
-            $appsecret = $wechat['appsecret'];
-            //第二步：获取网页授权access_token和openid
-            $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
-        }
-        //var_dump($oauth2);
-        if (!array_key_exists('errcode', $oauth2)) {
-            $openid = $oauth2['openid'];
-        }
-        //第三步：根据网页授权access_token和openid获取用户信息（不包含是否关注）
-        $oauth_userinfo = $this->getOauthUserInfo($oauth2['access_token'],$openid);
-        //var_dump($oauth_userinfo);
-        if (!array_key_exists('errcode', $oauth_userinfo)) {
             //修改用户信息
-            $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
-            //var_dump($userinfo);
-            if($userinfo){
-                $userinfo->wechatid = $oauth_userinfo['openid'];
-                $userinfo->unionid = $oauth_userinfo['unionid']??"";
-                $userinfo->nick_name = $oauth_userinfo['nickname'];
-                $userinfo->sex = $oauth_userinfo['sex'];
-                $userinfo->user_img = $oauth_userinfo['headimgurl'];
-                $userinfo->wechatinfo = json_encode($oauth_userinfo);
-                $userinfo->update();
-            }
+            $userInfo = ['unionid'=>$oauth_userinfo['unionid']??"",
+                'nick_name'=>$oauth_userinfo['nickname'],
+                'sex'=>$oauth_userinfo['sex'],
+                'user_img'=>$oauth_userinfo['headimgurl']];
+            (new UserService())->updateUserInfo($userInfo,$user_id);
         }
         return true;
     }
     /*更新用户微信信息*/
     /*更新用户微信信息*/
-    public function updateUserWithMiniProgram($user_id=0,$miniProgramUserInfo="")
+    public function updateUserWithMiniProgram($user_id=0,$miniProgramUserInfo="",$app_id = 101)
     {
         $miniProgramUserInfo = json_decode($miniProgramUserInfo,true);
-        $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'],$this->key_config->wechat_mini_program, $miniProgramUserInfo['code'] );
+        $miniProgramUserInfo = $this->decryptData($miniProgramUserInfo['encryptedData'], $miniProgramUserInfo['iv'],$this->key_config->tencent, $miniProgramUserInfo['code'],$app_id );
 
         $miniProgramUserInfo = json_decode($miniProgramUserInfo['data'],true);
         if(isset($miniProgramUserInfo['openId']))
         {
             //修改用户信息
-            $userinfo = \HJ\UserInfo::findFirst(["user_id = '".$user_id."' and is_del=0"]);
-            if($userinfo){
-                $userinfo->mini_program_id = $miniProgramUserInfo['openId']??"";
-                $userinfo->unionid = $miniProgramUserInfo['unionId']??"";
-                $userinfo->nick_name = $miniProgramUserInfo['nickName']??"";
-                $userinfo->sex = $miniProgramUserInfo['gender'];
-                $userinfo->user_img = $miniProgramUserInfo['avatarUrl'];
-                unset($miniProgramUserInfo['watermark']);
-                $userinfo->wechatinfo = json_encode($miniProgramUserInfo);
-                $userinfo->update();
-            }
+            $userInfo = ['unionid'=>$miniProgramUserInfo['unionId']??"",
+                'nick_name'=>$miniProgramUserInfo['nickName']??"",
+                'sex'=>$miniProgramUserInfo['gender'],
+                'user_img'=>$miniProgramUserInfo['avatarUrl']];
+            (new UserService())->updateUserInfo($userInfo,$user_id);
         }
         return true;
     }
@@ -104,8 +74,11 @@ class WechatService extends BaseService
     public function indexAction()
     {
         echo '测试信息';die;
-        $appid = $this->key_config->wechat->appid;
-        $appsecret = $this->key_config->wechat->appsecret;
+        $app_id = 101;
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
             $company_id = $_REQUEST['company_id']??"1";
             $redirect_url = 'http://api.staffhome.cn/Wechat/index';
@@ -114,7 +87,7 @@ class WechatService extends BaseService
         }else{
             //第二步：获取网页授权access_token和openid
             $code = $_REQUEST['code']??"";
-            $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+            $oauth2 = $this->getOauthAccessToken(101,$code);
             if (array_key_exists('errcode', $oauth2) && $oauth2['errcode'] != '0') {
                 return $this->failure($oauth2);
             }
@@ -126,7 +99,7 @@ class WechatService extends BaseService
             }
         }
         //第四步：根据appid和appsecret获取全局access_token
-        $access_token = $this->getAccessToken($appid,$appsecret);
+        $access_token = $this->getAccessToken(101);
         //第五步：根据全局access_token和openid获取用户信息
         $userinfo = $this->getUserInfo($access_token,$openid);
         if (array_key_exists('errcode', $userinfo) && $userinfo['errcode'] != '0') {
@@ -143,8 +116,11 @@ class WechatService extends BaseService
     /*测试----获取用户信息并判断是否关注*/
     public function getCodeForManager()
     {
-        $appid = $this->key_config->wechat->appid;
-        $appsecret = $this->key_config->wechat->appsecret;
+        $app_id = 101;
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
         if (empty($_REQUEST["code"])) {//第一步：获取微信授权code
             $redirect_url = $this->request->getServerName().$this->request->getURI();
             $redirect_url = str_replace("api.staffhome.cn","http://www.staffhome.cn/api",$redirect_url);
@@ -153,7 +129,7 @@ class WechatService extends BaseService
         }else{
             //第二步：获取网页授权access_token和openid
             $code = $_REQUEST['code']??"";
-            $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+            $oauth2 = $this->getOauthAccessToken(101,$code);
             if (array_key_exists('errcode', $oauth2) && $oauth2['errcode'] != '0') {
                 return $this->failure($oauth2);
             }
@@ -180,8 +156,12 @@ class WechatService extends BaseService
     }
 
     //获取网页授权access_token
-    public function getOauthAccessToken($appid="",$appsecret="",$code="")
+    public function getOauthAccessToken($app_id="",$code="")
     {
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
         $wechat_cache = $this->config->cache_settings->wechat;
         $redis_key = $wechat_cache->name.$code;
         $cache = $this->redis->get($redis_key);
@@ -216,8 +196,16 @@ class WechatService extends BaseService
     }
 
     //获取全局access_token
-    public function getAccessToken($appid="",$appsecret="",$redisKey = 'access_token')
+    public function getAccessToken($app_id=101)
     {
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['appid'];
+        $appsecret = $wechat['appsecret'];
+        //缓存配置名称
+        $cache_settings =  $this->config->cache_settings->accessToken;
+        //redis key
+        $redisKey = $cache_settings->name.'app_id:'.$app_id;
         $access_token_redis = $this->getRedis($redisKey);
         if( $access_token_redis && $access_token_redis["expires_time"] && $access_token_redis["expires_time"]>time() ){
             $access_token = $access_token_redis;
@@ -251,9 +239,13 @@ class WechatService extends BaseService
     }
 
     //获取分享所需参数
-    public function getSignPackage($appid="",$appsecret="",$url="")
+    public function getSignPackage($app_id=101,$url="")
     {
-        $AccessToken = $this->getAccessToken($appid,$appsecret);
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
+        $appid = $wechat['app_id'];
+        $appsecret = $wechat['appsecret'];
+        $AccessToken = $this->getAccessToken(101);
         $jsapiTicket = $this->_newGetApiTicket($AccessToken);
         // 注意 URL 一定要动态获取，不能 hardcode.
         //$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
@@ -353,18 +345,20 @@ class WechatService extends BaseService
 
     //根据code获取用户微信信息
     /*更新用户微信信息*/
-    public function getUserInfoByCode_Wechat($wechat=[],$code="")
+    public function getUserInfoByCode_Wechat($code="",$app_id)
     {
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
         $appid = $wechat['appid'];
         $appsecret = $wechat['appsecret'];
         //第二步：获取网页授权access_token和openid
-        $oauth2 = $this->getOauthAccessToken($appid,$appsecret,$code);
+        $oauth2 = $this->getOauthAccessToken($app_id,$code);
         $oauth_userinfo = [];
         if (!array_key_exists('errcode', $oauth2))
         {
             $openid = $oauth2['openid'];
             $wechat_openid_cache = $this->config->cache_settings->wechat_openid;
-            $redis_key = $wechat_openid_cache->name.$openid;
+            $redis_key = $wechat_openid_cache->name."_".$app_id."_".$openid;
             $cache = $this->redis->get($redis_key);
             if($cache!= "")
             {
@@ -386,10 +380,12 @@ class WechatService extends BaseService
     }
 
     //根据code获取小程序的用户身份信息
-    public function getUserInfoByCode_mini_program($wechat = [],$code="")
+    public function getUserInfoByCode_mini_program($code="",$app_id)
     {
+        $wechat = $this->key_config->tencent;
+        $wechat = $wechat->$app_id;
         $wechat_cache = $this->config->cache_settings->mini_program_code;
-        $redis_key = $wechat_cache->name.$code;
+        $redis_key = $wechat_cache->name."_".$app_id."_".$code;
         $cache = $this->redis->get($redis_key);
         if($cache!= "")
         {
@@ -430,9 +426,10 @@ class WechatService extends BaseService
      *
      * @return int 成功0，失败返回对应的错误码
      */
-    public function decryptData( $encryptedData, $iv, $wechat, $code )
+    public function decryptData( $encryptedData, $iv, $wechat, $code,$app_id)
     {
-        $sessionKey = $this->getUserInfoByCode_mini_program($this->key_config->wechat_mini_program,$code);
+        $wechat = $this->key_config->tencent->$app_id;
+        $sessionKey = $this->getUserInfoByCode_mini_program($code,$app_id);
         $decryptClass = new WXBizDataCrypt($wechat['appid'],$sessionKey['session_key']??"");
         $errCode = $decryptClass->decryptData($encryptedData, $iv, $data );
         $log = ['encryptedData'=>$encryptedData,'iv'=>$iv,'code'=>$code,'sessionKey'=>$sessionKey,'errorCode'=>$errCode,'data'=>$data];
@@ -454,7 +451,7 @@ class WechatService extends BaseService
      */
     public function wechatMenue(){
         die();
-        $access_token = $this->getAccessToken($this->key_config->aliyun->wechat->appid,$this->key_config->aliyun->wechat->appsecret);
+        $access_token = $this->getAccessToken(101);
 
         $url = 'https://api.weixin.qq.com/cgi-bin/menu/create?access_token='.$access_token;
         $menue = [
@@ -489,7 +486,7 @@ class WechatService extends BaseService
     /*
     * 检测小程序文字内容
     */
-    public function wechatMsgCheck($checkContent){
+    public function wechatMsgCheck($checkContent,$app_id=201){
         //md5缓存结果
         $cache_settings = $this->config->cache_settings->wechat_comment_check;
         $comment_redis_key = $cache_settings->name.md5($checkContent);
@@ -499,10 +496,7 @@ class WechatService extends BaseService
         {
             return json_decode($check_result,true);
         }
-        $appid = $this->key_config->wechat_mini_program->appid;
-        $appsecret = $this->key_config->wechat_mini_program->appsecret;
-        $redisKey = 'miniprogram';
-        $accessToken = $this->getAccessToken($appid,$appsecret,$redisKey);
+        $accessToken = $this->getAccessToken(201);
         $url = 'https://api.weixin.qq.com/wxa/msg_sec_check?access_token='. $accessToken;
         $data = json_encode(array('content'=>$checkContent),JSON_UNESCAPED_UNICODE);
         $wechatReturn =(new WebCurl())->curl_post($url,$data);
@@ -516,7 +510,7 @@ class WechatService extends BaseService
         }
         //结果缓存20分钟
         $this->redis->set($comment_redis_key,json_encode($return));
-        $this->redis->expire($cache_settings->expire,1200);
+        $this->redis->expire($comment_redis_key,$cache_settings->expire);
         return $return;
     }
 
