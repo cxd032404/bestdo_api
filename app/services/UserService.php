@@ -1325,7 +1325,6 @@ class UserService extends BaseService
         return $return;
     }
 
-<<<<<<< HEAD
     /*
  * 保存官网预留手机号
  */
@@ -1351,7 +1350,7 @@ class UserService extends BaseService
                 $return = ['result' => 0, 'data' => [], 'msg' => "保留手机号失败，请重试", 'code' => 400];
             }
         return $return;
-=======
+        }
     //创建用户
     public function createUser($userInfo = [])
     {
@@ -1369,6 +1368,5 @@ class UserService extends BaseService
             return ['result'=>false];
         }
 
->>>>>>> dev
     }
 }
