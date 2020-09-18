@@ -12,7 +12,7 @@ class configController extends BaseController
          $params = json_decode($params,true);
          foreach ($params as $key =>$value)
          {
-              $config_data = (new ConfigService())->getConfig($value);
+              $config_data = (new ConfigService())->getConfig($value,0);
               $content = $config_data->content;
               $data[$value] = $content;
          }
@@ -30,14 +30,14 @@ class configController extends BaseController
 
          $return = [];
          //标题
-         $title_config_data = (new ConfigService())->getConfig($title_config_name);
+         $title_config_data = (new ConfigService())->getConfig($title_config_name,0);
          $return['title'] = $title_config_data->content;
 
          //关键词
-         $keyword_config_data = (new ConfigService())->getConfig($keyword_config_name);
-         $return['keyword'] = $keyword_config_data->content;
+         $keyword_config_data = (new ConfigService())->getConfig($keyword_config_name,0);
+         $return['keywords'] = $keyword_config_data->content;
          //描述
-         $description_config_data = (new ConfigService())->getConfig($description_config_name);
+         $description_config_data = (new ConfigService())->getConfig($description_config_name,0);
          $return['description'] = $description_config_data->content;
          return $this->success($return);
 
