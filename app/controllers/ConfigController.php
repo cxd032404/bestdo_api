@@ -1,7 +1,7 @@
 <?php
 
 
-class configController extends BaseController
+class ConfigController extends BaseController
 {
     /*
      * 获取配置数据
